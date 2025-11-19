@@ -9,7 +9,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Получить подписку
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('*')
@@ -20,7 +19,6 @@ export default async function handler(req, res) {
     const isPremium = subscription && new Date(subscription.expires_at) > new Date();
     const plan = isPremium ? (subscription.plan === 'pro' ? 'PRO' : 'PREMIUM') : 'FREE';
 
-    // Получить количество сообщений
     const { count: userMessages } = await supabase
       .from('telegram_chats')
       .select('*', { count: 'exact', head: true })
@@ -32,7 +30,6 @@ export default async function handler(req, res) {
       .select('id')
       .eq('telegram_user_id', user_id);
 
-    // Получить streak
     const { data: allCheckins } = await supabase
       .from('checkins')
       .select('checkin_date')
@@ -63,7 +60,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Получить текущую тональность
     const tone = await getUserTone(user_id);
 
     return res.status(200).json({ 
