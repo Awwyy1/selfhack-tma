@@ -377,21 +377,21 @@
         <p style="color: #666; font-size: 14px;">Как я буду с тобой общаться</p>
       </div>
       
-      <div class="style-card" data-tone="focus" onclick="selectTone('focus')">
-        <h3>⚡ Focus</h3>
-        <p>Минимум слов, максимум действий. Резкий и дерзкий. Один прямой вопрос.</p>
+      <div class="style-card" data-tone="focused" onclick="selectTone('focused')">
+        <h3>⚡ Focused</h3>
+        <p>Минимум слов, максимум действий. Резкий и дерзкий. Один прямой вопрос (до 15 слов).</p>
         <span class="style-badge free">FREE</span>
       </div>
       
       <div class="style-card active" data-tone="baddy" onclick="selectTone('baddy')">
         <h3>💬 Baddy</h3>
-        <p>Как с другом, который не даёт врать себе.</p>
+        <p>Как с другом, который не даёт врать себе. GROW методика естественно (до 35 слов).</p>
         <span class="style-badge free">FREE</span>
       </div>
       
       <div class="style-card" data-tone="mentor" onclick="selectTone('mentor')">
         <h3>👔 Mentor</h3>
-        <p>Вежливо, структурированно, как бизнес-коуч.</p>
+        <p>Вежливо, структурированно, как бизнес-коуч. GROW методика последовательно (до 35 слов).</p>
         <span class="style-badge premium">PREMIUM</span>
       </div>
     </div>
@@ -414,7 +414,7 @@
       
       <div style="padding: 0 16px 16px;">
         <div class="goal-item">Стать более дисциплинированным и последовательным</div>
-        <div class="goal-item">Я всегда мечтал выучить французский</div>
+        <div class="goal-item">Я всегда мечтал научиться французскому</div>
         <div class="goal-item">Изменить мой образ мышления</div>
         <div class="goal-item">Создать что-то значимое — проект, бренд или наследие</div>
         <div class="goal-item">Бросить курить</div>
@@ -575,7 +575,7 @@
           
           // Обновить профиль
           const toneNames = {
-            focus: '⚡ Focus',
+            focused: '⚡ Focused',
             baddy: '💬 Baddy',
             mentor: '👔 Mentor'
           };
@@ -731,7 +731,7 @@
           document.getElementById('profile-streak').textContent = `${userStats.streak} дней`;
           
           const toneNames = {
-            focus: '⚡ Focus',
+            focused: '⚡ Focused',
             baddy: '💬 Baddy',
             mentor: '👔 Mentor'
           };
