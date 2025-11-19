@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase.js';
-import { anthropic, FREE_COACHING_SYSTEM, PRO_COACHING_SYSTEM } from '../lib/claude.js';
+import { anthropic } from '../lib/claude.js';
+import { getUserTone, getPromptByTone } from '../lib/tone-manager.js';
 
 const MODEL = 'claude-sonnet-4-5-20250929';
 
@@ -24,7 +25,6 @@ export default async function handler(req, res) {
       .maybeSingle();
 
     const isPremium = subscription && new Date(subscription.expires_at) > new Date();
-    const isPro = isPremium && subscription.plan === 'pro';
 
     // Проверка лимитов FREE
     if (!isPremium) {
@@ -43,6 +43,12 @@ export default async function handler(req, res) {
       }
     }
 
+    // Получить тональность пользователя
+    const userTone = await getUserTone(user_id);
+    const systemPrompt = getPromptByTone(userTone);
+
+    console.log(`📝 User ${user_id} | Tone: ${userTone} | Message: ${message.substring(0, 50)}...`);
+
     // Загрузка истории
     const { data: historyData } = await supabase
       .from('telegram_chats')
@@ -59,8 +65,7 @@ export default async function handler(req, res) {
     ];
 
     // Запрос к Claude
-    const systemPrompt = isPro ? PRO_COACHING_SYSTEM : FREE_COACHING_SYSTEM;
-    const maxTokens = isPro ? 400 : 200;
+    const maxTokens = userTone === 'focused' ? 100 : 200; // Focused короче
 
     const aiResponse = await anthropic.messages.create({
       model: MODEL,
@@ -71,6 +76,9 @@ export default async function handler(req, res) {
     });
 
     const reply = aiResponse.content[0].text;
+    const wordCount = reply.split(/\s+/).length;
+
+    console.log(`🤖 AI Response (${wordCount} words, tone: ${userTone}): ${reply}`);
 
     // Сохранение в БД
     await supabase.from('telegram_chats').insert([
@@ -78,14 +86,30 @@ export default async function handler(req, res) {
       { telegram_user_id: user_id, role: 'assistant', content: reply }
     ]);
 
+    // Получить статистику для ответа
+    const { count: userMessages } = await supabase
+      .from('telegram_chats')
+      .select('*', { count: 'exact', head: true })
+      .eq('telegram_user_id', user_id)
+      .eq('role', 'user');
+
+    const { data: allMessages } = await supabase
+      .from('telegram_chats')
+      .select('id', { count: 'exact', head: true })
+      .eq('telegram_user_id', user_id);
+
     return res.status(200).json({ 
       reply: reply,
-      isPro: isPro,
+      tone: userTone,
+      stats: {
+        messagesUsed: userMessages || 0,
+        totalMessages: allMessages?.length || 0
+      },
       timestamp: Date.now()
     });
 
   } catch (error) {
-    console.error('Chat API error:', error);
+    console.error('❌ Chat API error:', error);
     return res.status(500).json({ 
       error: 'Internal error',
       message: 'Произошла ошибка. Попробуй ещё раз.'
