@@ -14,8 +14,8 @@
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--tg-theme-bg-color, #fff);
-      color: var(--tg-theme-text-color, #000);
+      background: #FAFAFA;
+      color: #2D1B69;
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -23,18 +23,20 @@
     
     .header {
       padding: 16px;
-      background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-      border-bottom: 1px solid var(--tg-theme-section-separator-color, #e0e0e0);
+      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(123, 104, 238, 0.2);
     }
     
     .header h1 {
-      font-size: 20px;
+      font-size: 22px;
       margin-bottom: 4px;
+      font-weight: 700;
     }
     
     .header p {
       font-size: 14px;
-      color: var(--tg-theme-hint-color, #999);
+      opacity: 0.9;
     }
     
     .content {
@@ -46,13 +48,13 @@
     .page {
       display: none;
       height: 100%;
-      padding: 16px;
     }
     
     .page.active {
       display: block;
     }
     
+    /* ========== ЧАТ ========== */
     #chat-page {
       display: flex;
       flex-direction: column;
@@ -67,62 +69,258 @@
     
     .message {
       margin-bottom: 12px;
-      padding: 12px;
-      border-radius: 12px;
-      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      width: fit-content;
+      max-width: 75%;
       word-wrap: break-word;
     }
     
     .message.user {
-      background: var(--tg-theme-button-color, #3390ec);
-      color: var(--tg-theme-button-text-color, #fff);
+      background: #7B68EE;
+      color: white;
       margin-left: auto;
-      text-align: right;
+      border-bottom-right-radius: 4px;
     }
     
     .message.assistant {
-      background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-      color: var(--tg-theme-text-color, #000);
+      background: #E8E4FF;
+      color: #2D1B69;
+      border-bottom-left-radius: 4px;
     }
     
     .input-area {
       padding: 12px;
-      background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+      background: white;
       display: flex;
       gap: 8px;
-      border-top: 1px solid var(--tg-theme-section-separator-color, #e0e0e0);
+      border-top: 1px solid #E8E4FF;
     }
     
     #message-input {
       flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 20px;
-      background: var(--tg-theme-bg-color, #fff);
-      color: var(--tg-theme-text-color, #000);
+      padding: 12px 16px;
+      border: 1px solid #E8E4FF;
+      border-radius: 24px;
+      background: #FAFAFA;
+      color: #2D1B69;
       font-size: 16px;
     }
     
     #send-btn {
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
       border: none;
       border-radius: 50%;
-      background: var(--tg-theme-button-color, #3390ec);
-      color: var(--tg-theme-button-text-color, #fff);
+      background: #7B68EE;
+      color: white;
       font-size: 20px;
       cursor: pointer;
+      transition: background 0.2s;
     }
     
     #send-btn:active {
-      opacity: 0.7;
+      background: #6A58DD;
     }
     
+    /* ========== ЧЕКИН ========== */
+    #checkin-page {
+      padding: 24px;
+      text-align: center;
+    }
+    
+    .checkin-button {
+      margin-top: 40px;
+      padding: 20px 40px;
+      background: #7B68EE;
+      color: white;
+      border: none;
+      border-radius: 16px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(123, 104, 238, 0.3);
+    }
+    
+    .checkin-icon {
+      font-size: 80px;
+      margin: 40px 0 20px;
+    }
+    
+    /* ========== СТИЛЬ ========== */
+    #style-page {
+      padding: 16px;
+    }
+    
+    .style-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 2px solid #E8E4FF;
+    }
+    
+    .style-card h3 {
+      color: #7B68EE;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    
+    .style-card p {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .style-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #7B68EE;
+      color: white;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    
+    .style-badge.free {
+      background: #4CAF50;
+    }
+    
+    .style-badge.premium {
+      background: #FF9800;
+    }
+    
+    /* ========== ЦЕЛИ ========== */
+    #goals-page {
+      padding: 16px;
+    }
+    
+    .goal-item {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 4px solid #7B68EE;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .add-goal {
+      background: #E8E4FF;
+      border: 2px dashed #7B68EE;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      text-align: center;
+      color: #7B68EE;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    /* ========== ПРОФИЛЬ ========== */
+    #profile-page {
+      padding: 16px;
+    }
+    
+    .profile-section {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .profile-section h3 {
+      color: #7B68EE;
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .profile-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #F5F5F5;
+    }
+    
+    .profile-row:last-child {
+      border-bottom: none;
+    }
+    
+    .profile-label {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .profile-value {
+      color: #2D1B69;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    /* ========== ПОПАП ========== */
+    .popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .popup.active {
+      display: flex;
+    }
+    
+    .popup-content {
+      background: white;
+      border-radius: 20px;
+      padding: 32px 24px;
+      margin: 20px;
+      text-align: center;
+      max-width: 320px;
+    }
+    
+    .popup-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    
+    .popup-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #7B68EE;
+      margin-bottom: 12px;
+    }
+    
+    .popup-text {
+      font-size: 16px;
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    
+    .popup-close {
+      background: #7B68EE;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    /* ========== НАВИГАЦИЯ ========== */
     .navigation {
       display: flex;
-      background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-      border-top: 1px solid var(--tg-theme-section-separator-color, #e0e0e0);
-      padding: 4px 0;
+      background: white;
+      border-top: 1px solid #E8E4FF;
+      padding: 8px 0;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
     }
     
     .nav-btn {
@@ -133,64 +331,60 @@
       padding: 12px 4px;
       border: none;
       background: transparent;
-      color: var(--tg-theme-hint-color, #999);
+      color: #999;
       font-size: 12px;
       cursor: pointer;
+      transition: color 0.2s;
     }
     
     .nav-btn.active {
-      color: var(--tg-theme-button-color, #3390ec);
-      font-weight: 600;
-    }
-    
-    .placeholder-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      text-align: center;
-      color: var(--tg-theme-hint-color, #999);
-    }
-    
-    .placeholder-content .icon {
-      font-size: 64px;
-      margin-bottom: 16px;
-    }
-    
-    .placeholder-content h2 {
-      font-size: 20px;
-      margin-bottom: 8px;
-      color: var(--tg-theme-text-color, #000);
+      color: #7B68EE;
+      font-weight: 700;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>🧠 SelfHack</h1>
+    <h1>SelfHack</h1>
     <p id="user-name">Загрузка...</p>
   </div>
   
   <div class="content">
-    <!-- Страница Чекин -->
+    <!-- ЧЕКИН -->
     <div id="checkin-page" class="page">
-      <div class="placeholder-content">
-        <div class="icon">✓</div>
-        <h2>Чекин</h2>
-        <p>Отметь свой прогресс каждый день</p>
-      </div>
+      <div class="checkin-icon">✓</div>
+      <h2>Ежедневный чекин</h2>
+      <p style="color: #666; margin-top: 12px;">Отмечай свой прогресс каждый день</p>
+      <button class="checkin-button" onclick="doCheckin()">Сделать чекин</button>
     </div>
     
-    <!-- Страница Стиль -->
+    <!-- СТИЛЬ -->
     <div id="style-page" class="page">
-      <div class="placeholder-content">
-        <div class="icon">🎨</div>
-        <h2>Стиль общения</h2>
-        <p>Настрой как я буду с тобой общаться</p>
+      <div style="padding: 16px 0;">
+        <h2 style="margin-bottom: 8px;">Выбери стиль коуча</h2>
+        <p style="color: #666; font-size: 14px;">Как я буду с тобой общаться</p>
+      </div>
+      
+      <div class="style-card">
+        <h3>Buddy Coach</h3>
+        <p>Короткие ответы (35 слов), дружеский тон, быстрые вопросы. Как переписка с другом.</p>
+        <span class="style-badge free">FREE</span>
+      </div>
+      
+      <div class="style-card">
+        <h3>Deep Coach</h3>
+        <p>Глубокие вопросы (35-50 слов), структурированный подход, работа с паттернами поведения.</p>
+        <span class="style-badge premium">PREMIUM</span>
+      </div>
+      
+      <div class="style-card">
+        <h3>Pro Coach</h3>
+        <p>Расширенные ответы, анализ, отчёты, голосовые сообщения. Полное погружение в трансформацию.</p>
+        <span class="style-badge">PRO</span>
       </div>
     </div>
     
-    <!-- Страница Чат -->
+    <!-- ЧАТ -->
     <div id="chat-page" class="page active">
       <div id="chat-container"></div>
       <div class="input-area">
@@ -199,41 +393,84 @@
       </div>
     </div>
     
-    <!-- Страница Цели -->
+    <!-- ЦЕЛИ -->
     <div id="goals-page" class="page">
-      <div class="placeholder-content">
-        <div class="icon">🎯</div>
-        <h2>Цели</h2>
-        <p>Твои цели и прогресс</p>
+      <div style="padding: 16px 16px 0;">
+        <h2 style="margin-bottom: 8px;">Твои цели</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Чего ты хочешь достичь</p>
+      </div>
+      
+      <div style="padding: 0 16px 16px;">
+        <div class="goal-item">Стать более дисциплинированным и последовательным</div>
+        <div class="goal-item">Я всегда мечтал научиться французскому</div>
+        <div class="goal-item">Изменить мой образ мышления</div>
+        <div class="goal-item">Создать что-то значимое — проект, бренд или наследие</div>
+        <div class="goal-item">Бросить курить</div>
+        
+        <div class="add-goal">+ Добавить свою цель</div>
       </div>
     </div>
     
-    <!-- Страница Профиль -->
+    <!-- ПРОФИЛЬ -->
     <div id="profile-page" class="page">
-      <div class="placeholder-content">
-        <div class="icon">👤</div>
-        <h2>Профиль</h2>
-        <p>Настройки и подписка</p>
+      <div class="profile-section">
+        <h3>Подписка</h3>
+        <div class="profile-row">
+          <span class="profile-label">Тариф</span>
+          <span class="profile-value">FREE</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-label">Сообщений использовано</span>
+          <span class="profile-value">12 / 50</span>
+        </div>
+      </div>
+      
+      <div class="profile-section">
+        <h3>Активность</h3>
+        <div class="profile-row">
+          <span class="profile-label">Чекинов подряд</span>
+          <span class="profile-value">0 дней</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-label">Всего сообщений</span>
+          <span class="profile-value">24</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-label">Активных целей</span>
+          <span class="profile-value">5</span>
+        </div>
+      </div>
+      
+      <div class="profile-section">
+        <h3>Аккаунт</h3>
+        <div class="profile-row">
+          <span class="profile-label">Username</span>
+          <span class="profile-value" id="profile-username">@username</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-label">Дата регистрации</span>
+          <span class="profile-value">19 ноября 2024</span>
+        </div>
       </div>
     </div>
   </div>
   
+  <!-- ПОПАП ЧЕКИНА -->
+  <div class="popup" id="checkin-popup">
+    <div class="popup-content">
+      <div class="popup-icon">🔥</div>
+      <div class="popup-title">Чекин выполнен!</div>
+      <div class="popup-text" id="popup-text">Начинаем отсчёт streak.</div>
+      <button class="popup-close" onclick="closePopup()">Отлично!</button>
+    </div>
+  </div>
+  
   <div class="navigation">
-    <button class="nav-btn" data-page="checkin">
-      <span>Чекин</span>
-    </button>
-    <button class="nav-btn" data-page="style">
-      <span>Стиль</span>
-    </button>
-    <button class="nav-btn active" data-page="chat">
-      <span>Чат</span>
-    </button>
-    <button class="nav-btn" data-page="goals">
-      <span>Цели</span>
-    </button>
-    <button class="nav-btn" data-page="profile">
-      <span>Профиль</span>
-    </button>
+    <button class="nav-btn" data-page="checkin">Чекин</button>
+    <button class="nav-btn" data-page="style">Стиль</button>
+    <button class="nav-btn active" data-page="chat">Чат</button>
+    <button class="nav-btn" data-page="goals">Цели</button>
+    <button class="nav-btn" data-page="profile">Профиль</button>
   </div>
   
   <script>
@@ -245,11 +482,15 @@
     const userName = document.getElementById('user-name');
     userName.textContent = user ? `@${user.username || user.first_name}` : 'Guest';
     
+    if (user) {
+      document.getElementById('profile-username').textContent = `@${user.username || user.first_name}`;
+    }
+    
     const chatContainer = document.getElementById('chat-container');
     const messageInput = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');
     
-    // Навигация
+    // НАВИГАЦИЯ
     const navBtns = document.querySelectorAll('.nav-btn');
     const pages = document.querySelectorAll('.page');
     
@@ -257,16 +498,33 @@
       btn.addEventListener('click', () => {
         const pageName = btn.dataset.page;
         
-        // Убрать active со всех кнопок и страниц
         navBtns.forEach(b => b.classList.remove('active'));
         pages.forEach(p => p.classList.remove('active'));
         
-        // Добавить active к выбранным
         btn.classList.add('active');
         document.getElementById(`${pageName}-page`).classList.add('active');
       });
     });
     
+    // ЧЕКИН
+    function doCheckin() {
+      const streak = Math.floor(Math.random() * 10) + 1; // Заглушка
+      const popupText = document.getElementById('popup-text');
+      
+      if (streak === 1) {
+        popupText.textContent = 'Начинаем отсчёт streak.';
+      } else {
+        popupText.textContent = `Твой streak: ${streak} дней подряд. Продолжай!`;
+      }
+      
+      document.getElementById('checkin-popup').classList.add('active');
+    }
+    
+    function closePopup() {
+      document.getElementById('checkin-popup').classList.remove('active');
+    }
+    
+    // ЧАТ
     function addMessage(text, role) {
       const div = document.createElement('div');
       div.className = `message ${role}`;
@@ -312,7 +570,7 @@
       if (e.key === 'Enter') sendMessage();
     });
     
-    // Загрузка истории при старте
+    // ЗАГРУЗКА ИСТОРИИ
     async function loadHistory() {
       try {
         const response = await fetch(`/api/history?user_id=${user?.id || 0}`, {
