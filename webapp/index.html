@@ -37,6 +37,28 @@
       color: var(--tg-theme-hint-color, #999);
     }
     
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      position: relative;
+    }
+    
+    .page {
+      display: none;
+      height: 100%;
+      padding: 16px;
+    }
+    
+    .page.active {
+      display: block;
+    }
+    
+    #chat-page {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+    
     #chat-container {
       flex: 1;
       overflow-y: auto;
@@ -61,38 +83,6 @@
     .message.assistant {
       background: var(--tg-theme-secondary-bg-color, #f0f0f0);
       color: var(--tg-theme-text-color, #000);
-    }
-    
-    .navigation {
-      display: flex;
-      background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-      border-top: 1px solid var(--tg-theme-section-separator-color, #e0e0e0);
-      padding: 8px;
-      gap: 8px;
-    }
-    
-    .nav-btn {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: transparent;
-      color: var(--tg-theme-text-color, #000);
-      font-size: 14px;
-      cursor: pointer;
-    }
-    
-    .nav-btn.active {
-      background: var(--tg-theme-button-color, #3390ec);
-      color: var(--tg-theme-button-text-color, #fff);
-    }
-    
-    .page {
-      display: none;
-    }
-    
-    .page.active {
-      display: block;
     }
     
     .input-area {
@@ -127,6 +117,52 @@
     #send-btn:active {
       opacity: 0.7;
     }
+    
+    .navigation {
+      display: flex;
+      background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+      border-top: 1px solid var(--tg-theme-section-separator-color, #e0e0e0);
+      padding: 4px 0;
+    }
+    
+    .nav-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 4px;
+      border: none;
+      background: transparent;
+      color: var(--tg-theme-hint-color, #999);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
+    .nav-btn.active {
+      color: var(--tg-theme-button-color, #3390ec);
+      font-weight: 600;
+    }
+    
+    .placeholder-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      color: var(--tg-theme-hint-color, #999);
+    }
+    
+    .placeholder-content .icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    
+    .placeholder-content h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      color: var(--tg-theme-text-color, #000);
+    }
   </style>
 </head>
 <body>
@@ -135,17 +171,69 @@
     <p id="user-name">Загрузка...</p>
   </div>
   
-  <div id="chat-container"></div>
-  
-  <div class="navigation">
-    <button class="nav-btn active" data-page="chat">💬 Чат</button>
-    <button class="nav-btn" data-page="stats">📊 Статистика</button>
-    <button class="nav-btn" data-page="premium">💎 Premium</button>
+  <div class="content">
+    <!-- Страница Чекин -->
+    <div id="checkin-page" class="page">
+      <div class="placeholder-content">
+        <div class="icon">✓</div>
+        <h2>Чекин</h2>
+        <p>Отметь свой прогресс каждый день</p>
+      </div>
+    </div>
+    
+    <!-- Страница Стиль -->
+    <div id="style-page" class="page">
+      <div class="placeholder-content">
+        <div class="icon">🎨</div>
+        <h2>Стиль общения</h2>
+        <p>Настрой как я буду с тобой общаться</p>
+      </div>
+    </div>
+    
+    <!-- Страница Чат -->
+    <div id="chat-page" class="page active">
+      <div id="chat-container"></div>
+      <div class="input-area">
+        <input type="text" id="message-input" placeholder="Напиши что-то...">
+        <button id="send-btn">→</button>
+      </div>
+    </div>
+    
+    <!-- Страница Цели -->
+    <div id="goals-page" class="page">
+      <div class="placeholder-content">
+        <div class="icon">🎯</div>
+        <h2>Цели</h2>
+        <p>Твои цели и прогресс</p>
+      </div>
+    </div>
+    
+    <!-- Страница Профиль -->
+    <div id="profile-page" class="page">
+      <div class="placeholder-content">
+        <div class="icon">👤</div>
+        <h2>Профиль</h2>
+        <p>Настройки и подписка</p>
+      </div>
+    </div>
   </div>
   
-  <div class="input-area">
-    <input type="text" id="message-input" placeholder="Напиши что-то...">
-    <button id="send-btn">→</button>
+  <div class="navigation">
+    <button class="nav-btn" data-page="checkin">
+      <span>Чекин</span>
+    </button>
+    <button class="nav-btn" data-page="style">
+      <span>Стиль</span>
+    </button>
+    <button class="nav-btn active" data-page="chat">
+      <span>Чат</span>
+    </button>
+    <button class="nav-btn" data-page="goals">
+      <span>Цели</span>
+    </button>
+    <button class="nav-btn" data-page="profile">
+      <span>Профиль</span>
+    </button>
   </div>
   
   <script>
@@ -160,6 +248,24 @@
     const chatContainer = document.getElementById('chat-container');
     const messageInput = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');
+    
+    // Навигация
+    const navBtns = document.querySelectorAll('.nav-btn');
+    const pages = document.querySelectorAll('.page');
+    
+    navBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pageName = btn.dataset.page;
+        
+        // Убрать active со всех кнопок и страниц
+        navBtns.forEach(b => b.classList.remove('active'));
+        pages.forEach(p => p.classList.remove('active'));
+        
+        // Добавить active к выбранным
+        btn.classList.add('active');
+        document.getElementById(`${pageName}-page`).classList.add('active');
+      });
+    });
     
     function addMessage(text, role) {
       const div = document.createElement('div');
