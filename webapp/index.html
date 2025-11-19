@@ -168,7 +168,28 @@
       if (e.key === 'Enter') sendMessage();
     });
     
+    // Загрузка истории при старте
+async function loadHistory() {
+  try {
+    const response = await fetch(`/api/history?user_id=${user?.id || 0}`, {
+      headers: { 'X-Telegram-Init-Data': tg.initData }
+    });
+    const data = await response.json();
+    
+    if (data.history && data.history.length > 0) {
+      data.history.forEach(msg => {
+        addMessage(msg.content, msg.role);
+      });
+    } else {
+      addMessage('Привет! Я SelfHack. Чем могу помочь?', 'assistant');
+    }
+  } catch (error) {
+    console.error('Load history error:', error);
     addMessage('Привет! Я SelfHack. Чем могу помочь?', 'assistant');
+  }
+}
+
+loadHistory();
   </script>
 </body>
 </html>
