@@ -63,6 +63,38 @@
       color: var(--tg-theme-text-color, #000);
     }
     
+    .navigation {
+      display: flex;
+      background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+      border-top: 1px solid var(--tg-theme-section-separator-color, #e0e0e0);
+      padding: 8px;
+      gap: 8px;
+    }
+    
+    .nav-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--tg-theme-text-color, #000);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    .nav-btn.active {
+      background: var(--tg-theme-button-color, #3390ec);
+      color: var(--tg-theme-button-text-color, #fff);
+    }
+    
+    .page {
+      display: none;
+    }
+    
+    .page.active {
+      display: block;
+    }
+    
     .input-area {
       padding: 12px;
       background: var(--tg-theme-secondary-bg-color, #f0f0f0);
@@ -104,6 +136,12 @@
   </div>
   
   <div id="chat-container"></div>
+  
+  <div class="navigation">
+    <button class="nav-btn active" data-page="chat">💬 Чат</button>
+    <button class="nav-btn" data-page="stats">📊 Статистика</button>
+    <button class="nav-btn" data-page="premium">💎 Premium</button>
+  </div>
   
   <div class="input-area">
     <input type="text" id="message-input" placeholder="Напиши что-то...">
@@ -169,27 +207,27 @@
     });
     
     // Загрузка истории при старте
-async function loadHistory() {
-  try {
-    const response = await fetch(`/api/history?user_id=${user?.id || 0}`, {
-      headers: { 'X-Telegram-Init-Data': tg.initData }
-    });
-    const data = await response.json();
-    
-    if (data.history && data.history.length > 0) {
-      data.history.forEach(msg => {
-        addMessage(msg.content, msg.role);
-      });
-    } else {
-      addMessage('Привет! Я SelfHack. Чем могу помочь?', 'assistant');
+    async function loadHistory() {
+      try {
+        const response = await fetch(`/api/history?user_id=${user?.id || 0}`, {
+          headers: { 'X-Telegram-Init-Data': tg.initData }
+        });
+        const data = await response.json();
+        
+        if (data.history && data.history.length > 0) {
+          data.history.forEach(msg => {
+            addMessage(msg.content, msg.role);
+          });
+        } else {
+          addMessage('Привет! Я SelfHack. Чем могу помочь?', 'assistant');
+        }
+      } catch (error) {
+        console.error('Load history error:', error);
+        addMessage('Привет! Я SelfHack. Чем могу помочь?', 'assistant');
+      }
     }
-  } catch (error) {
-    console.error('Load history error:', error);
-    addMessage('Привет! Я SelfHack. Чем могу помочь?', 'assistant');
-  }
-}
 
-loadHistory();
+    loadHistory();
   </script>
 </body>
 </html>
