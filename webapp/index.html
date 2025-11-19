@@ -158,6 +158,18 @@
       padding: 20px;
       margin-bottom: 16px;
       border: 2px solid #E8E4FF;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .style-card:hover {
+      border-color: #7B68EE;
+      box-shadow: 0 4px 12px rgba(123, 104, 238, 0.15);
+    }
+    
+    .style-card.active {
+      border-color: #7B68EE;
+      background: #F5F3FF;
     }
     
     .style-card h3 {
@@ -365,22 +377,22 @@
         <p style="color: #666; font-size: 14px;">Как я буду с тобой общаться</p>
       </div>
       
-      <div class="style-card">
-        <h3>Buddy Coach</h3>
-        <p>Короткие ответы (35 слов), дружеский тон, быстрые вопросы. Как переписка с другом.</p>
+      <div class="style-card" data-tone="focused" onclick="selectTone('focused')">
+        <h3>⚡ Focused</h3>
+        <p>Минимум слов, максимум действий. Резкий и дерзкий. Один прямой вопрос (до 15 слов).</p>
         <span class="style-badge free">FREE</span>
       </div>
       
-      <div class="style-card">
-        <h3>Deep Coach</h3>
-        <p>Глубокие вопросы (35-50 слов), структурированный подход, работа с паттернами поведения.</p>
-        <span class="style-badge premium">PREMIUM</span>
+      <div class="style-card active" data-tone="baddy" onclick="selectTone('baddy')">
+        <h3>💬 Baddy</h3>
+        <p>Как с другом, который не даёт врать себе. GROW методика естественно (до 35 слов).</p>
+        <span class="style-badge free">FREE</span>
       </div>
       
-      <div class="style-card">
-        <h3>Pro Coach</h3>
-        <p>Расширенные ответы, анализ, отчёты, голосовые сообщения. Полное погружение в трансформацию.</p>
-        <span class="style-badge">PRO</span>
+      <div class="style-card" data-tone="mentor" onclick="selectTone('mentor')">
+        <h3>👔 Mentor</h3>
+        <p>Вежливо, структурированно, как бизнес-коуч. GROW методика последовательно (до 35 слов).</p>
+        <span class="style-badge premium">PREMIUM</span>
       </div>
     </div>
     
@@ -417,11 +429,15 @@
         <h3>Подписка</h3>
         <div class="profile-row">
           <span class="profile-label">Тариф</span>
-          <span class="profile-value">FREE</span>
+          <span class="profile-value" id="profile-plan">FREE</span>
         </div>
         <div class="profile-row">
           <span class="profile-label">Сообщений использовано</span>
-          <span class="profile-value">12 / 50</span>
+          <span class="profile-value" id="profile-messages">0 / 50</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-label">Текущий стиль</span>
+          <span class="profile-value" id="profile-tone">💬 Baddy</span>
         </div>
       </div>
       
@@ -429,11 +445,11 @@
         <h3>Активность</h3>
         <div class="profile-row">
           <span class="profile-label">Чекинов подряд</span>
-          <span class="profile-value">0 дней</span>
+          <span class="profile-value" id="profile-streak">0 дней</span>
         </div>
         <div class="profile-row">
           <span class="profile-label">Всего сообщений</span>
-          <span class="profile-value">24</span>
+          <span class="profile-value" id="profile-total">0</span>
         </div>
         <div class="profile-row">
           <span class="profile-label">Активных целей</span>
@@ -465,6 +481,16 @@
     </div>
   </div>
   
+  <!-- ПОПАП PREMIUM -->
+  <div class="popup" id="premium-popup">
+    <div class="popup-content">
+      <div class="popup-icon">💎</div>
+      <div class="popup-title">Нужен Premium</div>
+      <div class="popup-text">Стиль Mentor доступен только в Premium.<br><br>Premium $10.99/мес:<br>• Безлимитные сообщения<br>• 3 тональности коуча<br>• История 30 дней</div>
+      <button class="popup-close" onclick="closePopup()">Понятно</button>
+    </div>
+  </div>
+  
   <div class="navigation">
     <button class="nav-btn" data-page="checkin">Чекин</button>
     <button class="nav-btn" data-page="style">Стиль</button>
@@ -490,6 +516,15 @@
     const messageInput = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');
     
+    let currentTone = 'baddy'; // По умолчанию
+    let userStats = {
+      plan: 'FREE',
+      messagesUsed: 0,
+      messagesLimit: 50,
+      totalMessages: 0,
+      streak: 0
+    };
+    
     // НАВИГАЦИЯ
     const navBtns = document.querySelectorAll('.nav-btn');
     const pages = document.querySelectorAll('.page');
@@ -506,22 +541,94 @@
       });
     });
     
-    // ЧЕКИН
-    function doCheckin() {
-      const streak = Math.floor(Math.random() * 10) + 1; // Заглушка
-      const popupText = document.getElementById('popup-text');
-      
-      if (streak === 1) {
-        popupText.textContent = 'Начинаем отсчёт streak.';
-      } else {
-        popupText.textContent = `Твой streak: ${streak} дней подряд. Продолжай!`;
+    // ВЫБОР СТИЛЯ
+    async function selectTone(tone) {
+      // Проверка Premium для Mentor
+      if (tone === 'mentor' && userStats.plan === 'FREE') {
+        document.getElementById('premium-popup').classList.add('active');
+        return;
       }
       
-      document.getElementById('checkin-popup').classList.add('active');
+      try {
+        const response = await fetch('/api/tone', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            tone: tone
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          currentTone = tone;
+          
+          // Обновить UI
+          document.querySelectorAll('.style-card').forEach(card => {
+            card.classList.remove('active');
+          });
+          document.querySelector(`[data-tone="${tone}"]`).classList.add('active');
+          
+          // Обновить профиль
+          const toneNames = {
+            focused: '⚡ Focused',
+            baddy: '💬 Baddy',
+            mentor: '👔 Mentor'
+          };
+          document.getElementById('profile-tone').textContent = toneNames[tone];
+          
+          tg.showAlert(`✅ Стиль изменён на ${toneNames[tone]}`);
+        }
+      } catch (error) {
+        console.error('Select tone error:', error);
+        tg.showAlert('Ошибка при смене стиля. Попробуй ещё раз.');
+      }
+    }
+    
+    // ЧЕКИН
+    async function doCheckin() {
+      try {
+        const response = await fetch('/api/checkin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0
+          })
+        });
+        
+        const data = await response.json();
+        const popupText = document.getElementById('popup-text');
+        
+        if (data.success) {
+          if (data.streak === 1) {
+            popupText.textContent = 'Начинаем отсчёт streak.';
+          } else {
+            popupText.textContent = `Твой streak: ${data.streak} дней подряд. Продолжай!`;
+          }
+          userStats.streak = data.streak;
+          document.getElementById('profile-streak').textContent = `${data.streak} дней`;
+        } else {
+          popupText.textContent = data.message || 'Ты уже сделал чекин сегодня!';
+        }
+        
+        document.getElementById('checkin-popup').classList.add('active');
+      } catch (error) {
+        console.error('Checkin error:', error);
+        tg.showAlert('Ошибка чекина. Попробуй ещё раз.');
+      }
     }
     
     function closePopup() {
-      document.getElementById('checkin-popup').classList.remove('active');
+      document.querySelectorAll('.popup').forEach(popup => {
+        popup.classList.remove('active');
+      });
     }
     
     // ЧАТ
@@ -555,7 +662,22 @@
         });
         
         const data = await response.json();
-        addMessage(data.message || data.reply || 'Ошибка ответа', 'assistant');
+        
+        if (data.limit_reached) {
+          addMessage(data.message || 'Лимит FREE достигнут', 'assistant');
+          tg.showAlert('Лимит FREE (50 сообщений) достигнут. Купи Premium для продолжения.');
+        } else {
+          addMessage(data.reply || 'Ошибка ответа', 'assistant');
+          
+          // Обновить статистику
+          if (data.stats) {
+            userStats.messagesUsed = data.stats.messagesUsed;
+            userStats.totalMessages = data.stats.totalMessages;
+            document.getElementById('profile-messages').textContent = 
+              `${userStats.messagesUsed} / ${userStats.messagesLimit}`;
+            document.getElementById('profile-total').textContent = userStats.totalMessages;
+          }
+        }
         
       } catch (error) {
         console.error('Error:', error);
@@ -570,7 +692,7 @@
       if (e.key === 'Enter') sendMessage();
     });
     
-    // ЗАГРУЗКА ИСТОРИИ
+    // ЗАГРУЗКА ИСТОРИИ И СТАТИСТИКИ
     async function loadHistory() {
       try {
         const response = await fetch(`/api/history?user_id=${user?.id || 0}`, {
@@ -590,8 +712,46 @@
         addMessage('Привет! Я SelfHack. Чем могу помочь?', 'assistant');
       }
     }
+    
+    async function loadStats() {
+      try {
+        const response = await fetch(`/api/stats?user_id=${user?.id || 0}`, {
+          headers: { 'X-Telegram-Init-Data': tg.initData }
+        });
+        const data = await response.json();
+        
+        if (data.stats) {
+          userStats = data.stats;
+          
+          // Обновить UI
+          document.getElementById('profile-plan').textContent = userStats.plan;
+          document.getElementById('profile-messages').textContent = 
+            `${userStats.messagesUsed} / ${userStats.messagesLimit}`;
+          document.getElementById('profile-total').textContent = userStats.totalMessages;
+          document.getElementById('profile-streak').textContent = `${userStats.streak} дней`;
+          
+          const toneNames = {
+            focused: '⚡ Focused',
+            baddy: '💬 Baddy',
+            mentor: '👔 Mentor'
+          };
+          document.getElementById('profile-tone').textContent = toneNames[data.tone] || '💬 Baddy';
+          currentTone = data.tone || 'baddy';
+          
+          // Установить активную карточку стиля
+          document.querySelectorAll('.style-card').forEach(card => {
+            card.classList.remove('active');
+          });
+          document.querySelector(`[data-tone="${currentTone}"]`)?.classList.add('active');
+        }
+      } catch (error) {
+        console.error('Load stats error:', error);
+      }
+    }
 
+    // Инициализация
     loadHistory();
+    loadStats();
   </script>
 </body>
 </html>
