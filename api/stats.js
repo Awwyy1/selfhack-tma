@@ -65,12 +65,15 @@ export default async function handler(req, res) {
     // Extract all check-in dates for calendar display
     const checkinDates = allCheckins ? allCheckins.map(c => c.checkin_date) : [];
 
+    // Set limit based on plan
+    const messagesLimit = plan === 'FREE' ? 50 : 2000;
+
     return res.status(200).json({
       success: true,
       stats: {
         plan: plan,
         messagesUsed: userMessages || 0,
-        messagesLimit: 50,
+        messagesLimit: messagesLimit,
         totalMessages: allMessages?.length || 0,
         streak: streak,
         checkinDates: checkinDates
