@@ -103,6 +103,50 @@
       text-align: left;
     }
 
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: #E8E4FF;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+      margin-bottom: 12px;
+    }
+
+    .typing-indicator .dot {
+      width: 8px;
+      height: 8px;
+      background: #7B68EE;
+      border-radius: 50%;
+      margin: 0 2px;
+      animation: typingBounce 1.4s ease-in-out infinite;
+    }
+
+    .typing-indicator .dot:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .typing-indicator .dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-indicator .dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+      30% {
+        transform: translateY(-4px);
+        opacity: 1;
+      }
+    }
+
     .chat-day-divider {
       text-align: center;
       padding: 16px 0;
@@ -1550,15 +1594,42 @@
       chatContainer.appendChild(div);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
+
+    // Typing indicator functions
+    function showTypingIndicator() {
+      // Remove existing indicator if any
+      hideTypingIndicator();
+
+      const indicator = document.createElement('div');
+      indicator.className = 'typing-indicator';
+      indicator.id = 'typing-indicator';
+      indicator.innerHTML = `
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      `;
+      chatContainer.appendChild(indicator);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+      const indicator = document.getElementById('typing-indicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
     
     async function sendMessage() {
       const message = messageInput.value.trim();
       if (!message) return;
-      
+
       addMessage(message, 'user');
       messageInput.value = '';
       sendBtn.disabled = true;
-      
+
+      // Show typing indicator while waiting for response
+      showTypingIndicator();
+
       try {
         const response = await fetch('/api/chat', {
           method: 'POST',
@@ -1571,27 +1642,31 @@
             user_id: user?.id || 0
           })
         });
-        
+
         const data = await response.json();
-        
+
+        // Hide typing indicator before showing response
+        hideTypingIndicator();
+
         if (data.limit_reached) {
           addMessage(data.message || 'Лимит FREE достигнут', 'assistant');
           tg.showAlert('Лимит FREE (50 сообщений) достигнут. Купи Premium для продолжения.');
         } else {
           addMessage(data.reply || 'Ошибка ответа', 'assistant');
-          
+
           // Обновить статистику
           if (data.stats) {
             userStats.messagesUsed = data.stats.messagesUsed;
             userStats.totalMessages = data.stats.totalMessages;
-            document.getElementById('profile-messages').textContent = 
+            document.getElementById('profile-messages').textContent =
               `${userStats.messagesUsed} / ${userStats.messagesLimit}`;
             document.getElementById('profile-total').textContent = userStats.totalMessages;
           }
         }
-        
+
       } catch (error) {
         console.error('Error:', error);
+        hideTypingIndicator();
         addMessage('Ошибка. Попробуй ещё раз.', 'assistant');
       } finally {
         sendBtn.disabled = false;
