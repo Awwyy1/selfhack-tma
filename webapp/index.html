@@ -103,6 +103,50 @@
       text-align: left;
     }
 
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: #E8E4FF;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+      margin-bottom: 12px;
+    }
+
+    .typing-indicator .dot {
+      width: 8px;
+      height: 8px;
+      background: #7B68EE;
+      border-radius: 50%;
+      margin: 0 2px;
+      animation: typingBounce 1.4s ease-in-out infinite;
+    }
+
+    .typing-indicator .dot:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .typing-indicator .dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-indicator .dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+      30% {
+        transform: translateY(-4px);
+        opacity: 1;
+      }
+    }
+
     .chat-day-divider {
       text-align: center;
       padding: 16px 0;
@@ -283,19 +327,173 @@
       border: 2px solid #5A4AD0;
     }
 
+    /* Goal indicators in calendar */
     .calendar-day.has-goal {
-      box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.4);
+      box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.4);
       cursor: pointer;
       animation: goalPulse 2s ease-in-out infinite;
     }
 
     .calendar-day.has-goal:hover {
-      box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.7);
+      box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.7);
+    }
+
+    .calendar-day.goal-achieved {
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.6);
+      animation: none;
+    }
+
+    .calendar-day.goal-extended {
+      box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.6);
+      animation: none;
+    }
+
+    .calendar-day.goal-pending {
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+      animation: pendingPulse 1.5s ease-in-out infinite;
+    }
+
+    .calendar-day.goal-overdue {
+      position: relative;
+    }
+
+    .calendar-day.goal-overdue::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 6px;
+      height: 6px;
+      background: #FF5252;
+      border-radius: 50%;
     }
 
     @keyframes goalPulse {
-      0%, 100% { box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.4); }
-      50% { box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.7); }
+      0%, 100% { box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.4); }
+      50% { box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.7); }
+    }
+
+    @keyframes pendingPulse {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.4); }
+      50% { box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.8); }
+    }
+
+    /* Goal card statuses */
+    .goal-item.achieved {
+      border-left-color: #4CAF50;
+      background: #F1F8E9;
+    }
+
+    .goal-item.extended {
+      border-left-color: #FFC107;
+    }
+
+    .goal-item.failed {
+      border-left-color: #9E9E9E;
+      opacity: 0.7;
+    }
+
+    .goal-item.needs-validation {
+      animation: cardPulse 2s ease-in-out infinite;
+      border-left-color: #FF9800;
+    }
+
+    @keyframes cardPulse {
+      0%, 100% { box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3); }
+      50% { box-shadow: 0 4px 16px rgba(255, 152, 0, 0.5); }
+    }
+
+    .goal-status {
+      font-size: 11px;
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    .goal-status.achieved {
+      color: #4CAF50;
+    }
+
+    .goal-status.extended {
+      color: #FF9800;
+    }
+
+    .goal-status.failed {
+      color: #9E9E9E;
+    }
+
+    .goal-validation-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .goal-validation-btn {
+      flex: 1;
+      padding: 8px 4px;
+      border: none;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .goal-validation-btn.achieved {
+      background: #E8F5E9;
+      color: #4CAF50;
+    }
+
+    .goal-validation-btn.achieved:hover {
+      background: #C8E6C9;
+    }
+
+    .goal-validation-btn.extend {
+      background: #FFF3E0;
+      color: #FF9800;
+    }
+
+    .goal-validation-btn.extend:hover {
+      background: #FFE0B2;
+    }
+
+    .goal-validation-btn.failed {
+      background: #FAFAFA;
+      color: #9E9E9E;
+    }
+
+    .goal-validation-btn.failed:hover {
+      background: #F5F5F5;
+    }
+
+    /* Confetti animation */
+    .confetti-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 3000;
+      overflow: hidden;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      opacity: 0;
+      animation: confettiFall 3s ease-out forwards;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+      }
     }
 
     /* ========== STORIES ========== */
@@ -955,6 +1153,54 @@
       <button class="popup-close" onclick="closePopup()">Окей</button>
     </div>
   </div>
+
+  <!-- ПОПАП ВАЛИДАЦИИ ЦЕЛИ (при входе) -->
+  <div class="popup" id="goal-validation-popup">
+    <div class="popup-content">
+      <div class="popup-title">Время подвести итог!</div>
+      <div class="popup-text" id="goal-validation-text">Сегодня дата твоей цели. Как результат?</div>
+      <div class="popup-buttons" style="flex-direction: column; gap: 10px;">
+        <button class="popup-btn primary" onclick="validateGoal('achieved')" style="background: #4CAF50;">Достигнута!</button>
+        <button class="popup-btn secondary" onclick="showExtendGoalPopup()" style="background: #FFF3E0; color: #FF9800;">Нужно больше времени</button>
+        <button class="popup-btn secondary" onclick="validateGoal('failed')" style="background: #FAFAFA; color: #9E9E9E;">Не удалось</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП ПРОДЛЕНИЯ ЦЕЛИ -->
+  <div class="popup" id="extend-goal-popup">
+    <div class="popup-content large" style="text-align: left;">
+      <div class="popup-title" style="text-align: center;">Продлить цель</div>
+      <div class="popup-text" style="text-align: center; margin-bottom: 16px;">Сколько времени ещё нужно?</div>
+      <label class="popup-label">Новая дата</label>
+      <input type="date" id="extend-goal-date" class="popup-input">
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
+        <button class="popup-btn primary" onclick="extendGoal()">Продлить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП ЦЕЛЬ ДОСТИГНУТА -->
+  <div class="popup" id="goal-achieved-popup">
+    <div class="popup-content">
+      <div class="popup-title" style="color: #4CAF50;">Поздравляем!</div>
+      <div class="popup-text">Ты справился! Это отличный результат. Продолжай в том же духе!</div>
+      <button class="popup-close" onclick="closeAchievedPopup()" style="background: #4CAF50;">Отлично!</button>
+    </div>
+  </div>
+
+  <!-- ПОПАП ЦЕЛЬ НЕ ДОСТИГНУТА -->
+  <div class="popup" id="goal-failed-popup">
+    <div class="popup-content">
+      <div class="popup-title" style="color: #666;">Ничего страшного</div>
+      <div class="popup-text">Не все цели достигаются с первого раза. Проанализируй, что помешало, и попробуй снова с новым подходом.</div>
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Закрыть</button>
+        <button class="popup-btn primary" onclick="retryGoal()">Попробовать снова</button>
+      </div>
+    </div>
+  </div>
   
   <div class="navigation">
     <button class="nav-btn" data-page="checkin">Чекин</button>
@@ -1126,7 +1372,31 @@
         // Check if this day has a goal
         const goalsOnDate = userGoals.filter(g => g.target_date === dateStr);
         if (goalsOnDate.length > 0) {
-          div.classList.add('has-goal');
+          // Determine goal indicator based on status
+          const hasAchieved = goalsOnDate.some(g => g.status === 'achieved');
+          const hasFailed = goalsOnDate.some(g => g.status === 'failed');
+          const hasExtended = goalsOnDate.some(g => g.was_extended);
+          const hasActive = goalsOnDate.some(g => !g.status || g.status === 'active');
+
+          if (hasAchieved) {
+            div.classList.add('has-goal', 'goal-achieved');
+          } else if (hasFailed) {
+            div.classList.add('has-goal');
+            // Check if overdue (past date, active goal)
+            if (dateStr < todayStr && hasActive) {
+              div.classList.add('goal-overdue');
+            }
+          } else if (hasExtended) {
+            div.classList.add('has-goal', 'goal-extended');
+          } else if (hasActive) {
+            // Check if needs validation (today or past)
+            if (dateStr <= todayStr) {
+              div.classList.add('has-goal', 'goal-pending');
+            } else {
+              div.classList.add('has-goal');
+            }
+          }
+
           div.addEventListener('click', () => showGoalOnDate(dateStr, goalsOnDate));
         }
 
@@ -1176,13 +1446,19 @@
       const container = document.getElementById('goals-container');
       container.innerHTML = '';
 
-      if (userGoals.length === 0) {
+      // Filter out completed goals for main display (only show active)
+      const activeGoals = userGoals.filter(g => !g.status || g.status === 'active');
+      const completedGoals = userGoals.filter(g => g.status && g.status !== 'active');
+
+      if (activeGoals.length === 0 && completedGoals.length === 0) {
         container.innerHTML = '<div class="goals-empty">Пока нет целей. Добавьте свою первую цель!</div>';
         return;
       }
 
+      const today = formatDateGMT(getGMTDate());
+
       // Sort by target_date ascending (nearest first)
-      const sortedGoals = [...userGoals].sort((a, b) => {
+      const sortedGoals = [...activeGoals].sort((a, b) => {
         if (!a.target_date && !b.target_date) return 0;
         if (!a.target_date) return 1;
         if (!b.target_date) return -1;
@@ -1193,27 +1469,101 @@
         const div = document.createElement('div');
         div.className = 'goal-item';
 
+        // Check if goal needs validation
+        const needsValidation = goal.target_date && goal.target_date <= today;
+        if (needsValidation) {
+          div.classList.add('needs-validation');
+        }
+
+        // Check if goal was extended
+        if (goal.was_extended) {
+          div.classList.add('extended');
+        }
+
         let dateText = '';
+        let validationButtons = '';
+
         if (goal.target_date) {
           const date = new Date(goal.target_date);
           const day = date.getUTCDate();
           const month = monthNames[date.getUTCMonth()];
           const year = date.getUTCFullYear();
-          dateText = `<div class="goal-date">До ${day} ${month.toLowerCase()} ${year}</div>`;
+
+          const isToday = goal.target_date === today;
+          const isPast = goal.target_date < today;
+
+          let dateLabel = `До ${day} ${month.toLowerCase()} ${year}`;
+          if (isToday) {
+            dateLabel += ' - СЕГОДНЯ';
+          } else if (isPast) {
+            dateLabel += ' - ПРОСРОЧЕНО';
+          }
+
+          dateText = `<div class="goal-date">${dateLabel}</div>`;
+
+          // Show validation buttons for goals that need it
+          if (needsValidation) {
+            validationButtons = `
+              <div class="goal-validation-buttons">
+                <button class="goal-validation-btn achieved" onclick="validateGoalFromCard(${goal.id}, 'achieved')">Достигнута</button>
+                <button class="goal-validation-btn extend" onclick="validateGoalFromCard(${goal.id}, 'extend')">Продлить</button>
+                <button class="goal-validation-btn failed" onclick="validateGoalFromCard(${goal.id}, 'failed')">Нет</button>
+              </div>
+            `;
+          }
         }
 
         div.innerHTML = `
           <div class="goal-text">${goal.text}</div>
           ${dateText}
-          <button class="goal-delete" onclick="showDeleteConfirmation(${goal.id})">×</button>
+          ${validationButtons}
+          <button class="goal-delete" onclick="showDeleteConfirmation(${goal.id})">x</button>
         `;
         container.appendChild(div);
       });
 
-      // Update profile goals count
+      // Show completed goals section if any
+      if (completedGoals.length > 0) {
+        const completedSection = document.createElement('div');
+        completedSection.style.marginTop = '24px';
+        completedSection.innerHTML = '<h4 style="color: #999; font-size: 12px; margin-bottom: 12px;">ЗАВЕРШЕННЫЕ ЦЕЛИ</h4>';
+
+        completedGoals.forEach(goal => {
+          const div = document.createElement('div');
+          div.className = `goal-item ${goal.status}`;
+
+          let dateText = '';
+          let statusText = '';
+
+          if (goal.target_date) {
+            const date = new Date(goal.target_date);
+            const day = date.getUTCDate();
+            const month = monthNames[date.getUTCMonth()];
+            dateText = `<div class="goal-date">${day} ${month.toLowerCase()}</div>`;
+          }
+
+          if (goal.status === 'achieved') {
+            statusText = '<div class="goal-status achieved">Достигнута</div>';
+          } else if (goal.status === 'failed') {
+            statusText = '<div class="goal-status failed">Не достигнута</div>';
+          }
+
+          div.innerHTML = `
+            <div class="goal-text">${goal.text}</div>
+            ${dateText}
+            ${statusText}
+            <button class="goal-delete" onclick="showDeleteConfirmation(${goal.id})">x</button>
+          `;
+          completedSection.appendChild(div);
+        });
+
+        container.appendChild(completedSection);
+      }
+
+      // Update profile goals count (only active)
       const goalsCountEl = document.getElementById('profile-goals-count');
       if (goalsCountEl) {
-        goalsCountEl.textContent = userGoals.length;
+        goalsCountEl.textContent = activeGoals.length;
       }
 
       // Re-render calendar to update goal highlights
@@ -1324,6 +1674,194 @@
       }
     }
 
+    // Goal validation system
+    let currentValidationGoal = null;
+
+    // Check if any goals need validation on app load
+    function checkGoalsForValidation() {
+      const today = formatDateGMT(getGMTDate());
+
+      // Find goals that need validation (date is today or past, and still active)
+      const goalsNeedingValidation = userGoals.filter(g => {
+        if (!g.target_date) return false;
+        if (g.status && g.status !== 'active') return false;
+        return g.target_date <= today;
+      });
+
+      if (goalsNeedingValidation.length > 0) {
+        // Show validation popup for the first goal
+        currentValidationGoal = goalsNeedingValidation[0];
+        document.getElementById('goal-validation-text').textContent =
+          `Цель: "${currentValidationGoal.text}". Как результат?`;
+        document.getElementById('goal-validation-popup').classList.add('active');
+      }
+    }
+
+    // Validate goal with status
+    async function validateGoal(status) {
+      if (!currentValidationGoal) return;
+
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            goal_id: currentValidationGoal.id,
+            status: status
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Update local goal
+          const goalIndex = userGoals.findIndex(g => g.id === currentValidationGoal.id);
+          if (goalIndex !== -1) {
+            userGoals[goalIndex] = data.goal;
+          }
+
+          closePopup();
+          renderGoals();
+
+          // Show appropriate feedback
+          if (status === 'achieved') {
+            showConfetti();
+            setTimeout(() => {
+              document.getElementById('goal-achieved-popup').classList.add('active');
+            }, 500);
+          } else if (status === 'failed') {
+            setTimeout(() => {
+              document.getElementById('goal-failed-popup').classList.add('active');
+            }, 300);
+          }
+
+          currentValidationGoal = null;
+        } else {
+          tg.showAlert(data.message || 'Ошибка обновления');
+        }
+      } catch (error) {
+        console.error('Validate goal error:', error);
+        tg.showAlert('Ошибка обновления цели');
+      }
+    }
+
+    // Show extend goal popup
+    function showExtendGoalPopup() {
+      closePopup();
+      // Set minimum date to tomorrow
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      document.getElementById('extend-goal-date').min = tomorrow.toISOString().split('T')[0];
+      document.getElementById('extend-goal-date').value = '';
+      setTimeout(() => {
+        document.getElementById('extend-goal-popup').classList.add('active');
+      }, 300);
+    }
+
+    // Extend goal with new date
+    async function extendGoal() {
+      if (!currentValidationGoal) return;
+
+      const newDate = document.getElementById('extend-goal-date').value;
+      if (!newDate) {
+        tg.showAlert('Выбери новую дату');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            goal_id: currentValidationGoal.id,
+            status: 'extended',
+            new_date: newDate
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Update local goal
+          const goalIndex = userGoals.findIndex(g => g.id === currentValidationGoal.id);
+          if (goalIndex !== -1) {
+            userGoals[goalIndex] = data.goal;
+          }
+
+          closePopup();
+          renderGoals();
+          tg.showAlert('Цель продлена. Продолжай работать!');
+
+          currentValidationGoal = null;
+        } else {
+          tg.showAlert(data.message || 'Ошибка продления');
+        }
+      } catch (error) {
+        console.error('Extend goal error:', error);
+        tg.showAlert('Ошибка продления цели');
+      }
+    }
+
+    // Retry failed goal
+    function retryGoal() {
+      closePopup();
+      // Navigate to goals page and show add goal popup
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-page="goals"]').classList.add('active');
+      document.getElementById('goals-page').classList.add('active');
+      setTimeout(() => showAddGoalPopup(), 300);
+    }
+
+    // Close achieved popup and check for more goals
+    function closeAchievedPopup() {
+      closePopup();
+      // Check if there are more goals to validate
+      setTimeout(() => checkGoalsForValidation(), 500);
+    }
+
+    // Show confetti animation
+    function showConfetti() {
+      const container = document.createElement('div');
+      container.className = 'confetti-container';
+      document.body.appendChild(container);
+
+      const colors = ['#7B68EE', '#4CAF50', '#FF9800', '#E91E63', '#00BCD4'];
+
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 0.5 + 's';
+        confetti.style.animationDuration = (2 + Math.random()) + 's';
+        container.appendChild(confetti);
+      }
+
+      // Remove container after animation
+      setTimeout(() => container.remove(), 4000);
+    }
+
+    // Validate goal from card button
+    async function validateGoalFromCard(goalId, status) {
+      currentValidationGoal = userGoals.find(g => g.id === goalId);
+      if (!currentValidationGoal) return;
+
+      if (status === 'extend') {
+        showExtendGoalPopup();
+      } else {
+        await validateGoal(status);
+      }
+    }
+
     // Support functions
     function showSupportPopup() {
       document.getElementById('support-message-input').value = '';
@@ -1378,6 +1916,9 @@
         if (data.goals) {
           userGoals = data.goals;
           renderGoals();
+
+          // Check for goals that need validation after loading
+          setTimeout(() => checkGoalsForValidation(), 1000);
         }
       } catch (error) {
         console.error('Load goals error:', error);
@@ -1550,15 +2091,42 @@
       chatContainer.appendChild(div);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
+
+    // Typing indicator functions
+    function showTypingIndicator() {
+      // Remove existing indicator if any
+      hideTypingIndicator();
+
+      const indicator = document.createElement('div');
+      indicator.className = 'typing-indicator';
+      indicator.id = 'typing-indicator';
+      indicator.innerHTML = `
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      `;
+      chatContainer.appendChild(indicator);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+      const indicator = document.getElementById('typing-indicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
     
     async function sendMessage() {
       const message = messageInput.value.trim();
       if (!message) return;
-      
+
       addMessage(message, 'user');
       messageInput.value = '';
       sendBtn.disabled = true;
-      
+
+      // Show typing indicator while waiting for response
+      showTypingIndicator();
+
       try {
         const response = await fetch('/api/chat', {
           method: 'POST',
@@ -1571,27 +2139,31 @@
             user_id: user?.id || 0
           })
         });
-        
+
         const data = await response.json();
-        
+
+        // Hide typing indicator before showing response
+        hideTypingIndicator();
+
         if (data.limit_reached) {
           addMessage(data.message || 'Лимит FREE достигнут', 'assistant');
           tg.showAlert('Лимит FREE (50 сообщений) достигнут. Купи Premium для продолжения.');
         } else {
           addMessage(data.reply || 'Ошибка ответа', 'assistant');
-          
+
           // Обновить статистику
           if (data.stats) {
             userStats.messagesUsed = data.stats.messagesUsed;
             userStats.totalMessages = data.stats.totalMessages;
-            document.getElementById('profile-messages').textContent = 
+            document.getElementById('profile-messages').textContent =
               `${userStats.messagesUsed} / ${userStats.messagesLimit}`;
             document.getElementById('profile-total').textContent = userStats.totalMessages;
           }
         }
-        
+
       } catch (error) {
         console.error('Error:', error);
+        hideTypingIndicator();
         addMessage('Ошибка. Попробуй ещё раз.', 'assistant');
       } finally {
         sendBtn.disabled = false;

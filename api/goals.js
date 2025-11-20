@@ -71,6 +71,59 @@ export default async function handler(req, res) {
     }
   }
 
+  // PUT - Update goal status
+  if (method === 'PUT') {
+    const { user_id, goal_id, status, new_date } = req.body;
+
+    if (!user_id || !goal_id || !status) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Validate status
+    const validStatuses = ['active', 'achieved', 'extended', 'failed'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    try {
+      const updateData = {
+        status: status,
+        completed_at: ['achieved', 'failed'].includes(status) ? new Date().toISOString() : null
+      };
+
+      // If extending, update target_date
+      if (status === 'extended' && new_date) {
+        updateData.target_date = new_date;
+        updateData.status = 'active'; // Keep as active with new date
+        updateData.was_extended = true;
+      }
+
+      const { data: goal, error } = await supabase
+        .from('goals')
+        .update(updateData)
+        .eq('id', goal_id)
+        .eq('telegram_user_id', user_id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log(`Goal ${goal_id} updated to status: ${status} for user ${user_id}`);
+
+      return res.status(200).json({
+        success: true,
+        goal: goal
+      });
+
+    } catch (error) {
+      console.error('Update goal error:', error);
+      return res.status(500).json({
+        error: 'Internal error',
+        message: 'Error updating goal'
+      });
+    }
+  }
+
   // DELETE - Delete goal
   if (method === 'DELETE') {
     const { user_id, goal_id } = req.body;
