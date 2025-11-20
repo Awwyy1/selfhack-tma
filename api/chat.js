@@ -91,6 +91,7 @@ export default async function handler(req, res) {
       .select('role, content')
       .eq('telegram_user_id', user_id)
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(50);
 
     const conversationHistory = historyData ? historyData.reverse() : [];

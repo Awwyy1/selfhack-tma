@@ -10,9 +10,10 @@ export default async function handler(req, res) {
   try {
     const { data } = await supabase
       .from('telegram_chats')
-      .select('role, content, created_at')
+      .select('id, role, content, created_at')
       .eq('telegram_user_id', user_id)
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(50);
 
     // Reverse to get chronological order (oldest first) for display
