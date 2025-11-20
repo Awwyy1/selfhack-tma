@@ -136,27 +136,35 @@
     .streak-container {
       background: white;
       border-radius: 12px;
-      padding: 16px;
+      padding: 20px;
       margin-bottom: 16px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
     .streak-label {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 4px;
+      font-size: 16px;
+      color: #7B68EE;
+      margin-bottom: 8px;
+      font-weight: 600;
+      animation: subtlePulse 3s ease-in-out infinite;
     }
 
     .streak-value {
-      font-size: 24px;
+      font-size: 32px;
       font-weight: 700;
       color: #7B68EE;
+      animation: subtlePulse 3s ease-in-out infinite;
     }
 
     .streak-value span {
-      font-size: 14px;
-      font-weight: 400;
-      color: #666;
+      font-size: 18px;
+      font-weight: 600;
+      color: #7B68EE;
+    }
+
+    @keyframes subtlePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
 
     .calendar-container {
@@ -677,19 +685,19 @@
       </div>
       
       <div class="style-card" data-tone="focused" onclick="selectTone('focused')">
-        <h3>⚡ Focused</h3>
+        <h3>Focused</h3>
         <p>Жесткий, но честный. Идеально подойдет тем, кто не любит лишнюю болтовню.</p>
         <span class="style-badge free">FREE</span>
       </div>
-      
+
       <div class="style-card active" data-tone="baddy" onclick="selectTone('baddy')">
-        <h3>💬 Baddy</h3>
+        <h3>Baddy</h3>
         <p>Тот самый друг, который не даст тебе слиться в очередной раз.</p>
         <span class="style-badge free">FREE</span>
       </div>
-      
+
       <div class="style-card" data-tone="mentor" onclick="selectTone('mentor')">
-        <h3>👔 Mentor</h3>
+        <h3>Mentor</h3>
         <p>Персональный коуч уровня executive. Помогает видеть картину выше, шире и глубже.</p>
         <span class="style-badge premium">PREMIUM</span>
       </div>
@@ -770,7 +778,6 @@
   <!-- ПОПАП ЧЕКИНА -->
   <div class="popup" id="checkin-popup">
     <div class="popup-content">
-      <div class="popup-icon">🔥</div>
       <div class="popup-title">Чекин выполнен!</div>
       <div class="popup-text" id="popup-text">Начинаем отсчёт streak.</div>
       <button class="popup-close" onclick="closePopup()">Отлично!</button>
@@ -780,7 +787,6 @@
   <!-- ПОПАП PREMIUM -->
   <div class="popup" id="premium-popup">
     <div class="popup-content">
-      <div class="popup-icon">💎</div>
       <div class="popup-title">Нужен Premium</div>
       <div class="popup-text">Стиль Mentor доступен только в Premium.<br><br>Premium $10.99/мес:<br>• Безлимитные сообщения<br>• 3 тональности коуча<br>• История 30 дней</div>
       <button class="popup-close" onclick="closePopup()">Понятно</button>
@@ -817,7 +823,6 @@
   <!-- ПОПАП ЦЕЛЬ СОХРАНЕНА -->
   <div class="popup" id="goal-saved-popup">
     <div class="popup-content">
-      <div class="popup-icon">🎯</div>
       <div class="popup-title">Цель добавлена!</div>
       <div class="popup-text">Цель зафиксирована в календаре раздела чекин, желаем вам достигнуть её</div>
       <button class="popup-close" onclick="closePopup()">Отлично!</button>
@@ -827,7 +832,6 @@
   <!-- ПОПАП ПРОСМОТРА ЦЕЛИ -->
   <div class="popup" id="view-goal-popup">
     <div class="popup-content">
-      <div class="popup-icon">🎯</div>
       <div class="popup-title">Цель на эту дату</div>
       <div class="popup-text" id="view-goal-text"></div>
       <button class="popup-close" onclick="closePopup()">Окей</button>
@@ -850,7 +854,6 @@
   <!-- ПОПАП SUPPORT ОТПРАВЛЕН -->
   <div class="popup" id="support-sent-popup">
     <div class="popup-content">
-      <div class="popup-icon">✅</div>
       <div class="popup-title">Отправлено!</div>
       <div class="popup-text">Ваше обращение успешно отправлено. Мы свяжемся с вами в ближайшее время.</div>
       <button class="popup-close" onclick="closePopup()">Окей</button>
@@ -1282,13 +1285,13 @@
           
           // Обновить профиль
           const toneNames = {
-            focused: '⚡ Focused',
-            baddy: '💬 Baddy',
-            mentor: '👔 Mentor'
+            focused: 'Focused',
+            baddy: 'Baddy',
+            mentor: 'Mentor'
           };
           document.getElementById('profile-tone').textContent = toneNames[tone];
-          
-          tg.showAlert(`✅ Стиль изменён на ${toneNames[tone]}`);
+
+          tg.showAlert(`Стиль изменён на ${toneNames[tone]}`);
         }
       } catch (error) {
         console.error('Select tone error:', error);
@@ -1456,11 +1459,11 @@
           document.getElementById('checkin-streak').textContent = userStats.streak;
 
           const toneNames = {
-            focused: '⚡ Focused',
-            baddy: '💬 Baddy',
-            mentor: '👔 Mentor'
+            focused: 'Focused',
+            baddy: 'Baddy',
+            mentor: 'Mentor'
           };
-          document.getElementById('profile-tone').textContent = toneNames[data.tone] || '💬 Baddy';
+          document.getElementById('profile-tone').textContent = toneNames[data.tone] || 'Baddy';
           currentTone = data.tone || 'baddy';
 
           // Установить активную карточку стиля
