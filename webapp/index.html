@@ -91,6 +91,30 @@
       color: #2D1B69;
       border-bottom-left-radius: 4px;
     }
+
+    .message-time {
+      font-size: 10px;
+      color: #999;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    .message.assistant .message-time {
+      text-align: left;
+    }
+
+    .chat-day-divider {
+      text-align: center;
+      padding: 16px 0;
+      font-size: 12px;
+      color: #999;
+    }
+
+    .chat-day-divider span {
+      background: #FAFAFA;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
     
     .input-area {
       padding: 12px;
@@ -262,10 +286,78 @@
     .calendar-day.has-goal {
       box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.4);
       cursor: pointer;
+      animation: goalPulse 2s ease-in-out infinite;
     }
 
     .calendar-day.has-goal:hover {
       box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.7);
+    }
+
+    @keyframes goalPulse {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.4); }
+      50% { box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.7); }
+    }
+
+    /* ========== STORIES ========== */
+    .story-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .story-overlay.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .story-overlay.fade-out {
+      opacity: 0;
+    }
+
+    .story-content {
+      text-align: center;
+      padding: 40px;
+      color: white;
+      max-width: 320px;
+    }
+
+    .story-text {
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 24px;
+    }
+
+    .story-progress {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .story-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .story-dot.active {
+      background: white;
+    }
+
+    .story-tap {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 16px;
     }
 
     .checkin-button {
@@ -867,6 +959,15 @@
     <button class="nav-btn" data-page="goals">Цели</button>
     <button class="nav-btn" data-page="profile">Профиль</button>
   </div>
+
+  <!-- STORIES -->
+  <div class="story-overlay" id="story-overlay" onclick="nextStory()">
+    <div class="story-content">
+      <div class="story-text" id="story-text"></div>
+      <div class="story-progress" id="story-progress"></div>
+      <div class="story-tap">Tap to continue</div>
+    </div>
+  </div>
   
   <script>
     const tg = window.Telegram.WebApp;
@@ -894,6 +995,51 @@
       streak: 0,
       checkinDates: []
     };
+
+    // ========== STORIES ==========
+    const stories = [
+      "Каждый день - это новая возможность стать лучше, чем вчера",
+      "Дисциплина - это мост между целями и достижениями",
+      "Маленькие шаги каждый день приводят к большим результатам"
+    ];
+
+    let currentStoryIndex = 0;
+
+    function showStories() {
+      const today = new Date().toDateString();
+      const lastStoryDate = localStorage.getItem('lastStoryDate');
+
+      if (lastStoryDate === today) return;
+
+      currentStoryIndex = 0;
+      updateStoryContent();
+      document.getElementById('story-overlay').classList.add('active');
+
+      localStorage.setItem('lastStoryDate', today);
+    }
+
+    function updateStoryContent() {
+      document.getElementById('story-text').textContent = stories[currentStoryIndex];
+
+      const progressHtml = stories.map((_, i) =>
+        `<div class="story-dot ${i <= currentStoryIndex ? 'active' : ''}"></div>`
+      ).join('');
+      document.getElementById('story-progress').innerHTML = progressHtml;
+    }
+
+    function nextStory() {
+      currentStoryIndex++;
+
+      if (currentStoryIndex >= stories.length) {
+        const overlay = document.getElementById('story-overlay');
+        overlay.classList.add('fade-out');
+        setTimeout(() => {
+          overlay.classList.remove('active', 'fade-out');
+        }, 500);
+      } else {
+        updateStoryContent();
+      }
+    }
 
     // Calendar state (using GMT)
     let currentCalendarDate = new Date(Date.UTC(
@@ -1352,10 +1498,51 @@
     }
     
     // ЧАТ
-    function addMessage(text, role) {
+    let lastMessageDate = null;
+
+    function formatTime(date) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+
+    function formatDayDivider(date) {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      if (date.toDateString() === today.toDateString()) {
+        return 'Сегодня';
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Вчера';
+      } else {
+        const day = date.getDate();
+        const month = monthNames[date.getMonth()].toLowerCase();
+        return `${day} ${month}`;
+      }
+    }
+
+    function addDayDivider(date) {
+      const dateStr = date.toDateString();
+      if (lastMessageDate !== dateStr) {
+        lastMessageDate = dateStr;
+        const divider = document.createElement('div');
+        divider.className = 'chat-day-divider';
+        divider.innerHTML = `<span>${formatDayDivider(date)}</span>`;
+        chatContainer.appendChild(divider);
+      }
+    }
+
+    function addMessage(text, role, timestamp = null) {
+      const msgDate = timestamp ? new Date(timestamp) : new Date();
+      addDayDivider(msgDate);
+
       const div = document.createElement('div');
       div.className = `message ${role}`;
-      div.textContent = text;
+      div.innerHTML = `
+        ${text}
+        <div class="message-time">${formatTime(msgDate)}</div>
+      `;
       chatContainer.appendChild(div);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
@@ -1419,10 +1606,10 @@
           headers: { 'X-Telegram-Init-Data': tg.initData }
         });
         const data = await response.json();
-        
+
         if (data.history && data.history.length > 0) {
           data.history.forEach(msg => {
-            addMessage(msg.content, msg.role);
+            addMessage(msg.content, msg.role, msg.created_at);
           });
         } else {
           addMessage('Привет! Я SelfHack. Чем могу помочь?', 'assistant');
@@ -1488,6 +1675,7 @@
     loadHistory();
     loadStats();
     loadGoals();
+    showStories(); // Show daily motivational stories
   </script>
 </body>
 </html>
