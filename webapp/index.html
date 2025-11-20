@@ -341,16 +341,53 @@
     #goals-page {
       padding: 16px;
     }
-    
+
     .goal-item {
       background: white;
       border-radius: 12px;
       padding: 16px;
+      padding-right: 36px;
       margin-bottom: 12px;
       border-left: 4px solid #7B68EE;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      position: relative;
     }
-    
+
+    .goal-text {
+      font-size: 14px;
+      color: #2D1B69;
+      line-height: 1.4;
+    }
+
+    .goal-date {
+      font-size: 11px;
+      color: #999;
+      margin-top: 6px;
+    }
+
+    .goal-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 20px;
+      height: 20px;
+      border: none;
+      background: transparent;
+      color: #CCC;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .goal-delete:hover {
+      color: #999;
+      background: #F5F5F5;
+    }
+
     .add-goal {
       background: #E8E4FF;
       border: 2px dashed #7B68EE;
@@ -361,6 +398,13 @@
       color: #7B68EE;
       font-weight: 600;
       cursor: pointer;
+    }
+
+    .goals-empty {
+      text-align: center;
+      padding: 32px 16px;
+      color: #999;
+      font-size: 14px;
     }
     
     /* ========== ПРОФИЛЬ ========== */
@@ -458,6 +502,55 @@
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
+    }
+
+    .popup-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #E8E4FF;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: #2D1B69;
+    }
+
+    .popup-input:focus {
+      outline: none;
+      border-color: #7B68EE;
+    }
+
+    .popup-label {
+      font-size: 12px;
+      color: #666;
+      text-align: left;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .popup-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .popup-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+
+    .popup-btn.primary {
+      background: #7B68EE;
+      color: white;
+    }
+
+    .popup-btn.secondary {
+      background: #E8E4FF;
+      color: #7B68EE;
     }
     
     /* ========== НАВИГАЦИЯ ========== */
@@ -566,15 +659,10 @@
         <h2 style="margin-bottom: 8px;">Твои цели</h2>
         <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Чего ты хочешь достичь</p>
       </div>
-      
+
       <div style="padding: 0 16px 16px;">
-        <div class="goal-item">Стать более дисциплинированным и последовательным</div>
-        <div class="goal-item">Я всегда мечтал выучить французский</div>
-        <div class="goal-item">Изменить мой образ мышления</div>
-        <div class="goal-item">Создать что-то значимое - проект, бренд или наследие</div>
-        <div class="goal-item">Бросить курить</div>
-        
-        <div class="add-goal">+ Добавить свою цель</div>
+        <div id="goals-container"></div>
+        <div class="add-goal" onclick="showAddGoalPopup()">+ Добавить свою цель</div>
       </div>
     </div>
     
@@ -643,6 +731,21 @@
       <div class="popup-title">Нужен Premium</div>
       <div class="popup-text">Стиль Mentor доступен только в Premium.<br><br>Premium $10.99/мес:<br>• Безлимитные сообщения<br>• 3 тональности коуча<br>• История 30 дней</div>
       <button class="popup-close" onclick="closePopup()">Понятно</button>
+    </div>
+  </div>
+
+  <!-- ПОПАП ДОБАВЛЕНИЯ ЦЕЛИ -->
+  <div class="popup" id="add-goal-popup">
+    <div class="popup-content" style="text-align: left;">
+      <div class="popup-title" style="text-align: center;">Новая цель</div>
+      <label class="popup-label">Описание цели</label>
+      <textarea id="goal-text-input" class="popup-input" style="height: 80px; resize: none;" placeholder="Чего ты хочешь достичь?"></textarea>
+      <label class="popup-label">Дата достижения</label>
+      <input type="date" id="goal-date-input" class="popup-input">
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
+        <button class="popup-btn primary" onclick="saveGoal()">Сохранить</button>
+      </div>
     </div>
   </div>
   
@@ -796,7 +899,149 @@
     // Initialize calendar navigation
     document.getElementById('prev-month').addEventListener('click', prevMonth);
     document.getElementById('next-month').addEventListener('click', nextMonth);
-    
+
+    // ========== ЦЕЛИ ==========
+    let userGoals = [];
+
+    // Render goals list
+    function renderGoals() {
+      const container = document.getElementById('goals-container');
+      container.innerHTML = '';
+
+      if (userGoals.length === 0) {
+        container.innerHTML = '<div class="goals-empty">Пока нет целей. Добавьте свою первую цель!</div>';
+        return;
+      }
+
+      // Sort by target_date ascending (nearest first)
+      const sortedGoals = [...userGoals].sort((a, b) => {
+        if (!a.target_date && !b.target_date) return 0;
+        if (!a.target_date) return 1;
+        if (!b.target_date) return -1;
+        return new Date(a.target_date) - new Date(b.target_date);
+      });
+
+      sortedGoals.forEach(goal => {
+        const div = document.createElement('div');
+        div.className = 'goal-item';
+
+        let dateText = '';
+        if (goal.target_date) {
+          const date = new Date(goal.target_date);
+          const day = date.getUTCDate();
+          const month = monthNames[date.getUTCMonth()];
+          const year = date.getUTCFullYear();
+          dateText = `<div class="goal-date">До ${day} ${month.toLowerCase()} ${year}</div>`;
+        }
+
+        div.innerHTML = `
+          <div class="goal-text">${goal.text}</div>
+          ${dateText}
+          <button class="goal-delete" onclick="deleteGoal(${goal.id})">×</button>
+        `;
+        container.appendChild(div);
+      });
+
+      // Update profile goals count
+      const goalsCountEl = document.querySelector('#profile-page .profile-section:nth-child(2) .profile-row:last-child .profile-value');
+      if (goalsCountEl) {
+        goalsCountEl.textContent = userGoals.length;
+      }
+    }
+
+    // Show add goal popup
+    function showAddGoalPopup() {
+      document.getElementById('goal-text-input').value = '';
+      document.getElementById('goal-date-input').value = '';
+      document.getElementById('add-goal-popup').classList.add('active');
+    }
+
+    // Save new goal
+    async function saveGoal() {
+      const text = document.getElementById('goal-text-input').value.trim();
+      const targetDate = document.getElementById('goal-date-input').value;
+
+      if (!text) {
+        tg.showAlert('Введите описание цели');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            text: text,
+            target_date: targetDate || null
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          userGoals.push(data.goal);
+          renderGoals();
+          closePopup();
+        } else {
+          tg.showAlert(data.message || 'Ошибка сохранения');
+        }
+      } catch (error) {
+        console.error('Save goal error:', error);
+        tg.showAlert('Ошибка сохранения цели');
+      }
+    }
+
+    // Delete goal
+    async function deleteGoal(goalId) {
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            goal_id: goalId
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          userGoals = userGoals.filter(g => g.id !== goalId);
+          renderGoals();
+        } else {
+          tg.showAlert(data.message || 'Ошибка удаления');
+        }
+      } catch (error) {
+        console.error('Delete goal error:', error);
+        tg.showAlert('Ошибка удаления цели');
+      }
+    }
+
+    // Load goals from API
+    async function loadGoals() {
+      try {
+        const response = await fetch(`/api/goals?user_id=${user?.id || 0}`, {
+          headers: { 'X-Telegram-Init-Data': tg.initData }
+        });
+        const data = await response.json();
+
+        if (data.goals) {
+          userGoals = data.goals;
+          renderGoals();
+        }
+      } catch (error) {
+        console.error('Load goals error:', error);
+        renderGoals(); // Render empty state
+      }
+    }
+
     // НАВИГАЦИЯ
     const navBtns = document.querySelectorAll('.nav-btn');
     const pages = document.querySelectorAll('.page');
@@ -1042,8 +1287,10 @@
 
     // Инициализация
     renderCalendar(); // Initial render
+    renderGoals(); // Initial empty state
     loadHistory();
     loadStats();
+    loadGoals();
   </script>
 </body>
 </html>
