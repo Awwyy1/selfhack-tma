@@ -4,6 +4,42 @@ import { getUserTone, getPromptByTone } from '../lib/tone-manager.js';
 
 const MODEL = 'claude-sonnet-4-5-20250929';
 
+// Parse reminder from AI response
+function parseReminder(text) {
+  const match = text.match(/\[\[REMINDER:([^:]+):([^\]]+)\]\]/);
+  if (!match) return null;
+
+  const timeStr = match[1].trim();
+  const message = match[2].trim();
+
+  const now = new Date();
+  let remindAt;
+
+  // Check if it's minutes (e.g., "40")
+  if (/^\d+$/.test(timeStr)) {
+    const minutes = parseInt(timeStr);
+    remindAt = new Date(now.getTime() + minutes * 60000);
+  }
+  // Check if it's time format (e.g., "14:30")
+  else if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+    const [hours, mins] = timeStr.split(':').map(Number);
+    remindAt = new Date(now);
+    remindAt.setHours(hours, mins, 0, 0);
+    // If time already passed today, set for tomorrow
+    if (remindAt <= now) {
+      remindAt.setDate(remindAt.getDate() + 1);
+    }
+  } else {
+    return null;
+  }
+
+  return {
+    message,
+    remind_at: remindAt.toISOString(),
+    cleanText: text.replace(/\[\[REMINDER:[^\]]+\]\]/, '').trim()
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -75,10 +111,28 @@ export default async function handler(req, res) {
       messages: messages
     });
 
-    const reply = aiResponse.content[0].text;
+    let reply = aiResponse.content[0].text;
     const wordCount = reply.split(/\s+/).length;
 
     console.log(`🤖 AI Response (${wordCount} words, tone: ${userTone}): ${reply}`);
+
+    // Parse and create reminder if present
+    const reminder = parseReminder(reply);
+    if (reminder) {
+      try {
+        await supabase.from('reminders').insert({
+          telegram_user_id: user_id,
+          message: reminder.message,
+          remind_at: reminder.remind_at,
+          status: 'pending'
+        });
+        console.log(`⏰ Reminder created for ${user_id}: ${reminder.message} at ${reminder.remind_at}`);
+        // Use clean text without reminder markup
+        reply = reminder.cleanText;
+      } catch (reminderError) {
+        console.error('Failed to create reminder:', reminderError);
+      }
+    }
 
     // Сохранение в БД
     await supabase.from('telegram_chats').insert([
