@@ -128,26 +128,157 @@
     
     /* ========== ЧЕКИН ========== */
     #checkin-page {
-      padding: 24px;
+      padding: 16px;
       text-align: center;
+      overflow-y: auto;
     }
-    
-    .checkin-button {
-      margin-top: 40px;
-      padding: 20px 40px;
+
+    .streak-container {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .streak-label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .streak-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #7B68EE;
+    }
+
+    .streak-value span {
+      font-size: 14px;
+      font-weight: 400;
+      color: #666;
+    }
+
+    .calendar-container {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .calendar-nav {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #E8E4FF;
+      border-radius: 8px;
+      background: white;
+      color: #7B68EE;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .calendar-nav:hover {
+      background: #F5F3FF;
+    }
+
+    .calendar-nav:active {
+      background: #E8E4FF;
+    }
+
+    .calendar-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2D1B69;
+    }
+
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .calendar-weekday {
+      font-size: 11px;
+      color: #999;
+      text-align: center;
+      padding: 4px;
+      font-weight: 500;
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      border-radius: 50%;
+      color: #2D1B69;
+    }
+
+    .calendar-day.other-month {
+      color: #CCC;
+    }
+
+    .calendar-day.checked {
       background: #7B68EE;
       color: white;
+    }
+
+    .calendar-day.today {
+      border: 2px solid #7B68EE;
+    }
+
+    .calendar-day.today.checked {
+      border: 2px solid #5A4AD0;
+    }
+
+    .checkin-button {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
+      color: white;
       border: none;
-      border-radius: 16px;
-      font-size: 18px;
+      border-radius: 12px;
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(123, 104, 238, 0.3);
+      transition: all 0.2s;
     }
-    
-    .checkin-icon {
-      font-size: 80px;
-      margin: 40px 0 20px;
+
+    .checkin-button:active {
+      transform: scale(0.98);
+    }
+
+    .checkin-button:disabled {
+      background: #CCC;
+      box-shadow: none;
+    }
+
+    .checkin-motivation {
+      font-size: 12px;
+      color: #999;
+      font-style: italic;
+      margin-top: 12px;
     }
     
     /* ========== СТИЛЬ ========== */
@@ -367,10 +498,31 @@
   <div class="content">
     <!-- ЧЕКИН -->
     <div id="checkin-page" class="page">
-      <div class="checkin-icon">✓</div>
-      <h2>Ежедневный чекин</h2>
-      <p style="color: #666; margin-top: 12px;">Отмечай свой прогресс каждый день</p>
-      <button class="checkin-button" onclick="doCheckin()">Сделать чекин</button>
+      <div class="streak-container">
+        <div class="streak-label">Твой streak</div>
+        <div class="streak-value"><span id="checkin-streak">0</span> <span>дней</span></div>
+      </div>
+
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <button class="calendar-nav" id="prev-month">←</button>
+          <div class="calendar-title" id="calendar-title">Ноябрь 2025</div>
+          <button class="calendar-nav" id="next-month">→</button>
+        </div>
+        <div class="calendar-weekdays">
+          <div class="calendar-weekday">Вс</div>
+          <div class="calendar-weekday">Пн</div>
+          <div class="calendar-weekday">Вт</div>
+          <div class="calendar-weekday">Ср</div>
+          <div class="calendar-weekday">Чт</div>
+          <div class="calendar-weekday">Пт</div>
+          <div class="calendar-weekday">Сб</div>
+        </div>
+        <div class="calendar-days" id="calendar-days"></div>
+      </div>
+
+      <button class="checkin-button" id="checkin-btn" onclick="doCheckin()">Сделать чекин</button>
+      <p class="checkin-motivation">Последовательность создает импульс</p>
     </div>
     
     <!-- СТИЛЬ -->
@@ -525,8 +677,125 @@
       messagesUsed: 0,
       messagesLimit: 50,
       totalMessages: 0,
-      streak: 0
+      streak: 0,
+      checkinDates: []
     };
+
+    // Calendar state (using GMT)
+    let currentCalendarDate = new Date(Date.UTC(
+      new Date().getUTCFullYear(),
+      new Date().getUTCMonth(),
+      1
+    ));
+
+    // Get current date in GMT
+    function getGMTDate() {
+      const now = new Date();
+      return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    }
+
+    // Format date as YYYY-MM-DD in GMT
+    function formatDateGMT(date) {
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Month names in Russian
+    const monthNames = [
+      'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+    ];
+
+    // Render calendar for current month
+    function renderCalendar() {
+      const year = currentCalendarDate.getUTCFullYear();
+      const month = currentCalendarDate.getUTCMonth();
+
+      // Update title
+      document.getElementById('calendar-title').textContent = `${monthNames[month]} ${year}`;
+
+      // Get first day of month and total days
+      const firstDay = new Date(Date.UTC(year, month, 1));
+      const lastDay = new Date(Date.UTC(year, month + 1, 0));
+      const daysInMonth = lastDay.getUTCDate();
+      const startDayOfWeek = firstDay.getUTCDay(); // 0 = Sunday
+
+      // Get today in GMT
+      const today = getGMTDate();
+      const todayStr = formatDateGMT(today);
+
+      // Build calendar grid
+      const calendarDays = document.getElementById('calendar-days');
+      calendarDays.innerHTML = '';
+
+      // Previous month days
+      const prevMonth = new Date(Date.UTC(year, month, 0));
+      const prevMonthDays = prevMonth.getUTCDate();
+
+      for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const day = prevMonthDays - i;
+        const div = document.createElement('div');
+        div.className = 'calendar-day other-month';
+        div.textContent = day;
+        calendarDays.appendChild(div);
+      }
+
+      // Current month days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const div = document.createElement('div');
+        div.className = 'calendar-day';
+        div.textContent = day;
+
+        // Check if this day has a check-in
+        if (userStats.checkinDates.includes(dateStr)) {
+          div.classList.add('checked');
+        }
+
+        // Check if today
+        if (dateStr === todayStr) {
+          div.classList.add('today');
+        }
+
+        calendarDays.appendChild(div);
+      }
+
+      // Next month days to fill the grid
+      const totalCells = startDayOfWeek + daysInMonth;
+      const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+
+      for (let day = 1; day <= remainingCells; day++) {
+        const div = document.createElement('div');
+        div.className = 'calendar-day other-month';
+        div.textContent = day;
+        calendarDays.appendChild(div);
+      }
+    }
+
+    // Calendar navigation
+    function prevMonth() {
+      currentCalendarDate = new Date(Date.UTC(
+        currentCalendarDate.getUTCFullYear(),
+        currentCalendarDate.getUTCMonth() - 1,
+        1
+      ));
+      renderCalendar();
+    }
+
+    function nextMonth() {
+      currentCalendarDate = new Date(Date.UTC(
+        currentCalendarDate.getUTCFullYear(),
+        currentCalendarDate.getUTCMonth() + 1,
+        1
+      ));
+      renderCalendar();
+    }
+
+    // Initialize calendar navigation
+    document.getElementById('prev-month').addEventListener('click', prevMonth);
+    document.getElementById('next-month').addEventListener('click', nextMonth);
     
     // НАВИГАЦИЯ
     const navBtns = document.querySelectorAll('.nav-btn');
@@ -605,10 +874,10 @@
             user_id: user?.id || 0
           })
         });
-        
+
         const data = await response.json();
         const popupText = document.getElementById('popup-text');
-        
+
         if (data.success) {
           if (data.streak === 1) {
             popupText.textContent = 'Начинаем отсчёт streak.';
@@ -616,11 +885,21 @@
             popupText.textContent = `Твой streak: ${data.streak} дней подряд. Продолжай!`;
           }
           userStats.streak = data.streak;
+
+          // Add today's date to checkinDates
+          const today = formatDateGMT(getGMTDate());
+          if (!userStats.checkinDates.includes(today)) {
+            userStats.checkinDates.push(today);
+          }
+
+          // Update UI
           document.getElementById('profile-streak').textContent = `${data.streak} дней`;
+          document.getElementById('checkin-streak').textContent = data.streak;
+          renderCalendar();
         } else {
           popupText.textContent = data.message || 'Ты уже сделал чекин сегодня!';
         }
-        
+
         document.getElementById('checkin-popup').classList.add('active');
       } catch (error) {
         console.error('Checkin error:', error);
@@ -722,17 +1001,21 @@
           headers: { 'X-Telegram-Init-Data': tg.initData }
         });
         const data = await response.json();
-        
+
         if (data.stats) {
-          userStats = data.stats;
-          
+          userStats = {
+            ...data.stats,
+            checkinDates: data.stats.checkinDates || []
+          };
+
           // Обновить UI
           document.getElementById('profile-plan').textContent = userStats.plan;
-          document.getElementById('profile-messages').textContent = 
+          document.getElementById('profile-messages').textContent =
             `${userStats.messagesUsed} / ${userStats.messagesLimit}`;
           document.getElementById('profile-total').textContent = userStats.totalMessages;
           document.getElementById('profile-streak').textContent = `${userStats.streak} дней`;
-          
+          document.getElementById('checkin-streak').textContent = userStats.streak;
+
           const toneNames = {
             focused: '⚡ Focused',
             baddy: '💬 Baddy',
@@ -740,19 +1023,25 @@
           };
           document.getElementById('profile-tone').textContent = toneNames[data.tone] || '💬 Baddy';
           currentTone = data.tone || 'baddy';
-          
+
           // Установить активную карточку стиля
           document.querySelectorAll('.style-card').forEach(card => {
             card.classList.remove('active');
           });
           document.querySelector(`[data-tone="${currentTone}"]`)?.classList.add('active');
+
+          // Render calendar with check-in data
+          renderCalendar();
         }
       } catch (error) {
         console.error('Load stats error:', error);
+        // Render calendar even on error
+        renderCalendar();
       }
     }
 
     // Инициализация
+    renderCalendar(); // Initial render
     loadHistory();
     loadStats();
   </script>

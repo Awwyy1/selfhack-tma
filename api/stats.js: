@@ -62,14 +62,18 @@ export default async function handler(req, res) {
 
     const tone = await getUserTone(user_id);
 
-    return res.status(200).json({ 
+    // Extract all check-in dates for calendar display
+    const checkinDates = allCheckins ? allCheckins.map(c => c.checkin_date) : [];
+
+    return res.status(200).json({
       success: true,
       stats: {
         plan: plan,
         messagesUsed: userMessages || 0,
         messagesLimit: 50,
         totalMessages: allMessages?.length || 0,
-        streak: streak
+        streak: streak,
+        checkinDates: checkinDates
       },
       tone: tone
     });
