@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   try {
     const { data } = await supabase
       .from('telegram_chats')
-      .select('role, content')
+      .select('role, content, created_at')
       .eq('telegram_user_id', user_id)
       .order('created_at', { ascending: true })
       .limit(50);
