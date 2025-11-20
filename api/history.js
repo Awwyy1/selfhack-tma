@@ -12,11 +12,14 @@ export default async function handler(req, res) {
       .from('telegram_chats')
       .select('role, content, created_at')
       .eq('telegram_user_id', user_id)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(50);
 
-    return res.status(200).json({ 
-      history: data || []
+    // Reverse to get chronological order (oldest first) for display
+    const history = data ? data.reverse() : [];
+
+    return res.status(200).json({
+      history: history
     });
 
   } catch (error) {
