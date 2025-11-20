@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     const { data: reminders, error: fetchError } = await supabase
       .from('reminders')
       .select('*')
-      .eq('sent', false)
+      .eq('status', 'pending')
       .lte('remind_at', now);
 
     if (fetchError) throw fetchError;
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
           // Mark reminder as sent
           await supabase
             .from('reminders')
-            .update({ sent: true })
+            .update({ status: 'sent' })
             .eq('id', reminder.id);
 
           sentCount++;
