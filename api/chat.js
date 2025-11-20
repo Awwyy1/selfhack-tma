@@ -135,11 +135,13 @@ export default async function handler(req, res) {
       }
     }
 
-    // Сохранение в БД
-    await supabase.from('telegram_chats').insert([
-      { telegram_user_id: user_id, role: 'user', content: message },
+    // Сохранение в БД - вставляем последовательно для правильного порядка ID
+    await supabase.from('telegram_chats').insert(
+      { telegram_user_id: user_id, role: 'user', content: message }
+    );
+    await supabase.from('telegram_chats').insert(
       { telegram_user_id: user_id, role: 'assistant', content: reply }
-    ]);
+    );
 
     // Получить статистику для ответа
     const { count: userMessages } = await supabase
