@@ -251,6 +251,15 @@
       border: 2px solid #5A4AD0;
     }
 
+    .calendar-day.has-goal {
+      box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.4);
+      cursor: pointer;
+    }
+
+    .calendar-day.has-goal:hover {
+      box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.7);
+    }
+
     .checkin-button {
       width: 100%;
       padding: 16px;
@@ -473,6 +482,20 @@
       text-align: center;
       max-width: 320px;
     }
+
+    .popup-content.large {
+      max-width: 368px;
+      padding: 36px 28px;
+    }
+
+    .popup-content.large .popup-input {
+      padding: 14px;
+      font-size: 15px;
+    }
+
+    .popup-content.large textarea.popup-input {
+      height: 92px;
+    }
     
     .popup-icon {
       font-size: 64px;
@@ -558,27 +581,55 @@
       display: flex;
       background: white;
       border-top: 1px solid #E8E4FF;
-      padding: 8px 0;
+      padding: 8px 4px;
       box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+      gap: 4px;
     }
-    
+
     .nav-btn {
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 12px 4px;
+      padding: 10px 4px;
       border: none;
       background: transparent;
       color: #999;
-      font-size: 12px;
+      font-size: 11px;
       cursor: pointer;
-      transition: color 0.2s;
+      transition: all 0.2s ease;
+      border-radius: 8px;
     }
-    
+
+    .nav-btn:hover {
+      color: #7B68EE;
+      background: rgba(123, 104, 238, 0.05);
+    }
+
     .nav-btn.active {
       color: #7B68EE;
-      font-weight: 700;
+      font-weight: 600;
+      background: rgba(123, 104, 238, 0.1);
+      box-shadow: 0 0 8px rgba(123, 104, 238, 0.15);
+    }
+
+    /* ========== SUPPORT BUTTON ========== */
+    .support-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+
+    .support-btn:active {
+      transform: scale(0.98);
     }
   </style>
 </head>
@@ -668,7 +719,7 @@
     
     <!-- ПРОФИЛЬ -->
     <div id="profile-page" class="page">
-      <div class="profile-section">
+      <div class="profile-section" style="margin-bottom: 12px;">
         <h3>Подписка</h3>
         <div class="profile-row">
           <span class="profile-label">Тариф</span>
@@ -683,8 +734,8 @@
           <span class="profile-value" id="profile-tone">💬 Baddy</span>
         </div>
       </div>
-      
-      <div class="profile-section">
+
+      <div class="profile-section" style="margin-bottom: 12px;">
         <h3>Активность</h3>
         <div class="profile-row">
           <span class="profile-label">Чекинов подряд</span>
@@ -696,11 +747,11 @@
         </div>
         <div class="profile-row">
           <span class="profile-label">Активных целей</span>
-          <span class="profile-value">5</span>
+          <span class="profile-value" id="profile-goals-count">0</span>
         </div>
       </div>
-      
-      <div class="profile-section">
+
+      <div class="profile-section" style="margin-bottom: 12px;">
         <h3>Аккаунт</h3>
         <div class="profile-row">
           <span class="profile-label">Username</span>
@@ -711,6 +762,8 @@
           <span class="profile-value">19 ноября 2024</span>
         </div>
       </div>
+
+      <button class="support-btn" onclick="showSupportPopup()">Support</button>
     </div>
   </div>
   
@@ -736,16 +789,71 @@
 
   <!-- ПОПАП ДОБАВЛЕНИЯ ЦЕЛИ -->
   <div class="popup" id="add-goal-popup">
-    <div class="popup-content" style="text-align: left;">
+    <div class="popup-content large" style="text-align: left;">
       <div class="popup-title" style="text-align: center;">Новая цель</div>
       <label class="popup-label">Описание цели</label>
-      <textarea id="goal-text-input" class="popup-input" style="height: 80px; resize: none;" placeholder="Чего ты хочешь достичь?"></textarea>
+      <textarea id="goal-text-input" class="popup-input" style="resize: none;" placeholder="Чего ты хочешь достичь?"></textarea>
       <label class="popup-label">Дата достижения</label>
       <input type="date" id="goal-date-input" class="popup-input">
       <div class="popup-buttons">
         <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
         <button class="popup-btn primary" onclick="saveGoal()">Сохранить</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ -->
+  <div class="popup" id="delete-goal-popup">
+    <div class="popup-content">
+      <div class="popup-title">Удалить цель?</div>
+      <div class="popup-text">Вы уверены, что хотите удалить эту цель?</div>
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Нет</button>
+        <button class="popup-btn primary" onclick="confirmDeleteGoal()">Да</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП ЦЕЛЬ СОХРАНЕНА -->
+  <div class="popup" id="goal-saved-popup">
+    <div class="popup-content">
+      <div class="popup-icon">🎯</div>
+      <div class="popup-title">Цель добавлена!</div>
+      <div class="popup-text">Цель зафиксирована в календаре раздела чекин, желаем вам достигнуть её</div>
+      <button class="popup-close" onclick="closePopup()">Отлично!</button>
+    </div>
+  </div>
+
+  <!-- ПОПАП ПРОСМОТРА ЦЕЛИ -->
+  <div class="popup" id="view-goal-popup">
+    <div class="popup-content">
+      <div class="popup-icon">🎯</div>
+      <div class="popup-title">Цель на эту дату</div>
+      <div class="popup-text" id="view-goal-text"></div>
+      <button class="popup-close" onclick="closePopup()">Окей</button>
+    </div>
+  </div>
+
+  <!-- ПОПАП SUPPORT -->
+  <div class="popup" id="support-popup">
+    <div class="popup-content large" style="text-align: left;">
+      <div class="popup-title" style="text-align: center;">Support</div>
+      <div class="popup-text" style="text-align: center; margin-bottom: 16px;">Напишите в службу поддержки, если у вас есть вопросы или предложение по улучшению продукта.</div>
+      <textarea id="support-message-input" class="popup-input" style="resize: none;" placeholder="Ваше сообщение..."></textarea>
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
+        <button class="popup-btn primary" onclick="sendSupport()">Отправить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП SUPPORT ОТПРАВЛЕН -->
+  <div class="popup" id="support-sent-popup">
+    <div class="popup-content">
+      <div class="popup-icon">✅</div>
+      <div class="popup-title">Отправлено!</div>
+      <div class="popup-text">Ваше обращение успешно отправлено. Мы свяжемся с вами в ближайшее время.</div>
+      <button class="popup-close" onclick="closePopup()">Окей</button>
     </div>
   </div>
   
@@ -862,6 +970,13 @@
           div.classList.add('today');
         }
 
+        // Check if this day has a goal
+        const goalsOnDate = userGoals.filter(g => g.target_date === dateStr);
+        if (goalsOnDate.length > 0) {
+          div.classList.add('has-goal');
+          div.addEventListener('click', () => showGoalOnDate(dateStr, goalsOnDate));
+        }
+
         calendarDays.appendChild(div);
       }
 
@@ -937,16 +1052,41 @@
         div.innerHTML = `
           <div class="goal-text">${goal.text}</div>
           ${dateText}
-          <button class="goal-delete" onclick="deleteGoal(${goal.id})">×</button>
+          <button class="goal-delete" onclick="showDeleteConfirmation(${goal.id})">×</button>
         `;
         container.appendChild(div);
       });
 
       // Update profile goals count
-      const goalsCountEl = document.querySelector('#profile-page .profile-section:nth-child(2) .profile-row:last-child .profile-value');
+      const goalsCountEl = document.getElementById('profile-goals-count');
       if (goalsCountEl) {
         goalsCountEl.textContent = userGoals.length;
       }
+
+      // Re-render calendar to update goal highlights
+      renderCalendar();
+    }
+
+    // Show goal on date popup
+    function showGoalOnDate(dateStr, goals) {
+      const goalTexts = goals.map(g => g.text).join('\n\n');
+      document.getElementById('view-goal-text').textContent = goalTexts;
+      document.getElementById('view-goal-popup').classList.add('active');
+    }
+
+    // Delete confirmation
+    let goalToDelete = null;
+
+    function showDeleteConfirmation(goalId) {
+      goalToDelete = goalId;
+      document.getElementById('delete-goal-popup').classList.add('active');
+    }
+
+    async function confirmDeleteGoal() {
+      if (!goalToDelete) return;
+      closePopup();
+      await deleteGoalFromServer(goalToDelete);
+      goalToDelete = null;
     }
 
     // Show add goal popup
@@ -986,6 +1126,13 @@
           userGoals.push(data.goal);
           renderGoals();
           closePopup();
+
+          // Show confirmation if goal has a date
+          if (targetDate) {
+            setTimeout(() => {
+              document.getElementById('goal-saved-popup').classList.add('active');
+            }, 300);
+          }
         } else {
           tg.showAlert(data.message || 'Ошибка сохранения');
         }
@@ -995,8 +1142,8 @@
       }
     }
 
-    // Delete goal
-    async function deleteGoal(goalId) {
+    // Delete goal from server
+    async function deleteGoalFromServer(goalId) {
       try {
         const response = await fetch('/api/goals', {
           method: 'DELETE',
@@ -1021,6 +1168,49 @@
       } catch (error) {
         console.error('Delete goal error:', error);
         tg.showAlert('Ошибка удаления цели');
+      }
+    }
+
+    // Support functions
+    function showSupportPopup() {
+      document.getElementById('support-message-input').value = '';
+      document.getElementById('support-popup').classList.add('active');
+    }
+
+    async function sendSupport() {
+      const message = document.getElementById('support-message-input').value.trim();
+
+      if (!message) {
+        tg.showAlert('Введите сообщение');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/support', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            message: message
+          })
+        });
+
+        const data = await response.json();
+
+        closePopup();
+        if (data.success) {
+          setTimeout(() => {
+            document.getElementById('support-sent-popup').classList.add('active');
+          }, 300);
+        } else {
+          tg.showAlert(data.message || 'Ошибка отправки');
+        }
+      } catch (error) {
+        console.error('Send support error:', error);
+        tg.showAlert('Ошибка отправки сообщения');
       }
     }
 
@@ -1248,8 +1438,12 @@
         const data = await response.json();
 
         if (data.stats) {
+          // Set limit based on plan
+          const messagesLimit = data.stats.plan === 'FREE' ? 50 : 2000;
+
           userStats = {
             ...data.stats,
+            messagesLimit: messagesLimit,
             checkinDates: data.stats.checkinDates || []
           };
 
