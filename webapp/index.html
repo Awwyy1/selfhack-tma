@@ -825,6 +825,10 @@
           <span class="profile-label">Тариф</span>
           <span class="profile-value" id="profile-plan">FREE</span>
         </div>
+        <div class="profile-row" id="profile-expires-row" style="display: none;">
+          <span class="profile-label">Действует до</span>
+          <span class="profile-value" id="profile-expires"></span>
+        </div>
         <div class="profile-row">
           <span class="profile-label">Сообщений использовано</span>
           <span class="profile-value" id="profile-messages">0 / 50</span>
@@ -1639,6 +1643,21 @@
 
           // Обновить UI
           document.getElementById('profile-plan').textContent = userStats.plan;
+
+          // Show expiration date for premium plans
+          const expiresRow = document.getElementById('profile-expires-row');
+          const expiresValue = document.getElementById('profile-expires');
+          if (data.stats.expiresAt && userStats.plan !== 'FREE') {
+            const expiresDate = new Date(data.stats.expiresAt);
+            const day = expiresDate.getDate();
+            const month = monthNames[expiresDate.getMonth()].toLowerCase();
+            const year = expiresDate.getFullYear();
+            expiresValue.textContent = `${day} ${month} ${year}`;
+            expiresRow.style.display = 'flex';
+          } else {
+            expiresRow.style.display = 'none';
+          }
+
           document.getElementById('profile-messages').textContent =
             `${userStats.messagesUsed} / ${userStats.messagesLimit}`;
           document.getElementById('profile-total').textContent = userStats.totalMessages;

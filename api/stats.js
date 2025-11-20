@@ -25,9 +25,9 @@ export default async function handler(req, res) {
       .eq('telegram_user_id', user_id)
       .eq('role', 'user');
 
-    const { data: allMessages } = await supabase
+    const { count: totalMessages } = await supabase
       .from('telegram_chats')
-      .select('id')
+      .select('*', { count: 'exact', head: true })
       .eq('telegram_user_id', user_id);
 
     const { data: allCheckins } = await supabase
@@ -74,9 +74,10 @@ export default async function handler(req, res) {
         plan: plan,
         messagesUsed: userMessages || 0,
         messagesLimit: messagesLimit,
-        totalMessages: allMessages?.length || 0,
+        totalMessages: totalMessages || 0,
         streak: streak,
-        checkinDates: checkinDates
+        checkinDates: checkinDates,
+        expiresAt: isPremium ? subscription.expires_at : null
       },
       tone: tone
     });
