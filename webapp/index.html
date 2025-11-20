@@ -2079,13 +2079,16 @@
     }
 
     function addMessage(text, role, timestamp = null) {
+      // Strip any REMINDER markup that wasn't parsed (safety filter)
+      const cleanText = text.replace(/\[\[REMINDER:[^\]]+\]\]/g, '').trim();
+
       const msgDate = timestamp ? new Date(timestamp) : new Date();
       addDayDivider(msgDate);
 
       const div = document.createElement('div');
       div.className = `message ${role}`;
       div.innerHTML = `
-        ${text}
+        ${cleanText}
         <div class="message-time">${formatTime(msgDate)}</div>
       `;
       chatContainer.appendChild(div);
