@@ -1,9 +1,9 @@
 import { supabase } from '../../lib/supabase.js';
 
 export default async function handler(req, res) {
-  // Verify cron secret (Vercel adds this header for cron jobs)
-  const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Verify cron secret (from external cron service or direct call)
+  const cronSecret = req.headers['x-cron-secret'] || req.query.secret;
+  if (cronSecret !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
