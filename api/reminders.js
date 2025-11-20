@@ -23,7 +23,7 @@ export default async function handler(req, res) {
         .from('reminders')
         .select('*')
         .eq('telegram_user_id', userId)
-        .eq('sent', false)
+        .eq('status', 'pending')
         .order('remind_at', { ascending: true });
 
       if (error) throw error;
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
           telegram_user_id: userId,
           message: message,
           remind_at: remind_at,
-          sent: false
+          status: 'pending'
         })
         .select()
         .single();
