@@ -6,7 +6,9 @@ const MODEL = 'claude-sonnet-4-5-20250929';
 
 // Parse reminder from AI response
 function parseReminder(text) {
-  const match = text.match(/\[\[REMINDER:([^:]+):([^\]]+)\]\]/);
+  // Updated regex to properly capture time in HH:MM format or just minutes
+  // Format: [[REMINDER:time:message]] where time is "40" or "14:30"
+  const match = text.match(/\[\[REMINDER:(\d{1,2}(?::\d{2})?):([^\]]+)\]\]/);
   if (!match) return null;
 
   const timeStr = match[1].trim();
@@ -15,13 +17,8 @@ function parseReminder(text) {
   const now = new Date();
   let remindAt;
 
-  // Check if it's minutes (e.g., "40")
-  if (/^\d+$/.test(timeStr)) {
-    const minutes = parseInt(timeStr);
-    remindAt = new Date(now.getTime() + minutes * 60000);
-  }
-  // Check if it's time format (e.g., "14:30")
-  else if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+  // Check if it's time format (e.g., "14:30" or "8:00")
+  if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
     const [hours, mins] = timeStr.split(':').map(Number);
     remindAt = new Date(now);
     remindAt.setHours(hours, mins, 0, 0);
@@ -29,6 +26,11 @@ function parseReminder(text) {
     if (remindAt <= now) {
       remindAt.setDate(remindAt.getDate() + 1);
     }
+  }
+  // Check if it's minutes (e.g., "40")
+  else if (/^\d+$/.test(timeStr)) {
+    const minutes = parseInt(timeStr);
+    remindAt = new Date(now.getTime() + minutes * 60000);
   } else {
     return null;
   }
