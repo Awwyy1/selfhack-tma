@@ -24,22 +24,18 @@
     }
     
     .header {
-      padding: 16px;
-      padding-top: calc(16px + env(safe-area-inset-top, 0));
+      padding: 8px 16px;
+      padding-top: calc(8px + env(safe-area-inset-top, 0));
       background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
       color: white;
       box-shadow: 0 2px 8px rgba(123, 104, 238, 0.2);
+      text-align: center;
     }
-    
+
     .header h1 {
-      font-size: 22px;
-      margin-bottom: 4px;
+      font-size: 20px;
+      margin: 0;
       font-weight: 700;
-    }
-    
-    .header p {
-      font-size: 14px;
-      opacity: 0.9;
     }
     
     .content {
@@ -938,7 +934,6 @@
 <body>
   <div class="header">
     <h1>SelfHack</h1>
-    <p id="user-name">Загрузка...</p>
   </div>
   
   <div class="content">
@@ -1248,11 +1243,14 @@
     if (tg.disableVerticalSwipes) {
       tg.disableVerticalSwipes();
     }
-    
+
+    // Prompt user to add app to home screen
+    if (tg.addToHomeScreen) {
+      tg.addToHomeScreen();
+    }
+
     const user = tg.initDataUnsafe?.user;
-    const userName = document.getElementById('user-name');
-    userName.textContent = user ? `@${user.username || user.first_name}` : 'Guest';
-    
+
     if (user) {
       document.getElementById('profile-username').textContent = `@${user.username || user.first_name}`;
     }
