@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase.js';
 import { anthropic } from '../lib/claude.js';
 import { getUserTone, getPromptByTone } from '../lib/tone-manager.js';
-import { checkAndCreateSummary } from '../lib/summarizer.js';
+import { checkAndCreateSummary, loadConversationWithSummaries, createMissingSummaries } from '../lib/summarizer.js';
 
 const MODEL = 'claude-sonnet-4-5-20250929';
 
@@ -116,21 +116,24 @@ export default async function handler(req, res) {
 
     console.log(`📝 User ${user_id} | Tone: ${userTone} | Message: ${message.substring(0, 50)}...`);
 
-    // Загрузка истории
-    const { data: historyData } = await supabase
-      .from('telegram_chats')
-      .select('role, content')
-      .eq('telegram_user_id', user_id)
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
-      .limit(50);
+    // Загрузка истории с summaries для пользователей с большим количеством сообщений
+    // Сначала создаем недостающие summaries
+    try {
+      await createMissingSummaries(user_id);
+    } catch (summaryErr) {
+      console.error('Error creating missing summaries:', summaryErr);
+      // Continue even if summary creation fails
+    }
 
-    const conversationHistory = historyData ? historyData.reverse() : [];
+    // Загружаем историю с summaries
+    const conversationHistory = await loadConversationWithSummaries(user_id, 30);
 
     const messages = [
       ...conversationHistory,
       { role: 'user', content: message }
     ];
+
+    console.log(`📚 Loaded ${conversationHistory.length} messages/summaries for user ${user_id}`);
 
     // Запрос к Claude
     const maxTokens = userTone === 'focused' ? 100 : 200; // Focused короче
