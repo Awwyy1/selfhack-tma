@@ -123,13 +123,27 @@ export default async function handler(req, res) {
     const reminder = parseReminder(reply);
     if (reminder) {
       try {
-        await supabase.from('reminders').insert({
-          telegram_user_id: user_id,
-          message: reminder.message,
-          remind_at: reminder.remind_at,
-          status: 'pending'
-        });
-        console.log(`⏰ Reminder created for ${user_id}: ${reminder.message} at ${reminder.remind_at}`);
+        // Check for existing duplicate reminder before inserting
+        const { data: existingReminder } = await supabase
+          .from('reminders')
+          .select('id')
+          .eq('telegram_user_id', user_id)
+          .eq('message', reminder.message)
+          .eq('remind_at', reminder.remind_at)
+          .eq('status', 'pending')
+          .maybeSingle();
+
+        if (!existingReminder) {
+          await supabase.from('reminders').insert({
+            telegram_user_id: user_id,
+            message: reminder.message,
+            remind_at: reminder.remind_at,
+            status: 'pending'
+          });
+          console.log(`⏰ Reminder created for ${user_id}: ${reminder.message} at ${reminder.remind_at}`);
+        } else {
+          console.log(`⏰ Duplicate reminder skipped for ${user_id}: ${reminder.message} at ${reminder.remind_at}`);
+        }
         // Use clean text without reminder markup
         reply = reminder.cleanText;
       } catch (reminderError) {
