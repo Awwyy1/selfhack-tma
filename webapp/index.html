@@ -1572,8 +1572,21 @@
 
     // Show goal on date popup
     function showGoalOnDate(dateStr, goals) {
-      const goalTexts = goals.map(g => g.text).join('\n\n');
-      document.getElementById('view-goal-text').textContent = goalTexts;
+      const container = document.getElementById('view-goal-text');
+
+      if (goals.length === 1) {
+        // Single goal - display without numbering
+        container.innerHTML = `<div style="text-align: left; padding: 8px 0;">${goals[0].text}</div>`;
+      } else {
+        // Multiple goals - display numbered list
+        const goalItems = goals.map((g, index) =>
+          `<div style="text-align: left; padding: 8px 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px;">
+            <strong>${index + 1}.</strong> ${g.text}
+          </div>`
+        ).join('');
+        container.innerHTML = goalItems;
+      }
+
       document.getElementById('view-goal-popup').classList.add('active');
     }
 
