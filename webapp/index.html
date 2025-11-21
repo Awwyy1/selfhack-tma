@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>SelfHack AI Coach</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
@@ -17,12 +17,15 @@
       background: #FAFAFA;
       color: #2D1B69;
       height: 100vh;
+      height: var(--tg-viewport-stable-height, 100vh);
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
     
     .header {
       padding: 16px;
+      padding-top: calc(16px + env(safe-area-inset-top, 0));
       background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
       color: white;
       box-shadow: 0 2px 8px rgba(123, 104, 238, 0.2);
@@ -880,6 +883,7 @@
       background: white;
       border-top: 1px solid #E8E4FF;
       padding: 8px 4px;
+      padding-bottom: calc(8px + env(safe-area-inset-bottom, 0));
       box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
       gap: 4px;
     }
@@ -1223,6 +1227,27 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.ready();
+
+    // Request fullscreen mode for native app feel
+    if (tg.requestFullscreen) {
+      tg.requestFullscreen();
+    }
+
+    // Set header and background colors to match app theme
+    if (tg.setHeaderColor) {
+      tg.setHeaderColor('#7B68EE');
+    }
+    if (tg.setBackgroundColor) {
+      tg.setBackgroundColor('#FAFAFA');
+    }
+    if (tg.setBottomBarColor) {
+      tg.setBottomBarColor('#FFFFFF');
+    }
+
+    // Disable vertical swipes to close (for better UX in fullscreen)
+    if (tg.disableVerticalSwipes) {
+      tg.disableVerticalSwipes();
+    }
     
     const user = tg.initDataUnsafe?.user;
     const userName = document.getElementById('user-name');
