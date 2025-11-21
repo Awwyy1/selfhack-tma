@@ -5,7 +5,8 @@ import { getUserTone, getPromptByTone } from '../lib/tone-manager.js';
 const MODEL = 'claude-sonnet-4-5-20250929';
 
 // Parse reminder from AI response
-function parseReminder(text) {
+// timezoneOffset: user's timezone offset in minutes (positive for west of UTC, e.g., -180 for Moscow UTC+3)
+function parseReminder(text, timezoneOffset = 0) {
   // Updated regex to properly capture time in HH:MM format or just minutes
   // Format: [[REMINDER:time:message]] where time is "40" or "14:30"
   const match = text.match(/\[\[REMINDER:(\d{1,2}(?::\d{2})?):([^\]]+)\]\]/);
@@ -14,15 +15,33 @@ function parseReminder(text) {
   const timeStr = match[1].trim();
   const message = match[2].trim();
 
+  // Get current time in user's timezone
   const now = new Date();
   let remindAt;
 
   // Check if it's time format (e.g., "14:30" or "8:00")
   if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
     const [hours, mins] = timeStr.split(':').map(Number);
-    remindAt = new Date(now);
-    remindAt.setHours(hours, mins, 0, 0);
-    // If time already passed today, set for tomorrow
+
+    // Calculate the reminder time in user's timezone
+    // Create a date in UTC that represents the user's local time
+    const userNow = new Date(now.getTime() - timezoneOffset * 60000);
+
+    // Set the time in user's local context
+    remindAt = new Date(Date.UTC(
+      userNow.getUTCFullYear(),
+      userNow.getUTCMonth(),
+      userNow.getUTCDate(),
+      hours,
+      mins,
+      0,
+      0
+    ));
+
+    // Convert back to actual UTC by adding the offset
+    remindAt = new Date(remindAt.getTime() + timezoneOffset * 60000);
+
+    // If time already passed today in user's timezone, set for tomorrow
     if (remindAt <= now) {
       remindAt.setDate(remindAt.getDate() + 1);
     }
@@ -34,6 +53,9 @@ function parseReminder(text) {
   } else {
     return null;
   }
+
+  // Normalize to nearest minute (remove seconds and milliseconds) for better deduplication
+  remindAt.setSeconds(0, 0);
 
   return {
     message,
@@ -47,11 +69,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { message, user_id } = req.body;
+  const { message, user_id, timezone_offset } = req.body;
 
   if (!message || !user_id) {
     return res.status(400).json({ error: 'Missing message or user_id' });
   }
+
+  // timezone_offset: minutes offset from UTC (positive for west, negative for east)
+  // e.g., Moscow (UTC+3) = -180, New York (UTC-5) = 300
+  const userTimezoneOffset = typeof timezone_offset === 'number' ? timezone_offset : 0;
 
   try {
     // Проверка подписки
@@ -120,27 +146,39 @@ export default async function handler(req, res) {
     console.log(`🤖 AI Response (${wordCount} words, tone: ${userTone}): ${reply}`);
 
     // Parse and create reminder if present
-    const reminder = parseReminder(reply);
+    const reminder = parseReminder(reply, userTimezoneOffset);
     if (reminder) {
       try {
-        // Check for existing duplicate reminder before inserting
-        const { data: existingReminder } = await supabase
-          .from('reminders')
-          .select('id')
-          .eq('telegram_user_id', user_id)
-          .eq('message', reminder.message)
-          .eq('remind_at', reminder.remind_at)
-          .eq('status', 'pending')
-          .maybeSingle();
+        // Normalize message for better deduplication (trim and lowercase for comparison)
+        const normalizedMessage = reminder.message.trim().toLowerCase();
 
-        if (!existingReminder) {
+        // Check for existing duplicate reminder before inserting
+        // Use a time window of 1 minute for deduplication
+        const reminderTime = new Date(reminder.remind_at);
+        const timeWindowStart = new Date(reminderTime.getTime() - 60000).toISOString();
+        const timeWindowEnd = new Date(reminderTime.getTime() + 60000).toISOString();
+
+        const { data: existingReminders } = await supabase
+          .from('reminders')
+          .select('id, message')
+          .eq('telegram_user_id', user_id)
+          .eq('status', 'pending')
+          .gte('remind_at', timeWindowStart)
+          .lte('remind_at', timeWindowEnd);
+
+        // Check if any existing reminder has similar message (case-insensitive)
+        const isDuplicate = existingReminders?.some(r =>
+          r.message.trim().toLowerCase() === normalizedMessage
+        );
+
+        if (!isDuplicate) {
           await supabase.from('reminders').insert({
             telegram_user_id: user_id,
             message: reminder.message,
             remind_at: reminder.remind_at,
             status: 'pending'
           });
-          console.log(`⏰ Reminder created for ${user_id}: ${reminder.message} at ${reminder.remind_at}`);
+          console.log(`⏰ Reminder created for ${user_id}: ${reminder.message} at ${reminder.remind_at} (timezone offset: ${userTimezoneOffset})`);
         } else {
           console.log(`⏰ Duplicate reminder skipped for ${user_id}: ${reminder.message} at ${reminder.remind_at}`);
         }

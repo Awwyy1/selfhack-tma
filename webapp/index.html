@@ -2131,6 +2131,9 @@
       showTypingIndicator();
 
       try {
+        // Get user's timezone offset in minutes (positive for west of UTC)
+        const timezoneOffset = new Date().getTimezoneOffset();
+
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: {
@@ -2139,7 +2142,8 @@
           },
           body: JSON.stringify({
             message: message,
-            user_id: user?.id || 0
+            user_id: user?.id || 0,
+            timezone_offset: timezoneOffset
           })
         });
 
