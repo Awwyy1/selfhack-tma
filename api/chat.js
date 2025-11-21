@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase.js';
 import { anthropic } from '../lib/claude.js';
 import { getUserTone, getPromptByTone } from '../lib/tone-manager.js';
+import { checkAndCreateSummary } from '../lib/summarizer.js';
 
 const MODEL = 'claude-sonnet-4-5-20250929';
 
@@ -43,7 +44,7 @@ function parseReminder(text, timezoneOffset = 0) {
 
     // If time already passed today in user's timezone, set for tomorrow
     if (remindAt <= now) {
-      remindAt.setDate(remindAt.getDate() + 1);
+      remindAt.setUTCDate(remindAt.getUTCDate() + 1);
     }
   }
   // Check if it's minutes (e.g., "40")
@@ -78,6 +79,8 @@ export default async function handler(req, res) {
   // timezone_offset: minutes offset from UTC (positive for west, negative for east)
   // e.g., Moscow (UTC+3) = -180, New York (UTC-5) = 300
   const userTimezoneOffset = typeof timezone_offset === 'number' ? timezone_offset : 0;
+
+  console.log(`🕐 Timezone debug: received=${timezone_offset}, type=${typeof timezone_offset}, using=${userTimezoneOffset}`);
 
   try {
     // Проверка подписки
@@ -172,13 +175,24 @@ export default async function handler(req, res) {
         );
 
         if (!isDuplicate) {
-          await supabase.from('reminders').insert({
+          const { data: insertedReminder, error: insertError } = await supabase.from('reminders').insert({
             telegram_user_id: user_id,
             message: reminder.message,
             remind_at: reminder.remind_at,
             status: 'pending'
-          });
-          console.log(`⏰ Reminder created for ${user_id}: ${reminder.message} at ${reminder.remind_at} (timezone offset: ${userTimezoneOffset})`);
+          }).select().single();
+
+          if (insertError) {
+            console.error(`❌ Failed to insert reminder:`, insertError);
+          } else {
+            const remindAtDate = new Date(reminder.remind_at);
+            const userLocalTime = new Date(remindAtDate.getTime() - userTimezoneOffset * 60000);
+            console.log(`⏰ Reminder created for ${user_id}:`);
+            console.log(`   Message: ${reminder.message}`);
+            console.log(`   UTC time: ${reminder.remind_at}`);
+            console.log(`   User local time: ${userLocalTime.toISOString().replace('Z', '')} (offset: ${userTimezoneOffset}min)`);
+            console.log(`   DB ID: ${insertedReminder?.id}`);
+          }
         } else {
           console.log(`⏰ Duplicate reminder skipped for ${user_id}: ${reminder.message} at ${reminder.remind_at}`);
         }
@@ -196,6 +210,14 @@ export default async function handler(req, res) {
     await supabase.from('telegram_chats').insert(
       { telegram_user_id: user_id, role: 'assistant', content: reply }
     );
+
+    // Проверить и создать summary если нужно (каждые 50 сообщений пользователя)
+    try {
+      await checkAndCreateSummary(user_id);
+    } catch (summaryError) {
+      console.error('Error creating summary:', summaryError);
+      // Don't fail the request if summary creation fails
+    }
 
     // Получить статистику для ответа
     const { count: userMessages } = await supabase
