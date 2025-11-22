@@ -162,10 +162,15 @@ export default async function handler(req, res) {
     // Добавить блок целей к системному промпту
     systemPrompt += formatGoalsForPrompt(userGoals);
 
-    console.log(`📝 User ${user_id} | Tone: ${userTone} | Goals: ${userGoals?.length || 0} | Message: ${message.substring(0, 50)}...`);
-
     // Загрузка истории с саммари предыдущих разговоров
-    const conversationHistory = await loadConversationWithSummaries(user_id, 50);
+    const { messages: conversationHistory, summaryContext } = await loadConversationWithSummaries(user_id, 50);
+
+    // Добавить саммари к системному промпту (критично для памяти!)
+    if (summaryContext) {
+      systemPrompt += summaryContext;
+    }
+
+    console.log(`📝 User ${user_id} | Tone: ${userTone} | Goals: ${userGoals?.length || 0} | Summaries: ${summaryContext ? 'yes' : 'no'} | Message: ${message.substring(0, 50)}...`);
 
     const messages = [
       ...conversationHistory,
