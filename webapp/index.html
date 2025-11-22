@@ -362,18 +362,13 @@
     }
 
     .calendar-day.goal-overdue {
-      position: relative;
+      box-shadow: 0 0 0 2px rgba(255, 82, 82, 0.7);
+      animation: none;
     }
 
-    .calendar-day.goal-overdue::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      right: 2px;
-      width: 6px;
-      height: 6px;
-      background: #FF5252;
-      border-radius: 50%;
+    .calendar-day.goal-failed {
+      box-shadow: 0 0 0 2px rgba(158, 158, 158, 0.6);
+      animation: none;
     }
 
     @keyframes goalPulse {
@@ -399,6 +394,11 @@
     .goal-item.failed {
       border-left-color: #9E9E9E;
       opacity: 0.7;
+    }
+
+    .goal-item.overdue {
+      border-left-color: #FF5252;
+      background: #FFF5F5;
     }
 
     .goal-item.needs-validation {
@@ -427,6 +427,10 @@
 
     .goal-status.failed {
       color: #9E9E9E;
+    }
+
+    .goal-status.overdue {
+      color: #FF5252;
     }
 
     .goal-validation-buttons {
@@ -1126,7 +1130,7 @@
   <div class="popup" id="goal-saved-popup">
     <div class="popup-content">
       <div class="popup-title">Цель добавлена!</div>
-      <div class="popup-text">Цель зафиксирована в календаре раздела чекин, желаем вам достигнуть её</div>
+      <div class="popup-text" id="goal-saved-text">Цель зафиксирована в календаре раздела чекин, желаем вам достигнуть её</div>
       <button class="popup-close" onclick="closePopup()">Отлично!</button>
     </div>
   </div>
@@ -1416,26 +1420,31 @@
           // Determine goal indicator based on status
           const hasAchieved = goalsOnDate.some(g => g.status === 'achieved');
           const hasFailed = goalsOnDate.some(g => g.status === 'failed');
-          const hasExtended = goalsOnDate.some(g => g.was_extended);
+          const hasExtended = goalsOnDate.some(g => g.was_extended && (!g.status || g.status === 'active'));
           const hasActive = goalsOnDate.some(g => !g.status || g.status === 'active');
 
-          if (hasAchieved) {
+          if (hasAchieved && !hasFailed && !hasActive) {
+            // All goals achieved - green circle
             div.classList.add('has-goal', 'goal-achieved');
-          } else if (hasFailed) {
-            div.classList.add('has-goal');
-            // Check if overdue (past date, active goal)
-            if (dateStr < todayStr && hasActive) {
-              div.classList.add('goal-overdue');
-            }
+          } else if (hasFailed && !hasAchieved && !hasActive) {
+            // All goals failed - gray circle
+            div.classList.add('has-goal', 'goal-failed');
+          } else if (hasActive && dateStr < todayStr) {
+            // Has active goals but date has passed - red circle (overdue)
+            div.classList.add('has-goal', 'goal-overdue');
           } else if (hasExtended) {
+            // Goal was extended - yellow circle
             div.classList.add('has-goal', 'goal-extended');
           } else if (hasActive) {
-            // Check if needs validation (today or past)
-            if (dateStr <= todayStr) {
+            // Active goals - check if needs validation
+            if (dateStr === todayStr) {
               div.classList.add('has-goal', 'goal-pending');
             } else {
               div.classList.add('has-goal');
             }
+          } else {
+            // Mixed statuses or other
+            div.classList.add('has-goal');
           }
 
           div.addEventListener('click', () => showGoalOnDate(dateStr, goalsOnDate));
@@ -1510,9 +1519,13 @@
         const div = document.createElement('div');
         div.className = 'goal-item';
 
-        // Check if goal needs validation
+        // Check if goal is overdue (past date but still active)
+        const isOverdue = goal.target_date && goal.target_date < today;
         const needsValidation = goal.target_date && goal.target_date <= today;
-        if (needsValidation) {
+
+        if (isOverdue) {
+          div.classList.add('overdue');
+        } else if (needsValidation) {
           div.classList.add('needs-validation');
         }
 
@@ -1523,6 +1536,7 @@
 
         let dateText = '';
         let validationButtons = '';
+        let statusText = '';
 
         if (goal.target_date) {
           const date = new Date(goal.target_date);
@@ -1538,6 +1552,7 @@
             dateLabel += ' - СЕГОДНЯ';
           } else if (isPast) {
             dateLabel += ' - ПРОСРОЧЕНО';
+            statusText = '<div class="goal-status overdue">Просрочена</div>';
           }
 
           dateText = `<div class="goal-date">${dateLabel}</div>`;
@@ -1557,6 +1572,7 @@
         div.innerHTML = `
           <div class="goal-text">${goal.text}</div>
           ${dateText}
+          ${statusText}
           ${validationButtons}
           <button class="goal-delete" onclick="showDeleteConfirmation(${goal.id})">x</button>
         `;
@@ -1614,17 +1630,51 @@
     // Show goal on date popup
     function showGoalOnDate(dateStr, goals) {
       const container = document.getElementById('view-goal-text');
+      const today = formatDateGMT(getGMTDate());
+
+      // Function to determine goal status display
+      function getGoalStatusHtml(goal) {
+        if (goal.status === 'achieved') {
+          return '<span style="color: #4CAF50; font-weight: 600; font-size: 11px;">Достигнута</span>';
+        } else if (goal.status === 'failed') {
+          return '<span style="color: #9E9E9E; font-weight: 600; font-size: 11px;">Не достигнута</span>';
+        } else if (goal.target_date && goal.target_date < today) {
+          return '<span style="color: #FF5252; font-weight: 600; font-size: 11px;">Просрочена</span>';
+        }
+        return '';
+      }
 
       if (goals.length === 1) {
         // Single goal - display without numbering
-        container.innerHTML = `<div style="text-align: left; padding: 8px 0;">${goals[0].text}</div>`;
+        const statusHtml = getGoalStatusHtml(goals[0]);
+        container.innerHTML = `<div style="text-align: left; padding: 8px 0;">
+          ${goals[0].text}
+          ${statusHtml ? `<div style="margin-top: 6px;">${statusHtml}</div>` : ''}
+        </div>`;
       } else {
-        // Multiple goals - display numbered list
-        const goalItems = goals.map((g, index) =>
-          `<div style="text-align: left; padding: 8px 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px;">
+        // Multiple goals - sort by status: achieved first, then overdue, then failed
+        const sortedGoals = [...goals].sort((a, b) => {
+          const statusOrder = { 'achieved': 0, 'active': 1, 'failed': 2 };
+          const aStatus = a.status || 'active';
+          const bStatus = b.status || 'active';
+          // Overdue (active but past) should come after achieved
+          const aOverdue = aStatus === 'active' && a.target_date < today;
+          const bOverdue = bStatus === 'active' && b.target_date < today;
+          if (aStatus === 'achieved' && bStatus !== 'achieved') return -1;
+          if (bStatus === 'achieved' && aStatus !== 'achieved') return 1;
+          if (aOverdue && !bOverdue) return -1;
+          if (bOverdue && !aOverdue) return 1;
+          return (statusOrder[aStatus] || 1) - (statusOrder[bStatus] || 1);
+        });
+
+        // Multiple goals - display numbered list with status
+        const goalItems = sortedGoals.map((g, index) => {
+          const statusHtml = getGoalStatusHtml(g);
+          return `<div style="text-align: left; padding: 8px 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px;">
             <strong>${index + 1}.</strong> ${g.text}
-          </div>`
-        ).join('');
+            ${statusHtml ? `<div style="margin-top: 4px;">${statusHtml}</div>` : ''}
+          </div>`;
+        }).join('');
         container.innerHTML = goalItems;
       }
 
@@ -1650,6 +1700,10 @@
     function showAddGoalPopup() {
       document.getElementById('goal-text-input').value = '';
       document.getElementById('goal-date-input').value = '';
+      // Set minimum date to tomorrow (cannot set goals for past dates)
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      document.getElementById('goal-date-input').min = tomorrow.toISOString().split('T')[0];
       document.getElementById('add-goal-popup').classList.add('active');
     }
 
@@ -1687,6 +1741,13 @@
           // Show confirmation if goal has a date
           if (targetDate) {
             setTimeout(() => {
+              // Show the goal text in confirmation popup
+              const date = new Date(targetDate);
+              const day = date.getUTCDate();
+              const month = monthNames[date.getUTCMonth()].toLowerCase();
+              const year = date.getUTCFullYear();
+              document.getElementById('goal-saved-text').innerHTML =
+                `<strong>"${text}"</strong><br><br>Цель зафиксирована на ${day} ${month} ${year} в календаре раздела чекин. Желаем вам достигнуть её!`;
               document.getElementById('goal-saved-popup').classList.add('active');
             }, 300);
           }
