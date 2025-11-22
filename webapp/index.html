@@ -1752,14 +1752,9 @@
         }
       }
 
-      // Warn about goals without deadline
+      // Warn about goals without deadline - must specify date
       if (!targetDate) {
-        tg.showConfirm('У бессрочных целей очень плохая статистика, укажите пожалуйста дату', async (confirmed) => {
-          if (!confirmed) {
-            return;
-          }
-          await saveGoalToServer(text, targetDate);
-        });
+        tg.showAlert('У бессрочных целей очень плохая статистика, укажите пожалуйста дату');
         return;
       }
 
