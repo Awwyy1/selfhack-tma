@@ -167,6 +167,7 @@
       display: flex;
       gap: 8px;
       border-top: 1px solid #E8E4FF;
+      align-items: flex-end;
     }
     
     #message-input {
@@ -177,6 +178,12 @@
       background: #FAFAFA;
       color: #2D1B69;
       font-size: 16px;
+      resize: none;
+      overflow-y: hidden;
+      min-height: 48px;
+      max-height: 120px;
+      line-height: 1.4;
+      font-family: inherit;
     }
     
     #send-btn {
@@ -998,7 +1005,7 @@
     <div id="chat-page" class="page active">
       <div id="chat-container"></div>
       <div class="input-area">
-        <input type="text" id="message-input" placeholder="Напиши что-то...">
+        <textarea id="message-input" placeholder="Напиши что-то..." rows="1"></textarea>
         <button id="send-btn">→</button>
       </div>
     </div>
@@ -1257,6 +1264,18 @@
     const chatContainer = document.getElementById('chat-container');
     const messageInput = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');
+
+    // Auto-resize textarea function
+    function autoResizeTextarea() {
+      messageInput.style.height = 'auto';
+      const newHeight = Math.min(messageInput.scrollHeight, 120);
+      messageInput.style.height = newHeight + 'px';
+      // Switch to scroll when max height reached
+      messageInput.style.overflowY = messageInput.scrollHeight > 120 ? 'auto' : 'hidden';
+    }
+
+    // Initialize textarea auto-resize
+    messageInput.addEventListener('input', autoResizeTextarea);
     
     let currentTone = 'baddy'; // По умолчанию
     let userStats = {
@@ -2169,6 +2188,8 @@
 
       addMessage(message, 'user');
       messageInput.value = '';
+      messageInput.style.height = 'auto';
+      messageInput.style.overflowY = 'hidden';
       sendBtn.disabled = true;
 
       // Show typing indicator while waiting for response
@@ -2222,8 +2243,11 @@
     }
     
     sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
     });
     
     // ЗАГРУЗКА ИСТОРИИ И СТАТИСТИКИ
