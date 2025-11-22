@@ -160,7 +160,32 @@
       padding: 4px 12px;
       border-radius: 12px;
     }
-    
+
+    .load-more-container {
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    .load-more-btn {
+      background: #F0EDFF;
+      color: #7B68EE;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 16px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .load-more-btn:hover {
+      background: #E8E4FF;
+    }
+
+    .load-more-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .input-area {
       padding: 12px;
       background: white;
@@ -2214,6 +2239,9 @@
     
     // ЧАТ
     let lastMessageDate = null;
+    let historyOffset = 0;
+    let historyHasMore = false;
+    let isLoadingMore = false;
 
     function formatTime(date) {
       const hours = String(date.getHours()).padStart(2, '0');
@@ -2360,12 +2388,29 @@
     // ЗАГРУЗКА ИСТОРИИ И СТАТИСТИКИ
     async function loadHistory() {
       try {
-        const response = await fetch(`/api/history?user_id=${user?.id || 0}`, {
+        const response = await fetch(`/api/history?user_id=${user?.id || 0}&offset=0&limit=50`, {
           headers: { 'X-Telegram-Init-Data': tg.initData }
         });
         const data = await response.json();
 
         if (data.history && data.history.length > 0) {
+          // Store pagination state
+          historyOffset = data.history.length;
+          historyHasMore = data.hasMore;
+
+          // Add "Load more" button if there are more messages
+          if (historyHasMore) {
+            const loadMoreContainer = document.createElement('div');
+            loadMoreContainer.className = 'load-more-container';
+            loadMoreContainer.id = 'load-more-container';
+            loadMoreContainer.innerHTML = `
+              <button class="load-more-btn" onclick="loadMoreHistory()">
+                Загрузить ещё
+              </button>
+            `;
+            chatContainer.appendChild(loadMoreContainer);
+          }
+
           data.history.forEach(msg => {
             addMessage(msg.content, msg.role, msg.created_at);
           });
@@ -2375,6 +2420,104 @@
       } catch (error) {
         console.error('Load history error:', error);
         addMessage('Привет! Я SelfHack. Чем могу помочь?', 'assistant');
+      }
+    }
+
+    async function loadMoreHistory() {
+      if (isLoadingMore || !historyHasMore) return;
+
+      isLoadingMore = true;
+      const loadMoreBtn = document.querySelector('.load-more-btn');
+      if (loadMoreBtn) {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Загрузка...';
+      }
+
+      try {
+        const response = await fetch(`/api/history?user_id=${user?.id || 0}&offset=${historyOffset}&limit=50`, {
+          headers: { 'X-Telegram-Init-Data': tg.initData }
+        });
+        const data = await response.json();
+
+        if (data.history && data.history.length > 0) {
+          // Update pagination state
+          historyOffset += data.history.length;
+          historyHasMore = data.hasMore;
+
+          // Get the load-more container to insert messages after it
+          const loadMoreContainer = document.getElementById('load-more-container');
+
+          // Reset lastMessageDate to properly add day dividers for older messages
+          const oldLastMessageDate = lastMessageDate;
+
+          // Find the first message element (after load-more button)
+          const firstMessageElement = loadMoreContainer ? loadMoreContainer.nextElementSibling : chatContainer.firstChild;
+
+          // Track day dividers we need to add
+          let currentDate = null;
+
+          // Insert older messages after the load-more button
+          data.history.forEach(msg => {
+            const msgDate = new Date(msg.created_at);
+            const dateStr = msgDate.toDateString();
+
+            // Add day divider if needed
+            if (currentDate !== dateStr) {
+              currentDate = dateStr;
+              const divider = document.createElement('div');
+              divider.className = 'chat-day-divider';
+              divider.innerHTML = `<span>${formatDayDivider(msgDate)}</span>`;
+
+              if (firstMessageElement) {
+                chatContainer.insertBefore(divider, firstMessageElement);
+              } else {
+                chatContainer.appendChild(divider);
+              }
+            }
+
+            // Strip any REMINDER markup
+            const cleanText = msg.content.replace(/\[\[REMINDER:[^\]]+\]\]/g, '').trim();
+
+            // Create message element
+            const div = document.createElement('div');
+            div.className = `message ${msg.role}`;
+            div.innerHTML = `
+              ${cleanText}
+              <div class="message-time">${formatTime(msgDate)}</div>
+            `;
+
+            if (firstMessageElement) {
+              chatContainer.insertBefore(div, firstMessageElement);
+            } else {
+              chatContainer.appendChild(div);
+            }
+          });
+
+          // Remove duplicate day dividers if the oldest loaded message has same date as first existing message
+          if (firstMessageElement && firstMessageElement.classList.contains('chat-day-divider')) {
+            const prevElement = firstMessageElement.previousElementSibling;
+            if (prevElement && prevElement.classList.contains('chat-day-divider') &&
+                prevElement.textContent === firstMessageElement.textContent) {
+              firstMessageElement.remove();
+            }
+          }
+
+          // Update button state
+          if (!historyHasMore && loadMoreContainer) {
+            loadMoreContainer.remove();
+          } else if (loadMoreBtn) {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Загрузить ещё';
+          }
+        }
+      } catch (error) {
+        console.error('Load more history error:', error);
+        if (loadMoreBtn) {
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = 'Загрузить ещё';
+        }
+      } finally {
+        isLoadingMore = false;
       }
     }
     
