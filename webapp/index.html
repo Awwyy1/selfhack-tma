@@ -1752,6 +1752,22 @@
         }
       }
 
+      // Warn about goals without deadline
+      if (!targetDate) {
+        tg.showConfirm('У бессрочных целей очень плохая статистика, укажите пожалуйста дату', async (confirmed) => {
+          if (!confirmed) {
+            return;
+          }
+          await saveGoalToServer(text, targetDate);
+        });
+        return;
+      }
+
+      await saveGoalToServer(text, targetDate);
+    }
+
+    // Actually save goal to server
+    async function saveGoalToServer(text, targetDate) {
       try {
         const response = await fetch('/api/goals', {
           method: 'POST',
