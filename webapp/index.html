@@ -885,6 +885,19 @@
       background: #E8E4FF;
       color: #7B68EE;
     }
+
+    /* Scrollable popup for viewing goals on date */
+    #view-goal-popup .popup-content {
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #view-goal-popup .popup-text {
+      max-height: 50vh;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
     
     /* ========== НАВИГАЦИЯ ========== */
     .navigation {
@@ -1521,11 +1534,11 @@
 
         // Check if goal is overdue (past date but still active)
         const isOverdue = goal.target_date && goal.target_date < today;
-        const needsValidation = goal.target_date && goal.target_date <= today;
+        const isToday = goal.target_date && goal.target_date === today;
 
         if (isOverdue) {
           div.classList.add('overdue');
-        } else if (needsValidation) {
+        } else if (isToday) {
           div.classList.add('needs-validation');
         }
 
@@ -1544,11 +1557,11 @@
           const month = monthNames[date.getUTCMonth()];
           const year = date.getUTCFullYear();
 
-          const isToday = goal.target_date === today;
+          const isTodayDate = goal.target_date === today;
           const isPast = goal.target_date < today;
 
           let dateLabel = `До ${day} ${month.toLowerCase()} ${year}`;
-          if (isToday) {
+          if (isTodayDate) {
             dateLabel += ' - СЕГОДНЯ';
           } else if (isPast) {
             dateLabel += ' - ПРОСРОЧЕНО';
@@ -1557,8 +1570,8 @@
 
           dateText = `<div class="goal-date">${dateLabel}</div>`;
 
-          // Show validation buttons for goals that need it
-          if (needsValidation) {
+          // Show validation buttons only for today's goals, not overdue ones
+          if (isToday) {
             validationButtons = `
               <div class="goal-validation-buttons">
                 <button class="goal-validation-btn achieved" onclick="validateGoalFromCard(${goal.id}, 'achieved')">Достигнута</button>
@@ -1585,7 +1598,20 @@
         completedSection.style.marginTop = '24px';
         completedSection.innerHTML = '<h4 style="color: #999; font-size: 12px; margin-bottom: 12px;">ЗАВЕРШЕННЫЕ ЦЕЛИ</h4>';
 
-        completedGoals.forEach(goal => {
+        // Sort completed goals: achieved first, then failed, all by date descending
+        const sortedCompletedGoals = [...completedGoals].sort((a, b) => {
+          // First sort by status: achieved comes before failed
+          if (a.status === 'achieved' && b.status !== 'achieved') return -1;
+          if (a.status !== 'achieved' && b.status === 'achieved') return 1;
+
+          // Then sort by date descending (newest first)
+          if (!a.target_date && !b.target_date) return 0;
+          if (!a.target_date) return 1;
+          if (!b.target_date) return -1;
+          return new Date(b.target_date) - new Date(a.target_date);
+        });
+
+        sortedCompletedGoals.forEach(goal => {
           const div = document.createElement('div');
           div.className = `goal-item ${goal.status}`;
 
@@ -1715,6 +1741,15 @@
       if (!text) {
         tg.showAlert('Введите описание цели');
         return;
+      }
+
+      // Validate date is not in the past
+      if (targetDate) {
+        const today = formatDateGMT(getGMTDate());
+        if (targetDate <= today) {
+          tg.showAlert('Дата цели должна быть в будущем');
+          return;
+        }
       }
 
       try {
