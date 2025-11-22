@@ -1,11 +1,11 @@
 import { supabase } from '../lib/supabase.js';
 import { anthropic } from '../lib/claude.js';
-import { getUserTone, getPromptByTone } from '../lib/tone-manager.js';
+import { getUserTone, getPromptByTone, getToneName, getToneDescription } from '../lib/tone-manager.js';
 import { checkAndCreateSummary, loadConversationWithSummaries } from '../lib/summarizer.js';
 
 const MODEL = 'claude-sonnet-4-5-20250929';
 
-// Format user goals for system prompt
+// Format user goals for system prompt - includes all statuses
 function formatGoalsForPrompt(goals) {
   if (!goals || goals.length === 0) {
     return '\n\n=== ЦЕЛИ ПОЛЬЗОВАТЕЛЯ ===\nПока нет целей.\n\nИспользуй эти цели в коучинге. Если нет целей — предложи поставить.\nНе выдумывай цели — только эти или "пока нет целей".';
@@ -14,7 +14,16 @@ function formatGoalsForPrompt(goals) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const formattedGoals = goals.map(goal => {
+  // Limit for showing completed/failed goals (30 days)
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  // Group goals by status
+  const activeGoals = [];
+  const achievedGoals = [];
+  const failedGoals = [];
+
+  goals.forEach(goal => {
     const deadline = new Date(goal.target_date);
     deadline.setHours(0, 0, 0, 0);
 
@@ -27,19 +36,139 @@ function formatGoalsForPrompt(goals) {
       year: 'numeric'
     });
 
-    let status;
-    if (diffDays < 0) {
-      status = `просрочено на ${Math.abs(diffDays)} дн.`;
-    } else if (diffDays === 0) {
-      status = 'сегодня';
+    if (goal.status === 'achieved') {
+      // Only show achieved goals from last 30 days
+      const completedAt = goal.completed_at ? new Date(goal.completed_at) : deadline;
+      if (completedAt >= thirtyDaysAgo) {
+        const completedDate = goal.completed_at
+          ? new Date(goal.completed_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+          : dateStr;
+        achievedGoals.push(`• "${goal.text}" — завершено ${completedDate}`);
+      }
+    } else if (goal.status === 'failed') {
+      // Only show failed goals from last 30 days
+      if (deadline >= thirtyDaysAgo) {
+        failedGoals.push(`• "${goal.text}" — не выполнено (срок был: ${dateStr})`);
+      }
     } else {
-      status = `${diffDays} дн.`;
+      // Active or extended goals
+      let timeStatus;
+      if (diffDays < 0) {
+        timeStatus = `просрочено на ${Math.abs(diffDays)} дн.`;
+      } else if (diffDays === 0) {
+        timeStatus = 'сегодня';
+      } else {
+        timeStatus = `${diffDays} дн.`;
+      }
+
+      const extendedNote = goal.was_extended ? ' [продлено]' : '';
+      activeGoals.push(`• "${goal.text}" — срок: ${dateStr} (${timeStatus})${extendedNote}`);
     }
+  });
 
-    return `• "${goal.text}" — срок: ${dateStr} (${status})`;
-  }).join('\n');
+  let result = '\n\n=== ЦЕЛИ ПОЛЬЗОВАТЕЛЯ ===\n';
 
-  return `\n\n=== ЦЕЛИ ПОЛЬЗОВАТЕЛЯ ===\n${formattedGoals}\n\nИспользуй эти цели в коучинге. Если нет целей — предложи поставить.\nНе выдумывай цели — только эти или "пока нет целей".`;
+  if (activeGoals.length > 0) {
+    result += '\nАктивные цели:\n' + activeGoals.join('\n');
+  }
+
+  if (achievedGoals.length > 0) {
+    result += '\n\nЗавершённые цели (за последние 30 дней):\n' + achievedGoals.join('\n');
+  }
+
+  if (failedGoals.length > 0) {
+    result += '\n\nНе выполненные цели (за последние 30 дней):\n' + failedGoals.join('\n');
+  }
+
+  if (activeGoals.length === 0 && achievedGoals.length === 0 && failedGoals.length === 0) {
+    result += '\nПока нет целей.';
+  }
+
+  result += '\n\nИспользуй эти цели в коучинге. Если нет активных целей — предложи поставить.\nНе выдумывай цели — только эти или "пока нет целей".';
+
+  return result;
+}
+
+// Format check-in data for system prompt
+function formatCheckinForPrompt(checkinData) {
+  if (!checkinData) {
+    return '\n\n=== ЧЕКИНЫ ПОЛЬЗОВАТЕЛЯ ===\nПока нет чекинов.';
+  }
+
+  const { streak, totalCheckins, lastCheckinDate, checkedInToday } = checkinData;
+
+  let result = '\n\n=== ЧЕКИНЫ ПОЛЬЗОВАТЕЛЯ ===\n';
+  result += `Текущий streak: ${streak} дней подряд\n`;
+  result += `Всего чекинов: ${totalCheckins}\n`;
+
+  if (lastCheckinDate) {
+    const lastDate = new Date(lastCheckinDate).toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    result += `Последний чекин: ${lastDate}\n`;
+  }
+
+  result += `Сегодня чекин: ${checkedInToday ? 'да' : 'нет'}\n`;
+  result += '\nЧекин — ежедневное подтверждение активности пользователя. Streak показывает сколько дней подряд пользователь делал чекин.';
+
+  return result;
+}
+
+// Format communication style for system prompt
+function formatStyleForPrompt(tone) {
+  const toneName = getToneName(tone);
+  const toneDescription = getToneDescription(tone);
+
+  return `\n\n=== ТЕКУЩИЙ СТИЛЬ ОБЩЕНИЯ ===\nСтиль: ${toneName}\nОписание: ${toneDescription}\n\nКогда пользователь спрашивает о стиле общения — отвечай именно этой информацией. Не импровизируй и не предлагай другие стили.`;
+}
+
+// Get check-in data for user
+async function getCheckinData(userId) {
+  const today = new Date().toISOString().split('T')[0];
+
+  // Get all checkins for user
+  const { data: allCheckins } = await supabase
+    .from('checkins')
+    .select('checkin_date')
+    .eq('telegram_user_id', userId)
+    .order('checkin_date', { ascending: false });
+
+  if (!allCheckins || allCheckins.length === 0) {
+    return null;
+  }
+
+  // Check if checked in today
+  const checkedInToday = allCheckins[0]?.checkin_date === today;
+
+  // Calculate streak
+  let streak = 0;
+  let checkDate = new Date(today);
+
+  // If not checked in today, start from yesterday
+  if (!checkedInToday) {
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  for (const checkin of allCheckins) {
+    const checkinDate = checkin.checkin_date;
+    const expectedDate = checkDate.toISOString().split('T')[0];
+
+    if (checkinDate === expectedDate) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else if (checkinDate < expectedDate) {
+      break;
+    }
+  }
+
+  return {
+    streak,
+    totalCheckins: allCheckins.length,
+    lastCheckinDate: allCheckins[0]?.checkin_date,
+    checkedInToday
+  };
 }
 
 // Parse reminder from AI response
@@ -151,16 +280,22 @@ export default async function handler(req, res) {
     const userTone = await getUserTone(user_id);
     let systemPrompt = getPromptByTone(userTone);
 
-    // Загрузить активные цели пользователя
+    // Добавить информацию о текущем стиле общения
+    systemPrompt += formatStyleForPrompt(userTone);
+
+    // Загрузить все цели пользователя (включая завершённые и проваленные)
     const { data: userGoals } = await supabase
       .from('goals')
-      .select('text, target_date')
+      .select('text, target_date, status, completed_at, was_extended')
       .eq('telegram_user_id', user_id)
-      .eq('status', 'active')
       .order('target_date', { ascending: true });
 
     // Добавить блок целей к системному промпту
     systemPrompt += formatGoalsForPrompt(userGoals);
+
+    // Загрузить данные чекинов
+    const checkinData = await getCheckinData(user_id);
+    systemPrompt += formatCheckinForPrompt(checkinData);
 
     // Загрузка истории с саммари предыдущих разговоров
     const { messages: conversationHistory, summaryContext } = await loadConversationWithSummaries(user_id, 50);
@@ -170,7 +305,7 @@ export default async function handler(req, res) {
       systemPrompt += summaryContext;
     }
 
-    console.log(`📝 User ${user_id} | Tone: ${userTone} | Goals: ${userGoals?.length || 0} | Summaries: ${summaryContext ? 'yes' : 'no'} | Message: ${message.substring(0, 50)}...`);
+    console.log(`📝 User ${user_id} | Tone: ${userTone} | Goals: ${userGoals?.length || 0} | Checkins: ${checkinData?.totalCheckins || 0} | Streak: ${checkinData?.streak || 0} | Summaries: ${summaryContext ? 'yes' : 'no'} | Message: ${message.substring(0, 50)}...`);
 
     const messages = [
       ...conversationHistory,
