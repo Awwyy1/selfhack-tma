@@ -36,7 +36,7 @@ function formatGoalsForPrompt(goals) {
       status = `${diffDays} дн.`;
     }
 
-    return `• "${goal.title}" — срок: ${dateStr} (${status})`;
+    return `• "${goal.text}" — срок: ${dateStr} (${status})`;
   }).join('\n');
 
   return `\n\n=== ЦЕЛИ ПОЛЬЗОВАТЕЛЯ ===\n${formattedGoals}\n\nИспользуй эти цели в коучинге. Если нет целей — предложи поставить.\nНе выдумывай цели — только эти или "пока нет целей".`;
@@ -154,7 +154,7 @@ export default async function handler(req, res) {
     // Загрузить активные цели пользователя
     const { data: userGoals } = await supabase
       .from('goals')
-      .select('title, target_date')
+      .select('text, target_date')
       .eq('telegram_user_id', user_id)
       .eq('status', 'active')
       .order('target_date', { ascending: true });
