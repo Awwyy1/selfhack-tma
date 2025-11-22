@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase.js';
 import { anthropic } from '../lib/claude.js';
 import { getUserTone, getPromptByTone } from '../lib/tone-manager.js';
-import { checkAndCreateSummary } from '../lib/summarizer.js';
+import { checkAndCreateSummary, loadConversationWithSummaries } from '../lib/summarizer.js';
 
 const MODEL = 'claude-sonnet-4-5-20250929';
 
@@ -164,16 +164,8 @@ export default async function handler(req, res) {
 
     console.log(`📝 User ${user_id} | Tone: ${userTone} | Goals: ${userGoals?.length || 0} | Message: ${message.substring(0, 50)}...`);
 
-    // Загрузка истории
-    const { data: historyData } = await supabase
-      .from('telegram_chats')
-      .select('role, content')
-      .eq('telegram_user_id', user_id)
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
-      .limit(50);
-
-    const conversationHistory = historyData ? historyData.reverse() : [];
+    // Загрузка истории с саммари предыдущих разговоров
+    const conversationHistory = await loadConversationWithSummaries(user_id, 50);
 
     const messages = [
       ...conversationHistory,
