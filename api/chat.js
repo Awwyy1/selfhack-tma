@@ -5,6 +5,43 @@ import { checkAndCreateSummary } from '../lib/summarizer.js';
 
 const MODEL = 'claude-sonnet-4-5-20250929';
 
+// Format user goals for system prompt
+function formatGoalsForPrompt(goals) {
+  if (!goals || goals.length === 0) {
+    return '\n\n=== ЦЕЛИ ПОЛЬЗОВАТЕЛЯ ===\nПока нет целей.\n\nИспользуй эти цели в коучинге. Если нет целей — предложи поставить.\nНе выдумывай цели — только эти или "пока нет целей".';
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const formattedGoals = goals.map(goal => {
+    const deadline = new Date(goal.target_date);
+    deadline.setHours(0, 0, 0, 0);
+
+    const diffTime = deadline - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const dateStr = deadline.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+
+    let status;
+    if (diffDays < 0) {
+      status = `просрочено на ${Math.abs(diffDays)} дн.`;
+    } else if (diffDays === 0) {
+      status = 'сегодня';
+    } else {
+      status = `${diffDays} дн.`;
+    }
+
+    return `• "${goal.title}" — срок: ${dateStr} (${status})`;
+  }).join('\n');
+
+  return `\n\n=== ЦЕЛИ ПОЛЬЗОВАТЕЛЯ ===\n${formattedGoals}\n\nИспользуй эти цели в коучинге. Если нет целей — предложи поставить.\nНе выдумывай цели — только эти или "пока нет целей".`;
+}
+
 // Parse reminder from AI response
 // timezoneOffset: user's timezone offset in minutes (positive for west of UTC, e.g., -180 for Moscow UTC+3)
 function parseReminder(text, timezoneOffset = 0) {
@@ -112,9 +149,20 @@ export default async function handler(req, res) {
 
     // Получить тональность пользователя
     const userTone = await getUserTone(user_id);
-    const systemPrompt = getPromptByTone(userTone);
+    let systemPrompt = getPromptByTone(userTone);
 
-    console.log(`📝 User ${user_id} | Tone: ${userTone} | Message: ${message.substring(0, 50)}...`);
+    // Загрузить активные цели пользователя
+    const { data: userGoals } = await supabase
+      .from('goals')
+      .select('title, target_date')
+      .eq('telegram_user_id', user_id)
+      .eq('status', 'active')
+      .order('target_date', { ascending: true });
+
+    // Добавить блок целей к системному промпту
+    systemPrompt += formatGoalsForPrompt(userGoals);
+
+    console.log(`📝 User ${user_id} | Tone: ${userTone} | Goals: ${userGoals?.length || 0} | Message: ${message.substring(0, 50)}...`);
 
     // Загрузка истории
     const { data: historyData } = await supabase
