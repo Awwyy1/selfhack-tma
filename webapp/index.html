@@ -533,7 +533,7 @@
       }
     }
 
-    /* ========== STORIES ========== */
+    /* ========== ONBOARDING STORIES ========== */
     .story-overlay {
       position: fixed;
       top: 0;
@@ -542,8 +542,7 @@
       bottom: 0;
       background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
       display: none;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
       z-index: 2000;
       opacity: 0;
       transition: opacity 0.5s ease;
@@ -558,41 +557,201 @@
       opacity: 0;
     }
 
-    .story-content {
-      text-align: center;
-      padding: 40px;
-      color: white;
-      max-width: 320px;
-    }
-
-    .story-text {
-      font-size: 24px;
-      font-weight: 600;
-      line-height: 1.4;
-      margin-bottom: 24px;
-    }
-
-    .story-progress {
+    .story-progress-bar {
       display: flex;
-      gap: 8px;
-      justify-content: center;
+      gap: 4px;
+      padding: 16px 12px 8px;
+      padding-top: calc(16px + env(safe-area-inset-top, 0));
     }
 
-    .story-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
+    .story-progress-segment {
+      flex: 1;
+      height: 3px;
       background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+      overflow: hidden;
     }
 
-    .story-dot.active {
+    .story-progress-segment.completed {
       background: white;
     }
 
-    .story-tap {
+    .story-progress-segment.active {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .story-progress-segment.active::after {
+      content: '';
+      display: block;
+      height: 100%;
+      background: white;
+      animation: storyProgress 5s linear forwards;
+    }
+
+    @keyframes storyProgress {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
+
+    .story-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: white;
+      text-align: center;
+    }
+
+    .story-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+
+    .story-title {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 16px;
+      max-width: 300px;
+    }
+
+    .story-subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      line-height: 1.5;
+      max-width: 280px;
+    }
+
+    .story-tap-zones {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+    }
+
+    .story-tap-left,
+    .story-tap-right {
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .story-tap-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      text-align: center;
       font-size: 12px;
-      opacity: 0.7;
-      margin-top: 16px;
+      opacity: 0.6;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* Tone selector in onboarding */
+    .onboarding-tone-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 300px;
+      margin-top: 24px;
+    }
+
+    .onboarding-tone-card {
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .onboarding-tone-card:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .onboarding-tone-card.selected {
+      border-color: white;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .onboarding-tone-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .onboarding-tone-desc {
+      font-size: 12px;
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+
+    .onboarding-tone-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 8px;
+      margin-top: 8px;
+      background: rgba(76, 175, 80, 0.8);
+    }
+
+    .onboarding-tone-badge.premium {
+      background: rgba(255, 152, 0, 0.8);
+    }
+
+    /* CTA button in onboarding */
+    .onboarding-cta {
+      background: white;
+      color: #7B68EE;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 48px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 32px;
+      transition: transform 0.2s;
+    }
+
+    .onboarding-cta:active {
+      transform: scale(0.98);
+    }
+
+    /* GROW methodology visual */
+    .grow-visual {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 24px 0;
+      text-align: left;
+      width: 100%;
+      max-width: 260px;
+    }
+
+    .grow-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+    }
+
+    .grow-letter {
+      font-size: 20px;
+      font-weight: 700;
+      width: 28px;
+    }
+
+    .grow-label {
+      font-size: 14px;
+      opacity: 0.9;
     }
 
     .checkin-button {
@@ -1260,13 +1419,15 @@
     <button class="nav-btn" data-page="profile">Профиль</button>
   </div>
 
-  <!-- STORIES -->
-  <div class="story-overlay" id="story-overlay" onclick="nextStory()">
-    <div class="story-content">
-      <div class="story-text" id="story-text"></div>
-      <div class="story-progress" id="story-progress"></div>
-      <div class="story-tap">Tap to continue</div>
+  <!-- ONBOARDING STORIES -->
+  <div class="story-overlay" id="story-overlay">
+    <div class="story-progress-bar" id="story-progress-bar"></div>
+    <div class="story-content" id="story-content"></div>
+    <div class="story-tap-zones">
+      <div class="story-tap-left" onclick="prevStory()"></div>
+      <div class="story-tap-right" onclick="nextStory()"></div>
     </div>
+    <div class="story-tap-hint">Tap to continue</div>
   </div>
   
   <script>
@@ -1329,49 +1490,223 @@
       checkinDates: []
     };
 
-    // ========== STORIES ==========
-    const stories = [
-      "Каждый день - это новая возможность стать лучше, чем вчера",
-      "Дисциплина - это мост между целями и достижениями",
-      "Маленькие шаги каждый день приводят к большим результатам"
+    // ========== ONBOARDING STORIES ==========
+    const onboardingStories = [
+      {
+        type: 'text',
+        icon: '💬',
+        title: 'Ты получил 10 советов от ChatGPT',
+        subtitle: 'Сколько из них ты применил?'
+      },
+      {
+        type: 'text',
+        icon: '🧠',
+        title: 'Советы не работают',
+        subtitle: 'Потому что это НЕ твои решения. Информация извне не становится действием.'
+      },
+      {
+        type: 'text',
+        icon: '❓',
+        title: 'Коуч не даёт ответы',
+        subtitle: 'Он задаёт вопросы, которые помогают ТЕБЕ найти решение. Твоё решение = твоё действие.'
+      },
+      {
+        type: 'grow',
+        icon: '🎯',
+        title: 'Методология GROW',
+        subtitle: 'От цели к действию через 4 шага'
+      },
+      {
+        type: 'text',
+        icon: '📋',
+        title: 'Ставь цели с дедлайнами',
+        subtitle: 'Коуч напомнит и поможет довести до конца. Цели отображаются в календаре.'
+      },
+      {
+        type: 'text',
+        icon: '🔥',
+        title: 'Ежедневный check-in',
+        subtitle: 'Формирует привычку возвращаться. Не разрывай цепочку — это работает.'
+      },
+      {
+        type: 'text',
+        icon: '🔔',
+        title: 'Напоминания в Telegram',
+        subtitle: 'Коуч отправит напоминание в нужный момент. Прямо в личку.'
+      },
+      {
+        type: 'text',
+        icon: '⚡',
+        title: 'Это будет непривычно',
+        subtitle: 'Вопросы требуют усилий. Но через неделю ты увидишь разницу.'
+      },
+      {
+        type: 'tone-selector',
+        icon: '🎨',
+        title: 'Выбери стиль коуча',
+        subtitle: 'Как он будет с тобой общаться'
+      },
+      {
+        type: 'cta',
+        icon: '🚀',
+        title: 'Готов начать?',
+        subtitle: 'Расскажи, над чем хочешь поработать в ближайшую неделю'
+      }
     ];
 
     let currentStoryIndex = 0;
+    let selectedOnboardingTone = 'baddy';
 
-    function showStories() {
-      const today = new Date().toDateString();
-      const lastStoryDate = localStorage.getItem('lastStoryDate');
-
-      if (lastStoryDate === today) return;
+    function showOnboarding() {
+      // Check if onboarding already completed
+      const onboardingCompleted = localStorage.getItem('onboarding_completed');
+      if (onboardingCompleted === 'true') return;
 
       currentStoryIndex = 0;
-      updateStoryContent();
+      selectedOnboardingTone = 'baddy';
+      renderStory();
       document.getElementById('story-overlay').classList.add('active');
-
-      localStorage.setItem('lastStoryDate', today);
     }
 
-    function updateStoryContent() {
-      document.getElementById('story-text').textContent = stories[currentStoryIndex];
+    function renderStory() {
+      const story = onboardingStories[currentStoryIndex];
+      const contentEl = document.getElementById('story-content');
+      const progressEl = document.getElementById('story-progress-bar');
 
-      const progressHtml = stories.map((_, i) =>
-        `<div class="story-dot ${i <= currentStoryIndex ? 'active' : ''}"></div>`
-      ).join('');
-      document.getElementById('story-progress').innerHTML = progressHtml;
+      // Update progress bar
+      progressEl.innerHTML = onboardingStories.map((_, i) => {
+        let className = 'story-progress-segment';
+        if (i < currentStoryIndex) className += ' completed';
+        else if (i === currentStoryIndex) className += ' active';
+        return `<div class="${className}"></div>`;
+      }).join('');
+
+      // Render content based on type
+      let contentHtml = `<div class="story-icon">${story.icon}</div>`;
+      contentHtml += `<div class="story-title">${story.title}</div>`;
+
+      if (story.type === 'grow') {
+        contentHtml += `
+          <div class="grow-visual">
+            <div class="grow-step"><span class="grow-letter">G</span><span class="grow-label">Goal — Цель</span></div>
+            <div class="grow-step"><span class="grow-letter">R</span><span class="grow-label">Reality — Реальность</span></div>
+            <div class="grow-step"><span class="grow-letter">O</span><span class="grow-label">Options — Варианты</span></div>
+            <div class="grow-step"><span class="grow-letter">W</span><span class="grow-label">Will — Действие</span></div>
+          </div>
+        `;
+      } else if (story.type === 'tone-selector') {
+        contentHtml += `<div class="story-subtitle">${story.subtitle}</div>`;
+        contentHtml += `
+          <div class="onboarding-tone-selector">
+            <div class="onboarding-tone-card ${selectedOnboardingTone === 'focused' ? 'selected' : ''}" onclick="selectOnboardingTone('focused', event)">
+              <div class="onboarding-tone-name">Focused</div>
+              <div class="onboarding-tone-desc">Минимум слов, максимум действий</div>
+              <div class="onboarding-tone-badge">FREE</div>
+            </div>
+            <div class="onboarding-tone-card ${selectedOnboardingTone === 'baddy' ? 'selected' : ''}" onclick="selectOnboardingTone('baddy', event)">
+              <div class="onboarding-tone-name">Baddy</div>
+              <div class="onboarding-tone-desc">Друг, который не даст слиться</div>
+              <div class="onboarding-tone-badge">FREE</div>
+            </div>
+          </div>
+        `;
+        contentHtml += `<button class="onboarding-cta" onclick="advanceFromToneSelector(event)">Продолжить</button>`;
+      } else if (story.type === 'cta') {
+        contentHtml += `<div class="story-subtitle">${story.subtitle}</div>`;
+        contentHtml += `<button class="onboarding-cta" onclick="completeOnboarding(event)">Начать</button>`;
+      } else {
+        contentHtml += `<div class="story-subtitle">${story.subtitle}</div>`;
+      }
+
+      contentEl.innerHTML = contentHtml;
+    }
+
+    function selectOnboardingTone(tone, event) {
+      event.stopPropagation();
+      selectedOnboardingTone = tone;
+
+      // Update UI
+      document.querySelectorAll('.onboarding-tone-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      event.currentTarget.classList.add('selected');
+    }
+
+    function advanceFromToneSelector(event) {
+      event.stopPropagation();
+      currentStoryIndex++;
+      renderStory();
+    }
+
+    function prevStory() {
+      if (currentStoryIndex > 0) {
+        currentStoryIndex--;
+        renderStory();
+      }
     }
 
     function nextStory() {
+      // Don't auto-advance on tone selector or CTA
+      const story = onboardingStories[currentStoryIndex];
+      if (story.type === 'tone-selector' || story.type === 'cta') {
+        return;
+      }
+
       currentStoryIndex++;
 
-      if (currentStoryIndex >= stories.length) {
-        const overlay = document.getElementById('story-overlay');
-        overlay.classList.add('fade-out');
-        setTimeout(() => {
-          overlay.classList.remove('active', 'fade-out');
-        }, 500);
+      if (currentStoryIndex >= onboardingStories.length) {
+        completeOnboarding();
       } else {
-        updateStoryContent();
+        renderStory();
       }
+    }
+
+    async function completeOnboarding(event) {
+      if (event) event.stopPropagation();
+
+      // Save selected tone
+      try {
+        await fetch('/api/tone', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            tone: selectedOnboardingTone
+          })
+        });
+
+        currentTone = selectedOnboardingTone;
+
+        // Update style page UI
+        document.querySelectorAll('.style-card').forEach(card => {
+          card.classList.remove('active');
+        });
+        document.querySelector(`[data-tone="${selectedOnboardingTone}"]`)?.classList.add('active');
+
+        // Update profile
+        const toneNames = { focused: 'Focused', baddy: 'Baddy', mentor: 'Mentor' };
+        document.getElementById('profile-tone').textContent = toneNames[selectedOnboardingTone];
+      } catch (error) {
+        console.error('Save tone error:', error);
+      }
+
+      // Mark onboarding as completed
+      localStorage.setItem('onboarding_completed', 'true');
+
+      // Close overlay
+      const overlay = document.getElementById('story-overlay');
+      overlay.classList.add('fade-out');
+      setTimeout(() => {
+        overlay.classList.remove('active', 'fade-out');
+      }, 500);
+    }
+
+    // Legacy function name for compatibility
+    function showStories() {
+      showOnboarding();
     }
 
     // Calendar state (using GMT)
@@ -2415,11 +2750,17 @@
             addMessage(msg.content, msg.role, msg.created_at);
           });
         } else {
-          addMessage('Привет! Я SelfHack. Чем могу помочь?', 'assistant');
+          // Check if user completed onboarding
+          const onboardingCompleted = localStorage.getItem('onboarding_completed');
+          if (onboardingCompleted === 'true') {
+            addMessage('Привет! Ты прошёл онбординг — значит, готов к работе. Над чем хочешь поработать в ближайшую неделю?', 'assistant');
+          } else {
+            addMessage('Привет! Я твой AI-коуч. Над чем хочешь поработать?', 'assistant');
+          }
         }
       } catch (error) {
         console.error('Load history error:', error);
-        addMessage('Привет! Я SelfHack. Чем могу помочь?', 'assistant');
+        addMessage('Привет! Я твой AI-коуч. Над чем хочешь поработать?', 'assistant');
       }
     }
 
