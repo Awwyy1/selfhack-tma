@@ -631,12 +631,14 @@
       right: 0;
       bottom: 0;
       display: flex;
+      pointer-events: none;
     }
 
     .story-tap-left,
     .story-tap-right {
       flex: 1;
       cursor: pointer;
+      pointer-events: auto;
     }
 
     .story-tap-hint {
@@ -668,6 +670,8 @@
       cursor: pointer;
       transition: all 0.2s;
       text-align: left;
+      position: relative;
+      z-index: 10;
     }
 
     .onboarding-tone-card:hover {
@@ -717,6 +721,8 @@
       cursor: pointer;
       margin-top: 32px;
       transition: transform 0.2s;
+      position: relative;
+      z-index: 10;
     }
 
     .onboarding-cta:active {
