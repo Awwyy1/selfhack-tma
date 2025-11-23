@@ -11,6 +11,12 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fix for Android fullscreen mode safe area handling */
+    html {
+      background: #FAFAFA;
     }
     
     body {
@@ -26,12 +32,14 @@
     
     .header {
       padding: 8px 16px;
-      padding-top: calc(8px + env(safe-area-inset-top, 0));
+      padding-top: calc(8px + var(--tg-safe-area-top, env(safe-area-inset-top, 0px)));
       padding-bottom: 6px;
       background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
       color: white;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
       text-align: center;
+      /* Ensure minimum top padding for Android in fullscreen mode */
+      min-height: 44px;
     }
 
     .header h1 {
@@ -561,7 +569,7 @@
       display: flex;
       gap: 4px;
       padding: 16px 12px 8px;
-      padding-top: calc(16px + env(safe-area-inset-top, 0));
+      padding-top: calc(16px + var(--tg-safe-area-top, env(safe-area-inset-top, 0px)));
     }
 
     .story-progress-segment {
@@ -639,6 +647,10 @@
       flex: 1;
       cursor: pointer;
       pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .story-tap-hint {
@@ -649,7 +661,7 @@
       text-align: center;
       font-size: 12px;
       opacity: 0.6;
-      padding-bottom: env(safe-area-inset-bottom, 0);
+      padding-bottom: var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px));
     }
 
     /* Tone selector in onboarding */
@@ -1108,9 +1120,24 @@
       background: white;
       border-top: 1px solid #E8E4FF;
       padding: 8px 4px;
-      padding-bottom: calc(8px + env(safe-area-inset-bottom, 0));
+      padding-bottom: calc(12px + var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
       box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
       gap: 4px;
+      /* Ensure minimum bottom padding for devices */
+      min-height: 60px;
+      position: relative;
+    }
+
+    /* Extend white background to cover safe area on iPhone X and Android */
+    .navigation::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px));
+      background: white;
+      transform: translateY(100%);
     }
 
     .nav-btn {
@@ -1479,6 +1506,35 @@
     // Disable vertical swipes to close (for better UX in fullscreen)
     if (tg.disableVerticalSwipes) {
       tg.disableVerticalSwipes();
+    }
+
+    // Apply safe area insets from Telegram WebApp API (more reliable than CSS env())
+    function applySafeAreaInsets() {
+      const root = document.documentElement;
+
+      // Get safe area insets from Telegram WebApp
+      if (tg.safeAreaInset) {
+        root.style.setProperty('--tg-safe-area-top', `${tg.safeAreaInset.top || 0}px`);
+        root.style.setProperty('--tg-safe-area-bottom', `${tg.safeAreaInset.bottom || 0}px`);
+        root.style.setProperty('--tg-safe-area-left', `${tg.safeAreaInset.left || 0}px`);
+        root.style.setProperty('--tg-safe-area-right', `${tg.safeAreaInset.right || 0}px`);
+      }
+
+      // Get content safe area insets (additional padding for notches)
+      if (tg.contentSafeAreaInset) {
+        root.style.setProperty('--tg-content-safe-area-top', `${tg.contentSafeAreaInset.top || 0}px`);
+        root.style.setProperty('--tg-content-safe-area-bottom', `${tg.contentSafeAreaInset.bottom || 0}px`);
+      }
+    }
+
+    // Apply on load and when viewport changes
+    applySafeAreaInsets();
+
+    // Listen for safe area changes
+    if (tg.onEvent) {
+      tg.onEvent('safeAreaChanged', applySafeAreaInsets);
+      tg.onEvent('contentSafeAreaChanged', applySafeAreaInsets);
+      tg.onEvent('viewportChanged', applySafeAreaInsets);
     }
 
     // Note: addToHomeScreen moved to Profile page button
