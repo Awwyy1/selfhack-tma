@@ -1076,6 +1076,19 @@
       color: #7B68EE;
     }
 
+    .popup-suggestion {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #E8E4FF;
+    }
+
+    .suggestion-text {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
     /* Scrollable popup for viewing goals on date */
     #view-goal-popup .popup-content {
       max-height: 80vh;
@@ -1329,12 +1342,18 @@
     </div>
   </div>
 
-  <!-- ПОПАП ЦЕЛЬ СОХРАНЕНА -->
+  <!-- ПОПАП ЦЕЛЬ СОХРАНЕНА С ПРЕДЛОЖЕНИЕМ КОУЧА -->
   <div class="popup" id="goal-saved-popup">
     <div class="popup-content">
       <div class="popup-title">Цель добавлена!</div>
       <div class="popup-text" id="goal-saved-text">Цель зафиксирована в календаре раздела чекин, желаем вам достигнуть её</div>
-      <button class="popup-close" onclick="closePopup()">Отлично!</button>
+      <div class="popup-suggestion" id="coach-suggestion">
+        <div class="suggestion-text">Хочешь обсудить план достижения с коучем?</div>
+        <div class="popup-buttons">
+          <button class="popup-btn secondary" onclick="closePopup()">Не сейчас</button>
+          <button class="popup-btn primary" onclick="goToChatWithGoal()">Обсудить</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2150,8 +2169,11 @@
           renderGoals();
           closePopup();
 
-          // Show confirmation if goal has a date
+          // Show confirmation with coach suggestion
           if (targetDate) {
+            // Save goal text for coach suggestion
+            lastCreatedGoal = text;
+
             setTimeout(() => {
               // Show the goal text in confirmation popup
               const date = new Date(targetDate);
@@ -2159,7 +2181,7 @@
               const month = monthNames[date.getUTCMonth()].toLowerCase();
               const year = date.getUTCFullYear();
               document.getElementById('goal-saved-text').innerHTML =
-                `<strong>"${text}"</strong><br><br>Цель зафиксирована на ${day} ${month} ${year} в календаре раздела чекин. Желаем вам достигнуть её!`;
+                `<strong>"${text}"</strong><br><br>Цель зафиксирована на ${day} ${month} ${year} в календаре раздела чекин.`;
               document.getElementById('goal-saved-popup').classList.add('active');
             }, 300);
           }
@@ -2201,8 +2223,35 @@
       }
     }
 
+    // Go to chat with the last created goal to discuss plan
+    function goToChatWithGoal() {
+      if (!lastCreatedGoal) {
+        closePopup();
+        return;
+      }
+
+      closePopup();
+
+      // Navigate to chat page
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-page="chat"]').classList.add('active');
+      document.getElementById('chat-page').classList.add('active');
+
+      // Set message in input and send it
+      const goalMessage = `Я поставил цель: "${lastCreatedGoal}". Помоги составить план её достижения.`;
+      messageInput.value = goalMessage;
+
+      // Small delay to ensure navigation completes
+      setTimeout(() => {
+        sendMessage();
+        lastCreatedGoal = null;
+      }, 100);
+    }
+
     // Goal validation system
     let currentValidationGoal = null;
+    let lastCreatedGoal = null; // For coach suggestion after goal creation
 
     // Check if any goals need validation on app load
     function checkGoalsForValidation() {

@@ -62,6 +62,16 @@ export default async function handler(req, res) {
 
     const tone = await getUserTone(user_id);
 
+    // Update last_seen timestamp for user activity tracking
+    await supabase
+      .from('user_preferences')
+      .upsert({
+        telegram_user_id: user_id,
+        last_seen: new Date().toISOString()
+      }, {
+        onConflict: 'telegram_user_id'
+      });
+
     // Extract all check-in dates for calendar display
     const checkinDates = allCheckins ? allCheckins.map(c => c.checkin_date) : [];
 
