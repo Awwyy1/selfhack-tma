@@ -1,3049 +1,3274 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>SelfHack AI Coach</title>
-  <link rel="manifest" href="/manifest.json">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    /* Fix for Android fullscreen mode safe area handling */
-    html {
-      background: #FAFAFA;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #FAFAFA;
-      color: #2D1B69;
-      height: 100vh;
-      height: var(--tg-viewport-stable-height, 100vh);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    
-    .header {
-      padding: 8px 16px;
-      padding-top: calc(8px + var(--tg-safe-area-top, env(safe-area-inset-top, 0px)));
-      padding-bottom: 6px;
-      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
-      color: white;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-      text-align: center;
-      /* Ensure minimum top padding for Android in fullscreen mode */
-      min-height: 44px;
-    }
-
-    .header h1 {
-      font-size: 20px;
-      margin: 0;
-      font-weight: 700;
-    }
-    
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      position: relative;
-    }
-    
-    .page {
-      display: none;
-      height: 100%;
-    }
-    
-    .page.active {
-      display: block;
-    }
-    
-    /* ========== ЧАТ ========== */
-    #chat-page {
-      flex-direction: column;
-      padding: 0;
-    }
-
-    #chat-page.active {
-      display: flex;
-    }
-    
-    #chat-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-    }
-    
-    .message {
-      margin-bottom: 12px;
-      padding: 12px 16px;
-      border-radius: 16px;
-      width: fit-content;
-      max-width: 75%;
-      word-wrap: break-word;
-    }
-    
-    .message.user {
-      background: #7B68EE;
-      color: white;
-      margin-left: auto;
-      border-bottom-right-radius: 4px;
-    }
-    
-    .message.assistant {
-      background: #E8E4FF;
-      color: #2D1B69;
-      border-bottom-left-radius: 4px;
-    }
-
-    .message-time {
-      font-size: 10px;
-      color: #999;
-      margin-top: 4px;
-      text-align: right;
-    }
-
-    .message.assistant .message-time {
-      text-align: left;
-    }
-
-    /* Typing indicator */
-    .typing-indicator {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      background: #E8E4FF;
-      border-radius: 16px;
-      border-bottom-left-radius: 4px;
-      width: fit-content;
-      margin-bottom: 12px;
-    }
-
-    .typing-indicator .dot {
-      width: 8px;
-      height: 8px;
-      background: #7B68EE;
-      border-radius: 50%;
-      margin: 0 2px;
-      animation: typingBounce 1.4s ease-in-out infinite;
-    }
-
-    .typing-indicator .dot:nth-child(1) {
-      animation-delay: 0s;
-    }
-
-    .typing-indicator .dot:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-
-    .typing-indicator .dot:nth-child(3) {
-      animation-delay: 0.4s;
-    }
-
-    @keyframes typingBounce {
-      0%, 60%, 100% {
-        transform: translateY(0);
-        opacity: 0.4;
-      }
-      30% {
-        transform: translateY(-4px);
-        opacity: 1;
-      }
-    }
-
-    .chat-day-divider {
-      text-align: center;
-      padding: 16px 0;
-      font-size: 12px;
-      color: #999;
-    }
-
-    .chat-day-divider span {
-      background: #FAFAFA;
-      padding: 4px 12px;
-      border-radius: 12px;
-    }
-
-    .load-more-container {
-      text-align: center;
-      padding: 12px 0;
-    }
-
-    .load-more-btn {
-      background: #F0EDFF;
-      color: #7B68EE;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 16px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .load-more-btn:hover {
-      background: #E8E4FF;
-    }
-
-    .load-more-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .input-area {
-      padding: 12px;
-      background: white;
-      display: flex;
-      gap: 8px;
-      border-top: 1px solid #E8E4FF;
-      align-items: flex-end;
-    }
-    
-    #message-input {
-      flex: 1;
-      padding: 12px 16px;
-      border: 1px solid #E8E4FF;
-      border-radius: 24px;
-      background: #FAFAFA;
-      color: #2D1B69;
-      font-size: 16px;
-      resize: none;
-      overflow-y: hidden;
-      min-height: 48px;
-      max-height: 120px;
-      line-height: 1.4;
-      font-family: inherit;
-    }
-    
-    #send-btn {
-      width: 48px;
-      height: 48px;
-      border: none;
-      border-radius: 50%;
-      background: #7B68EE;
-      color: white;
-      font-size: 20px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    
-    #send-btn:active {
-      background: #6A58DD;
-    }
-    
-    /* ========== ЧЕКИН ========== */
-    #checkin-page {
-      padding: 16px;
-      text-align: center;
-      overflow-y: auto;
-    }
-
-    .streak-container {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    .streak-label {
-      font-size: 16px;
-      color: #7B68EE;
-      margin-bottom: 8px;
-      font-weight: 600;
-      animation: subtlePulse 3s ease-in-out infinite;
-    }
-
-    .streak-value {
-      font-size: 32px;
-      font-weight: 700;
-      color: #7B68EE;
-      animation: subtlePulse 3s ease-in-out infinite;
-    }
-
-    .streak-value span {
-      font-size: 18px;
-      font-weight: 600;
-      color: #7B68EE;
-    }
-
-    @keyframes subtlePulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-
-    .calendar-container {
-      background: white;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    .calendar-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-
-    .calendar-nav {
-      width: 36px;
-      height: 36px;
-      border: 1px solid #E8E4FF;
-      border-radius: 8px;
-      background: white;
-      color: #7B68EE;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .calendar-nav:hover {
-      background: #F5F3FF;
-    }
-
-    .calendar-nav:active {
-      background: #E8E4FF;
-    }
-
-    .calendar-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #2D1B69;
-    }
-
-    .calendar-weekdays {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-      margin-bottom: 8px;
-    }
-
-    .calendar-weekday {
-      font-size: 11px;
-      color: #999;
-      text-align: center;
-      padding: 4px;
-      font-weight: 500;
-    }
-
-    .calendar-days {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-    }
-
-    .calendar-day {
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      border-radius: 50%;
-      color: #2D1B69;
-    }
-
-    .calendar-day.other-month {
-      color: #CCC;
-    }
-
-    .calendar-day.checked {
-      background: #7B68EE;
-      color: white;
-    }
-
-    .calendar-day.today {
-      border: 2px solid #7B68EE;
-    }
-
-    .calendar-day.today.checked {
-      border: 2px solid #5A4AD0;
-    }
-
-    /* Goal indicators in calendar */
-    .calendar-day.has-goal {
-      box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.4);
-      cursor: pointer;
-      animation: goalPulse 2s ease-in-out infinite;
-    }
-
-    .calendar-day.has-goal:hover {
-      box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.7);
-    }
-
-    .calendar-day.goal-achieved {
-      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.6);
-      animation: none;
-    }
-
-    .calendar-day.goal-extended {
-      box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.6);
-      animation: none;
-    }
-
-    .calendar-day.goal-pending {
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
-      animation: pendingPulse 1.5s ease-in-out infinite;
-    }
-
-    .calendar-day.goal-overdue {
-      box-shadow: 0 0 0 2px rgba(255, 82, 82, 0.7);
-      animation: none;
-    }
-
-    .calendar-day.goal-failed {
-      box-shadow: 0 0 0 2px rgba(158, 158, 158, 0.6);
-      animation: none;
-    }
-
-    @keyframes goalPulse {
-      0%, 100% { box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.4); }
-      50% { box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.7); }
-    }
-
-    @keyframes pendingPulse {
-      0%, 100% { box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.4); }
-      50% { box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.8); }
-    }
-
-    /* Goal card statuses */
-    .goal-item.achieved {
-      border-left-color: #4CAF50;
-      background: #F1F8E9;
-    }
-
-    .goal-item.extended {
-      border-left-color: #FFC107;
-    }
-
-    .goal-item.failed {
-      border-left-color: #9E9E9E;
-      opacity: 0.7;
-    }
-
-    .goal-item.overdue {
-      border-left-color: #FF5252;
-      background: #FFF5F5;
-    }
-
-    .goal-item.needs-validation {
-      animation: cardPulse 2s ease-in-out infinite;
-      border-left-color: #FF9800;
-    }
-
-    @keyframes cardPulse {
-      0%, 100% { box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3); }
-      50% { box-shadow: 0 4px 16px rgba(255, 152, 0, 0.5); }
-    }
-
-    .goal-status {
-      font-size: 11px;
-      margin-top: 6px;
-      font-weight: 600;
-    }
-
-    .goal-status.achieved {
-      color: #4CAF50;
-    }
-
-    .goal-status.extended {
-      color: #FF9800;
-    }
-
-    .goal-status.failed {
-      color: #9E9E9E;
-    }
-
-    .goal-status.overdue {
-      color: #FF5252;
-    }
-
-    .goal-validation-buttons {
-      display: flex;
-      gap: 6px;
-      margin-top: 10px;
-    }
-
-    .goal-validation-btn {
-      flex: 1;
-      padding: 8px 4px;
-      border: none;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .goal-validation-btn.achieved {
-      background: #E8F5E9;
-      color: #4CAF50;
-    }
-
-    .goal-validation-btn.achieved:hover {
-      background: #C8E6C9;
-    }
-
-    .goal-validation-btn.extend {
-      background: #FFF3E0;
-      color: #FF9800;
-    }
-
-    .goal-validation-btn.extend:hover {
-      background: #FFE0B2;
-    }
-
-    .goal-validation-btn.failed {
-      background: #FAFAFA;
-      color: #9E9E9E;
-    }
-
-    .goal-validation-btn.failed:hover {
-      background: #F5F5F5;
-    }
-
-    /* Confetti animation */
-    .confetti-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 3000;
-      overflow: hidden;
-    }
-
-    .confetti {
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      opacity: 0;
-      animation: confettiFall 3s ease-out forwards;
-    }
-
-    @keyframes confettiFall {
-      0% {
-        transform: translateY(-100px) rotate(0deg);
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(100vh) rotate(720deg);
-        opacity: 0;
-      }
-    }
-
-    /* ========== ONBOARDING STORIES ========== */
-    .story-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
-      display: none;
-      flex-direction: column;
-      z-index: 2000;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
-    .story-overlay.active {
-      display: flex;
-      opacity: 1;
-    }
-
-    .story-overlay.fade-out {
-      opacity: 0;
-    }
-
-    .story-progress-bar {
-      display: flex;
-      gap: 4px;
-      padding: 16px 12px 8px;
-      padding-top: calc(16px + var(--tg-safe-area-top, env(safe-area-inset-top, 0px)));
-    }
-
-    .story-progress-segment {
-      flex: 1;
-      height: 3px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
-    .story-progress-segment.completed {
-      background: white;
-    }
-
-    .story-progress-segment.active {
-      background: rgba(255, 255, 255, 0.3);
-    }
-
-    .story-progress-segment.active::after {
-      content: '';
-      display: block;
-      height: 100%;
-      background: white;
-      animation: storyProgress 5s linear forwards;
-    }
-
-    @keyframes storyProgress {
-      from { width: 0%; }
-      to { width: 100%; }
-    }
-
-    .story-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      color: white;
-      text-align: center;
-    }
-
-    .story-icon {
-      font-size: 64px;
-      margin-bottom: 24px;
-    }
-
-    .story-title {
-      font-size: 28px;
-      font-weight: 700;
-      line-height: 1.3;
-      margin-bottom: 16px;
-      max-width: 300px;
-    }
-
-    .story-subtitle {
-      font-size: 16px;
-      opacity: 0.9;
-      line-height: 1.5;
-      max-width: 280px;
-    }
-
-    .story-tap-zones {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      pointer-events: none;
-    }
-
-    .story-tap-left,
-    .story-tap-right {
-      flex: 1;
-      cursor: pointer;
-      pointer-events: auto;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-
-    .story-tap-hint {
-      position: absolute;
-      bottom: 40px;
-      left: 0;
-      right: 0;
-      text-align: center;
-      font-size: 12px;
-      opacity: 0.6;
-      padding-bottom: var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px));
-    }
-
-    /* Tone selector in onboarding */
-    .onboarding-tone-selector {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      width: 100%;
-      max-width: 300px;
-      margin-top: 24px;
-    }
-
-    .onboarding-tone-card {
-      background: rgba(255, 255, 255, 0.15);
-      border: 2px solid transparent;
-      border-radius: 12px;
-      padding: 16px;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: left;
-      position: relative;
-      z-index: 10;
-    }
-
-    .onboarding-tone-card:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
-
-    .onboarding-tone-card.selected {
-      border-color: white;
-      background: rgba(255, 255, 255, 0.25);
-    }
-
-    .onboarding-tone-name {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .onboarding-tone-desc {
-      font-size: 12px;
-      opacity: 0.8;
-      line-height: 1.4;
-    }
-
-    .onboarding-tone-badge {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 8px;
-      margin-top: 8px;
-      background: rgba(76, 175, 80, 0.8);
-    }
-
-    .onboarding-tone-badge.premium {
-      background: rgba(255, 152, 0, 0.8);
-    }
-
-    /* CTA button in onboarding */
-    .onboarding-cta {
-      background: white;
-      color: #7B68EE;
-      border: none;
-      border-radius: 12px;
-      padding: 16px 48px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 32px;
-      transition: transform 0.2s;
-      position: relative;
-      z-index: 10;
-    }
-
-    .onboarding-cta:active {
-      transform: scale(0.98);
-    }
-
-    /* GROW methodology visual */
-    .grow-visual {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin: 24px 0;
-      text-align: left;
-      width: 100%;
-      max-width: 260px;
-    }
-
-    .grow-step {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
-    }
-
-    .grow-letter {
-      font-size: 20px;
-      font-weight: 700;
-      width: 28px;
-    }
-
-    .grow-label {
-      font-size: 14px;
-      opacity: 0.9;
-    }
-
-    .checkin-button {
-      width: 100%;
-      padding: 16px;
-      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(123, 104, 238, 0.3);
-      transition: all 0.2s;
-    }
-
-    .checkin-button:active {
-      transform: scale(0.98);
-    }
-
-    .checkin-button:disabled {
-      background: #CCC;
-      box-shadow: none;
-    }
-
-    .checkin-motivation {
-      font-size: 12px;
-      color: #999;
-      font-style: italic;
-      margin-top: 12px;
-    }
-    
-    /* ========== СТИЛЬ ========== */
-    #style-page {
-      padding: 16px;
-    }
-    
-    .style-card {
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 16px;
-      border: 2px solid #E8E4FF;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .style-card:hover {
-      border-color: #7B68EE;
-      box-shadow: 0 4px 12px rgba(123, 104, 238, 0.15);
-    }
-    
-    .style-card.active {
-      border-color: #7B68EE;
-      background: #F5F3FF;
-    }
-    
-    .style-card h3 {
-      color: #7B68EE;
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-    
-    .style-card p {
-      color: #666;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-    
-    .style-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      background: #7B68EE;
-      color: white;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-    
-    .style-badge.free {
-      background: #4CAF50;
-    }
-    
-    .style-badge.premium {
-      background: #FF9800;
-    }
-    
-    /* ========== ЦЕЛИ ========== */
-    #goals-page {
-      padding: 16px;
-    }
-
-    .goal-item {
-      background: white;
-      border-radius: 12px;
-      padding: 16px;
-      padding-right: 36px;
-      margin-bottom: 12px;
-      border-left: 4px solid #7B68EE;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      position: relative;
-    }
-
-    .goal-text {
-      font-size: 14px;
-      color: #2D1B69;
-      line-height: 1.4;
-    }
-
-    .goal-date {
-      font-size: 11px;
-      color: #999;
-      margin-top: 6px;
-    }
-
-    .goal-delete {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 20px;
-      height: 20px;
-      border: none;
-      background: transparent;
-      color: #CCC;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: all 0.2s;
-    }
-
-    .goal-delete:hover {
-      color: #999;
-      background: #F5F5F5;
-    }
-
-    .add-goal {
-      background: #E8E4FF;
-      border: 2px dashed #7B68EE;
-      border-radius: 12px;
-      padding: 16px;
-      margin-top: 16px;
-      text-align: center;
-      color: #7B68EE;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .goals-empty {
-      text-align: center;
-      padding: 32px 16px;
-      color: #999;
-      font-size: 14px;
-    }
-    
-    /* ========== ПРОФИЛЬ ========== */
-    #profile-page {
-      padding: 16px;
-    }
-    
-    .profile-section {
-      background: white;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    
-    .profile-section h3 {
-      color: #7B68EE;
-      font-size: 16px;
-      margin-bottom: 12px;
-    }
-    
-    .profile-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #F5F5F5;
-    }
-    
-    .profile-row:last-child {
-      border-bottom: none;
-    }
-    
-    .profile-label {
-      color: #666;
-      font-size: 14px;
-    }
-    
-    .profile-value {
-      color: #2D1B69;
-      font-weight: 600;
-      font-size: 14px;
-    }
-    
-    /* ========== ПОПАП ========== */
-    .popup {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    
-    .popup.active {
-      display: flex;
-    }
-    
-    .popup-content {
-      background: white;
-      border-radius: 20px;
-      padding: 32px 24px;
-      margin: 20px;
-      text-align: center;
-      max-width: 320px;
-    }
-
-    .popup-content.large {
-      max-width: 368px;
-      padding: 36px 28px;
-    }
-
-    .popup-content.large .popup-input {
-      padding: 14px;
-      font-size: 15px;
-    }
-
-    .popup-content.large textarea.popup-input {
-      height: 92px;
-    }
-    
-    .popup-icon {
-      font-size: 64px;
-      margin-bottom: 16px;
-    }
-    
-    .popup-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #7B68EE;
-      margin-bottom: 12px;
-    }
-    
-    .popup-text {
-      font-size: 16px;
-      color: #666;
-      line-height: 1.5;
-      margin-bottom: 24px;
-    }
-    
-    .popup-close {
-      background: #7B68EE;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      padding: 12px 32px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .popup-input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #E8E4FF;
-      border-radius: 8px;
-      font-size: 14px;
-      margin-bottom: 12px;
-      color: #2D1B69;
-    }
-
-    .popup-input:focus {
-      outline: none;
-      border-color: #7B68EE;
-    }
-
-    .popup-label {
-      font-size: 12px;
-      color: #666;
-      text-align: left;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .popup-buttons {
-      display: flex;
-      gap: 8px;
-      margin-top: 16px;
-    }
-
-    .popup-btn {
-      flex: 1;
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-    }
-
-    .popup-btn.primary {
-      background: #7B68EE;
-      color: white;
-    }
-
-    .popup-btn.secondary {
-      background: #E8E4FF;
-      color: #7B68EE;
-    }
-
-    .popup-suggestion {
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid #E8E4FF;
-    }
-
-    .suggestion-text {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-
-    /* Scrollable popup for viewing goals on date */
-    #view-goal-popup .popup-content {
-      max-height: 80vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #view-goal-popup .popup-text {
-      max-height: 50vh;
-      overflow-y: auto;
-      margin-bottom: 16px;
-    }
-    
-    /* ========== НАВИГАЦИЯ ========== */
-    .navigation {
-      display: flex;
-      background: white;
-      border-top: 1px solid #E8E4FF;
-      padding: 8px 4px;
-      padding-bottom: calc(12px + var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
-      box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
-      gap: 4px;
-      /* Ensure minimum bottom padding for devices */
-      min-height: 60px;
-      position: relative;
-    }
-
-    /* Extend white background to cover safe area on iPhone X and Android */
-    .navigation::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px));
-      background: white;
-      transform: translateY(100%);
-    }
-
-    .nav-btn {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 4px;
-      border: none;
-      background: transparent;
-      color: #999;
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border-radius: 8px;
-    }
-
-    .nav-btn:hover {
-      color: #7B68EE;
-      background: rgba(123, 104, 238, 0.05);
-    }
-
-    .nav-btn.active {
-      color: #7B68EE;
-      font-weight: 600;
-      background: rgba(123, 104, 238, 0.1);
-      box-shadow: 0 0 8px rgba(123, 104, 238, 0.15);
-    }
-
-    /* ========== SUPPORT BUTTON ========== */
-    .support-btn {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: all 0.2s;
-    }
-
-    .support-btn:active {
-      transform: scale(0.98);
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>SelfHack AI Coach</title>
+  <link rel="manifest" href="/manifest.json">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ========== CSS VARIABLES FOR THEMING ========== */
+    :root {
+      /* Light theme colors */
+      --bg-primary: #FAFAFA;
+      --bg-secondary: #FFFFFF;
+      --bg-tertiary: #F5F3FF;
+      --bg-input: #FAFAFA;
+
+      --text-primary: #2D1B69;
+      --text-secondary: #666;
+      --text-tertiary: #999;
+      --text-muted: #CCC;
+
+      --accent-primary: #7B68EE;
+      --accent-secondary: #9D8EFF;
+      --accent-light: #E8E4FF;
+      --accent-lighter: #F0EDFF;
+      --accent-dark: #6A58DD;
+      --accent-darker: #5A4AD0;
+
+      --border-color: #E8E4FF;
+      --border-light: #F5F5F5;
+
+      --shadow-color: rgba(0, 0, 0, 0.05);
+      --shadow-medium: rgba(0, 0, 0, 0.08);
+
+      --success: #4CAF50;
+      --success-light: #E8F5E9;
+      --success-lighter: #F1F8E9;
+      --success-medium: #C8E6C9;
+
+      --warning: #FF9800;
+      --warning-light: #FFF3E0;
+      --warning-alt: #FFC107;
+
+      --error: #FF5252;
+      --error-light: #FFF5F5;
+
+      --info: #9E9E9E;
+    }
+
+    /* ========== DARK MODE COLORS ========== */
+    body.dark-mode {
+      --bg-primary: #1A1A1A;
+      --bg-secondary: #242424;
+      --bg-tertiary: #2D2447;
+      --bg-input: #2A2A2A;
+
+      --text-primary: #E8E4FF;
+      --text-secondary: #B8B8B8;
+      --text-tertiary: #888888;
+      --text-muted: #555555;
+
+      --accent-primary: #9D8EFF;
+      --accent-secondary: #B8A8FF;
+      --accent-light: #3A2F5C;
+      --accent-lighter: #2D2447;
+      --accent-dark: #8878DD;
+      --accent-darker: #7B68EE;
+
+      --border-color: #3A3A3A;
+      --border-light: #2E2E2E;
+
+      --shadow-color: rgba(0, 0, 0, 0.3);
+      --shadow-medium: rgba(0, 0, 0, 0.4);
+
+      --success: #66BB6A;
+      --success-light: #1E3A1F;
+      --success-lighter: #264428;
+      --success-medium: #2D5230;
+
+      --warning: #FFA726;
+      --warning-light: #3A2F1A;
+      --warning-alt: #FFD54F;
+
+      --error: #EF5350;
+      --error-light: #3A1F1F;
+
+      --info: #BDBDBD;
+    }
+
+    /* Fix for Android fullscreen mode safe area handling */
+    html {
+      background: var(--bg-primary);
+      transition: background-color 0.3s ease;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      height: var(--tg-viewport-stable-height, 100vh);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .header {
+      padding: 8px 16px;
+      padding-top: calc(8px + var(--tg-safe-area-top, env(safe-area-inset-top, 0px)));
+      padding-bottom: 6px;
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      color: white;
+      box-shadow: 0 2px 6px var(--shadow-medium);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      /* Ensure minimum top padding for Android in fullscreen mode */
+      min-height: 44px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    /* Theme toggle button */
+    .theme-toggle {
+      position: absolute;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .theme-toggle:active {
+      transform: scale(0.95);
+    }
+    
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      position: relative;
+    }
+    
+    .page {
+      display: none;
+      height: 100%;
+    }
+    
+    .page.active {
+      display: block;
+    }
+    
+    /* ========== ЧАТ ========== */
+    #chat-page {
+      flex-direction: column;
+      padding: 0;
+    }
+
+    #chat-page.active {
+      display: flex;
+    }
+    
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    
+    .message {
+      margin-bottom: 12px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      width: fit-content;
+      max-width: 75%;
+      word-wrap: break-word;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .message.user {
+      background: var(--accent-primary);
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.assistant {
+      background: var(--accent-light);
+      color: var(--text-primary);
+      border-bottom-left-radius: 4px;
+    }
+
+    .message-time {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    .message.assistant .message-time {
+      text-align: left;
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--accent-light);
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+      margin-bottom: 12px;
+      transition: background-color 0.3s ease;
+    }
+
+    .typing-indicator .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-primary);
+      border-radius: 50%;
+      margin: 0 2px;
+      animation: typingBounce 1.4s ease-in-out infinite;
+    }
+
+    .typing-indicator .dot:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .typing-indicator .dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-indicator .dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+      30% {
+        transform: translateY(-4px);
+        opacity: 1;
+      }
+    }
+
+    .chat-day-divider {
+      text-align: center;
+      padding: 16px 0;
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .chat-day-divider span {
+      background: var(--bg-primary);
+      padding: 4px 12px;
+      border-radius: 12px;
+      transition: background-color 0.3s ease;
+    }
+
+    .load-more-container {
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    .load-more-btn {
+      background: var(--accent-lighter);
+      color: var(--accent-primary);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 16px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .load-more-btn:hover {
+      background: var(--accent-light);
+    }
+
+    .load-more-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .input-area {
+      padding: 12px;
+      background: var(--bg-secondary);
+      display: flex;
+      gap: 8px;
+      border-top: 1px solid var(--border-color);
+      align-items: flex-end;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-size: 16px;
+      resize: none;
+      overflow-y: hidden;
+      min-height: 48px;
+      max-height: 120px;
+      line-height: 1.4;
+      font-family: inherit;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    #send-btn {
+      width: 48px;
+      height: 48px;
+      border: none;
+      border-radius: 50%;
+      background: var(--accent-primary);
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    #send-btn:active {
+      background: var(--accent-dark);
+    }
+    
+    /* ========== ЧЕКИН ========== */
+    #checkin-page {
+      padding: 16px;
+      text-align: center;
+      overflow-y: auto;
+    }
+
+    .streak-container {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px var(--shadow-color);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .streak-label {
+      font-size: 16px;
+      color: var(--accent-primary);
+      margin-bottom: 8px;
+      font-weight: 600;
+      animation: subtlePulse 3s ease-in-out infinite;
+    }
+
+    .streak-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent-primary);
+      animation: subtlePulse 3s ease-in-out infinite;
+    }
+
+    .streak-value span {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--accent-primary);
+    }
+
+    @keyframes subtlePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .calendar-container {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px var(--shadow-color);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .calendar-nav {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      color: var(--accent-primary);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .calendar-nav:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .calendar-nav:active {
+      background: var(--accent-light);
+    }
+
+    .calendar-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      transition: color 0.3s ease;
+    }
+
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .calendar-weekday {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-align: center;
+      padding: 4px;
+      font-weight: 500;
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      border-radius: 50%;
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+    }
+
+    .calendar-day.other-month {
+      color: var(--text-muted);
+    }
+
+    .calendar-day.checked {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .calendar-day.today {
+      border: 2px solid var(--accent-primary);
+    }
+
+    .calendar-day.today.checked {
+      border: 2px solid var(--accent-darker);
+    }
+
+    /* Goal indicators in calendar */
+    .calendar-day.has-goal {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+      cursor: pointer;
+      animation: goalPulse 2s ease-in-out infinite;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .calendar-day.has-goal:hover {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 70%, transparent);
+    }
+
+    .calendar-day.goal-achieved {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 60%, transparent);
+      animation: none;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .calendar-day.goal-extended {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--warning-alt) 60%, transparent);
+      animation: none;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .calendar-day.goal-pending {
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+      animation: pendingPulse 1.5s ease-in-out infinite;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .calendar-day.goal-overdue {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--error) 70%, transparent);
+      animation: none;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .calendar-day.goal-failed {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 60%, transparent);
+      animation: none;
+      transition: box-shadow 0.3s ease;
+    }
+
+    @keyframes goalPulse {
+      0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 40%, transparent); }
+      50% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 70%, transparent); }
+    }
+
+    @keyframes pendingPulse {
+      0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--warning-alt) 40%, transparent); }
+      50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning-alt) 80%, transparent); }
+    }
+
+    /* Goal card statuses */
+    .goal-item.achieved {
+      border-left-color: var(--success);
+      background: var(--success-lighter);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .goal-item.extended {
+      border-left-color: var(--warning-alt);
+      transition: border-color 0.3s ease;
+    }
+
+    .goal-item.failed {
+      border-left-color: var(--info);
+      opacity: 0.7;
+      transition: border-color 0.3s ease;
+    }
+
+    .goal-item.overdue {
+      border-left-color: var(--error);
+      background: var(--error-light);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .goal-item.needs-validation {
+      animation: cardPulse 2s ease-in-out infinite;
+      border-left-color: var(--warning);
+      transition: border-color 0.3s ease;
+    }
+
+    @keyframes cardPulse {
+      0%, 100% { box-shadow: 0 2px 8px color-mix(in srgb, var(--warning) 30%, transparent); }
+      50% { box-shadow: 0 4px 16px color-mix(in srgb, var(--warning) 50%, transparent); }
+    }
+
+    .goal-status {
+      font-size: 11px;
+      margin-top: 6px;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    .goal-status.achieved {
+      color: var(--success);
+    }
+
+    .goal-status.extended {
+      color: var(--warning);
+    }
+
+    .goal-status.failed {
+      color: var(--info);
+    }
+
+    .goal-status.overdue {
+      color: var(--error);
+    }
+
+    .goal-validation-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .goal-validation-btn {
+      flex: 1;
+      padding: 8px 4px;
+      border: none;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .goal-validation-btn.achieved {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .goal-validation-btn.achieved:hover {
+      background: var(--success-medium);
+    }
+
+    .goal-validation-btn.extend {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+
+    .goal-validation-btn.extend:hover {
+      background: color-mix(in srgb, var(--warning-light) 80%, var(--warning) 20%);
+    }
+
+    .goal-validation-btn.failed {
+      background: var(--bg-primary);
+      color: var(--info);
+    }
+
+    .goal-validation-btn.failed:hover {
+      background: var(--border-light);
+    }
+
+    /* Confetti animation */
+    .confetti-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 3000;
+      overflow: hidden;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      opacity: 0;
+      animation: confettiFall 3s ease-out forwards;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    /* ========== ONBOARDING STORIES ========== */
+    .story-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      display: none;
+      flex-direction: column;
+      z-index: 2000;
+      opacity: 0;
+      transition: opacity 0.5s ease, background 0.3s ease;
+    }
+
+    .story-overlay.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .story-overlay.fade-out {
+      opacity: 0;
+    }
+
+    .story-progress-bar {
+      display: flex;
+      gap: 4px;
+      padding: 16px 12px 8px;
+      padding-top: calc(16px + var(--tg-safe-area-top, env(safe-area-inset-top, 0px)));
+    }
+
+    .story-progress-segment {
+      flex: 1;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .story-progress-segment.completed {
+      background: white;
+    }
+
+    .story-progress-segment.active {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .story-progress-segment.active::after {
+      content: '';
+      display: block;
+      height: 100%;
+      background: white;
+      animation: storyProgress 5s linear forwards;
+    }
+
+    @keyframes storyProgress {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
+
+    .story-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: white;
+      text-align: center;
+    }
+
+    .story-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+
+    .story-title {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 16px;
+      max-width: 300px;
+    }
+
+    .story-subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      line-height: 1.5;
+      max-width: 280px;
+    }
+
+    .story-tap-zones {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      pointer-events: none;
+    }
+
+    .story-tap-left,
+    .story-tap-right {
+      flex: 1;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .story-tap-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.6;
+      padding-bottom: var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Tone selector in onboarding */
+    .onboarding-tone-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 300px;
+      margin-top: 24px;
+    }
+
+    .onboarding-tone-card {
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      position: relative;
+      z-index: 10;
+    }
+
+    .onboarding-tone-card:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .onboarding-tone-card.selected {
+      border-color: white;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .onboarding-tone-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .onboarding-tone-desc {
+      font-size: 12px;
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+
+    .onboarding-tone-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 8px;
+      margin-top: 8px;
+      background: color-mix(in srgb, var(--success) 80%, transparent);
+      transition: background 0.3s ease;
+    }
+
+    .onboarding-tone-badge.premium {
+      background: color-mix(in srgb, var(--warning) 80%, transparent);
+    }
+
+    /* CTA button in onboarding */
+    .onboarding-cta {
+      background: white;
+      color: var(--accent-primary);
+      border: none;
+      border-radius: 12px;
+      padding: 16px 48px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 32px;
+      transition: transform 0.2s, color 0.3s ease;
+      position: relative;
+      z-index: 10;
+    }
+
+    .onboarding-cta:active {
+      transform: scale(0.98);
+    }
+
+    /* GROW methodology visual */
+    .grow-visual {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 24px 0;
+      text-align: left;
+      width: 100%;
+      max-width: 260px;
+    }
+
+    .grow-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+    }
+
+    .grow-letter {
+      font-size: 20px;
+      font-weight: 700;
+      width: 28px;
+    }
+
+    .grow-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .checkin-button {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+      transition: all 0.3s ease;
+    }
+
+    .checkin-button:active {
+      transform: scale(0.98);
+    }
+
+    .checkin-button:disabled {
+      background: var(--text-muted);
+      box-shadow: none;
+    }
+
+    .checkin-motivation {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-style: italic;
+      margin-top: 12px;
+      transition: color 0.3s ease;
+    }
+    
+    /* ========== СТИЛЬ ========== */
+    #style-page {
+      padding: 16px;
+    }
+
+    .style-card {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 2px solid var(--accent-light);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .style-card:hover {
+      border-color: var(--accent-primary);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+    }
+
+    .style-card.active {
+      border-color: var(--accent-primary);
+      background: var(--bg-tertiary);
+    }
+
+    .style-card h3 {
+      color: var(--accent-primary);
+      font-size: 18px;
+      margin-bottom: 8px;
+      transition: color 0.3s ease;
+    }
+
+    .style-card p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.5;
+      transition: color 0.3s ease;
+    }
+
+    .style-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--accent-primary);
+      color: white;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 8px;
+      transition: background-color 0.3s ease;
+    }
+
+    .style-badge.free {
+      background: var(--success);
+    }
+
+    .style-badge.premium {
+      background: var(--warning);
+    }
+    
+    /* ========== ЦЕЛИ ========== */
+    #goals-page {
+      padding: 16px;
+    }
+
+    .goal-item {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      padding-right: 36px;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--accent-primary);
+      box-shadow: 0 2px 8px var(--shadow-color);
+      position: relative;
+      transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .goal-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.4;
+      transition: color 0.3s ease;
+    }
+
+    .goal-date {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 6px;
+      transition: color 0.3s ease;
+    }
+
+    .goal-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 20px;
+      height: 20px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .goal-delete:hover {
+      color: var(--text-tertiary);
+      background: var(--border-light);
+    }
+
+    .add-goal {
+      background: var(--accent-light);
+      border: 2px dashed var(--accent-primary);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      text-align: center;
+      color: var(--accent-primary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    .goals-empty {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-tertiary);
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+    
+    /* ========== ПРОФИЛЬ ========== */
+    #profile-page {
+      padding: 16px;
+    }
+
+    .profile-section {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    .profile-section h3 {
+      color: var(--accent-primary);
+      font-size: 16px;
+      margin-bottom: 12px;
+      transition: color 0.3s ease;
+    }
+
+    .profile-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-light);
+      transition: border-color 0.3s ease;
+    }
+
+    .profile-row:last-child {
+      border-bottom: none;
+    }
+
+    .profile-label {
+      color: var(--text-secondary);
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+
+    .profile-value {
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+    
+    /* ========== ПОПАП ========== */
+    .popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .popup.active {
+      display: flex;
+    }
+
+    .popup-content {
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      padding: 32px 24px;
+      margin: 20px;
+      text-align: center;
+      max-width: 320px;
+      transition: background-color 0.3s ease;
+    }
+
+    .popup-content.large {
+      max-width: 368px;
+      padding: 36px 28px;
+    }
+
+    .popup-content.large .popup-input {
+      padding: 14px;
+      font-size: 15px;
+    }
+
+    .popup-content.large textarea.popup-input {
+      height: 92px;
+    }
+    
+    .popup-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    
+    .popup-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent-primary);
+      margin-bottom: 12px;
+      transition: color 0.3s ease;
+    }
+
+    .popup-text {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 24px;
+      transition: color 0.3s ease;
+    }
+
+    .popup-close {
+      background: var(--accent-primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .popup-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--accent-light);
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+      background: var(--bg-input);
+      transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .popup-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+    }
+
+    .popup-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: left;
+      display: block;
+      margin-bottom: 4px;
+      transition: color 0.3s ease;
+    }
+
+    .popup-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .popup-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .popup-btn.primary {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .popup-btn.secondary {
+      background: var(--accent-light);
+      color: var(--accent-primary);
+    }
+
+    .popup-suggestion {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--accent-light);
+      transition: border-color 0.3s ease;
+    }
+
+    .suggestion-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      text-align: center;
+      transition: color 0.3s ease;
+    }
+
+    /* Scrollable popup for viewing goals on date */
+    #view-goal-popup .popup-content {
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #view-goal-popup .popup-text {
+      max-height: 50vh;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+    
+    /* ========== НАВИГАЦИЯ ========== */
+    .navigation {
+      display: flex;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      padding: 8px 4px;
+      padding-bottom: calc(12px + var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
+      box-shadow: 0 -2px 8px var(--shadow-color);
+      gap: 4px;
+      /* Ensure minimum bottom padding for devices */
+      min-height: 60px;
+      position: relative;
+      transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    /* Extend background to cover safe area on iPhone X and Android */
+    .navigation::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px));
+      background: var(--bg-secondary);
+      transform: translateY(100%);
+      transition: background-color 0.3s ease;
+    }
+
+    .nav-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 4px;
+      border: none;
+      background: transparent;
+      color: var(--text-tertiary);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 8px;
+    }
+
+    .nav-btn:hover {
+      color: var(--accent-primary);
+      background: var(--accent-lighter);
+    }
+
+    .nav-btn.active {
+      color: var(--accent-primary);
+      font-weight: 600;
+      background: var(--accent-light);
+      box-shadow: 0 0 8px var(--shadow-color);
+    }
+
+    /* ========== SUPPORT BUTTON ========== */
+    .support-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+
+    .support-btn:active {
+      transform: scale(0.98);
+    }
+  </style>
 </head>
 <body>
-  <div class="header">
-    <h1>SelfHack</h1>
-  </div>
-  
-  <div class="content">
-    <!-- ЧЕКИН -->
-    <div id="checkin-page" class="page">
-      <div class="streak-container">
-        <div class="streak-label">Твой streak</div>
-        <div class="streak-value"><span id="checkin-streak">0</span> <span>дней</span></div>
-      </div>
-
-      <div class="calendar-container">
-        <div class="calendar-header">
-          <button class="calendar-nav" id="prev-month">←</button>
-          <div class="calendar-title" id="calendar-title">Ноябрь 2025</div>
-          <button class="calendar-nav" id="next-month">→</button>
-        </div>
-        <div class="calendar-weekdays">
-          <div class="calendar-weekday">Вс</div>
-          <div class="calendar-weekday">Пн</div>
-          <div class="calendar-weekday">Вт</div>
-          <div class="calendar-weekday">Ср</div>
-          <div class="calendar-weekday">Чт</div>
-          <div class="calendar-weekday">Пт</div>
-          <div class="calendar-weekday">Сб</div>
-        </div>
-        <div class="calendar-days" id="calendar-days"></div>
-      </div>
-
-      <button class="checkin-button" id="checkin-btn" onclick="doCheckin()">Сделать чекин</button>
-      <p class="checkin-motivation">Последовательность создает импульс</p>
-    </div>
-    
-    <!-- СТИЛЬ -->
-    <div id="style-page" class="page">
-      <div style="padding: 16px 0;">
-        <h2 style="margin-bottom: 8px;">Выбери стиль коуча</h2>
-        <p style="color: #666; font-size: 14px;">Как я буду с тобой общаться</p>
-      </div>
-      
-      <div class="style-card" data-tone="focused" onclick="selectTone('focused')">
-        <h3>Focused</h3>
-        <p>Жесткий, но честный. Идеально подойдет тем, кто не любит лишнюю болтовню.</p>
-        <span class="style-badge free">FREE</span>
-      </div>
-
-      <div class="style-card active" data-tone="baddy" onclick="selectTone('baddy')">
-        <h3>Baddy</h3>
-        <p>Тот самый друг, который не даст тебе слиться в очередной раз.</p>
-        <span class="style-badge free">FREE</span>
-      </div>
-
-      <div class="style-card" data-tone="mentor" onclick="selectTone('mentor')">
-        <h3>Mentor</h3>
-        <p>Персональный коуч уровня executive. Помогает видеть картину выше, шире и глубже.</p>
-        <span class="style-badge premium">PREMIUM</span>
-      </div>
-    </div>
-    
-    <!-- ЧАТ -->
-    <div id="chat-page" class="page active">
-      <div id="chat-container"></div>
-      <div class="input-area">
-        <textarea id="message-input" placeholder="Напиши что-то..." rows="1"></textarea>
-        <button id="send-btn">→</button>
-      </div>
-    </div>
-    
-    <!-- ЦЕЛИ -->
-    <div id="goals-page" class="page">
-      <div style="padding: 16px 16px 0;">
-        <h2 style="margin-bottom: 8px;">Твои цели</h2>
-        <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Чего ты хочешь достичь</p>
-      </div>
-
-      <div style="padding: 0 16px 16px;">
-        <div id="goals-container"></div>
-        <div class="add-goal" onclick="showAddGoalPopup()">+ Добавить свою цель</div>
-      </div>
-    </div>
-    
-    <!-- ПРОФИЛЬ -->
-    <div id="profile-page" class="page">
-      <div class="profile-section" style="margin-bottom: 12px;">
-        <h3>Подписка</h3>
-        <div class="profile-row">
-          <span class="profile-label">Тариф</span>
-          <span class="profile-value" id="profile-plan">FREE</span>
-        </div>
-        <div class="profile-row" id="profile-expires-row" style="display: none;">
-          <span class="profile-label">Действует до</span>
-          <span class="profile-value" id="profile-expires"></span>
-        </div>
-        <div class="profile-row">
-          <span class="profile-label">Сообщений использовано</span>
-          <span class="profile-value" id="profile-messages">0 / 50</span>
-        </div>
-        <div class="profile-row">
-          <span class="profile-label">Текущий стиль</span>
-          <span class="profile-value" id="profile-tone"> Baddy</span>
-        </div>
-      </div>
-
-      <div class="profile-section" style="margin-bottom: 12px;">
-        <h3>Активность</h3>
-        <div class="profile-row">
-          <span class="profile-label">Чекинов подряд</span>
-          <span class="profile-value" id="profile-streak">0 дней</span>
-        </div>
-        <div class="profile-row">
-          <span class="profile-label">Всего сообщений</span>
-          <span class="profile-value" id="profile-total">0</span>
-        </div>
-        <div class="profile-row">
-          <span class="profile-label">Активных целей</span>
-          <span class="profile-value" id="profile-goals-count">0</span>
-        </div>
-      </div>
-
-      <div class="profile-section" style="margin-bottom: 12px;">
-        <h3>Аккаунт</h3>
-        <div class="profile-row">
-          <span class="profile-label">Username</span>
-          <span class="profile-value" id="profile-username">@username</span>
-        </div>
-        <div class="profile-row">
-          <span class="profile-label">Дата регистрации</span>
-          <span class="profile-value">19 ноября 2024</span>
-        </div>
-      </div>
-
-      <button class="support-btn" onclick="showSupportPopup()">Support</button>
-    </div>
-  </div>
-  
-  <!-- ПОПАП ЧЕКИНА -->
-  <div class="popup" id="checkin-popup">
-    <div class="popup-content">
-      <div class="popup-title">Чекин выполнен!</div>
-      <div class="popup-text" id="popup-text">Начинаем отсчёт streak.</div>
-      <button class="popup-close" onclick="closePopup()">Отлично!</button>
-    </div>
-  </div>
-  
-  <!-- ПОПАП PREMIUM -->
-  <div class="popup" id="premium-popup">
-    <div class="popup-content">
-      <div class="popup-title">Нужен Premium</div>
-      <div class="popup-text">Стиль Mentor доступен только в Premium.<br><br>Premium $10.99/мес:<br>• Безлимитные сообщения<br>• 3 тональности коуча<br>• История 30 дней</div>
-      <button class="popup-close" onclick="closePopup()">Понятно</button>
-    </div>
-  </div>
-
-  <!-- ПОПАП ДОБАВЛЕНИЯ ЦЕЛИ -->
-  <div class="popup" id="add-goal-popup">
-    <div class="popup-content large" style="text-align: left;">
-      <div class="popup-title" style="text-align: center;">Новая цель</div>
-      <label class="popup-label">Описание цели</label>
-      <textarea id="goal-text-input" class="popup-input" style="resize: none;" placeholder="Чего ты хочешь достичь?"></textarea>
-      <label class="popup-label">Дата достижения</label>
-      <input type="date" id="goal-date-input" class="popup-input">
-      <div class="popup-buttons">
-        <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
-        <button class="popup-btn primary" onclick="saveGoal()">Сохранить</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ПОПАП ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ -->
-  <div class="popup" id="delete-goal-popup">
-    <div class="popup-content">
-      <div class="popup-title">Удалить цель?</div>
-      <div class="popup-text">Вы уверены, что хотите удалить эту цель?</div>
-      <div class="popup-buttons">
-        <button class="popup-btn secondary" onclick="closePopup()">Нет</button>
-        <button class="popup-btn primary" onclick="confirmDeleteGoal()">Да</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ПОПАП ЦЕЛЬ СОХРАНЕНА С ПРЕДЛОЖЕНИЕМ КОУЧА -->
-  <div class="popup" id="goal-saved-popup">
-    <div class="popup-content">
-      <div class="popup-title">Цель добавлена!</div>
-      <div class="popup-text" id="goal-saved-text">Цель зафиксирована в календаре раздела чекин, желаем вам достигнуть её</div>
-      <div class="popup-suggestion" id="coach-suggestion">
-        <div class="suggestion-text">Хочешь обсудить план достижения с коучем?</div>
-        <div class="popup-buttons">
-          <button class="popup-btn secondary" onclick="closePopup()">Не сейчас</button>
-          <button class="popup-btn primary" onclick="goToChatWithGoal()">Обсудить</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ПОПАП ПРОСМОТРА ЦЕЛИ -->
-  <div class="popup" id="view-goal-popup">
-    <div class="popup-content">
-      <div class="popup-title">Цель на эту дату</div>
-      <div class="popup-text" id="view-goal-text"></div>
-      <button class="popup-close" onclick="closePopup()">Окей</button>
-    </div>
-  </div>
-
-  <!-- ПОПАП SUPPORT -->
-  <div class="popup" id="support-popup">
-    <div class="popup-content large" style="text-align: left;">
-      <div class="popup-title" style="text-align: center;">Support</div>
-      <div class="popup-text" style="text-align: center; margin-bottom: 16px;">Напишите в службу поддержки, если у вас есть вопросы или предложение по улучшению продукта.</div>
-      <textarea id="support-message-input" class="popup-input" style="resize: none;" placeholder="Ваше сообщение..."></textarea>
-      <div class="popup-buttons">
-        <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
-        <button class="popup-btn primary" onclick="sendSupport()">Отправить</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ПОПАП SUPPORT ОТПРАВЛЕН -->
-  <div class="popup" id="support-sent-popup">
-    <div class="popup-content">
-      <div class="popup-title">Отправлено!</div>
-      <div class="popup-text">Ваше обращение успешно отправлено. Мы свяжемся с вами в ближайшее время.</div>
-      <button class="popup-close" onclick="closePopup()">Окей</button>
-    </div>
-  </div>
-
-  <!-- ПОПАП ВАЛИДАЦИИ ЦЕЛИ (при входе) -->
-  <div class="popup" id="goal-validation-popup">
-    <div class="popup-content">
-      <div class="popup-title">Время подвести итог!</div>
-      <div class="popup-text" id="goal-validation-text">Сегодня дата твоей цели. Как результат?</div>
-      <div class="popup-buttons" style="flex-direction: column; gap: 10px;">
-        <button class="popup-btn primary" onclick="validateGoal('achieved')" style="background: #4CAF50;">Достигнута!</button>
-        <button class="popup-btn secondary" onclick="showExtendGoalPopup()" style="background: #FFF3E0; color: #FF9800;">Нужно больше времени</button>
-        <button class="popup-btn secondary" onclick="validateGoal('failed')" style="background: #FAFAFA; color: #9E9E9E;">Не удалось</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ПОПАП ПРОДЛЕНИЯ ЦЕЛИ -->
-  <div class="popup" id="extend-goal-popup">
-    <div class="popup-content large" style="text-align: left;">
-      <div class="popup-title" style="text-align: center;">Продлить цель</div>
-      <div class="popup-text" style="text-align: center; margin-bottom: 16px;">Сколько времени ещё нужно?</div>
-      <label class="popup-label">Новая дата</label>
-      <input type="date" id="extend-goal-date" class="popup-input">
-      <div class="popup-buttons">
-        <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
-        <button class="popup-btn primary" onclick="extendGoal()">Продлить</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ПОПАП ЦЕЛЬ ДОСТИГНУТА -->
-  <div class="popup" id="goal-achieved-popup">
-    <div class="popup-content">
-      <div class="popup-title" style="color: #4CAF50;">Поздравляем!</div>
-      <div class="popup-text">Ты справился! Это отличный результат. Продолжай в том же духе!</div>
-      <button class="popup-close" onclick="closeAchievedPopup()" style="background: #4CAF50;">Отлично!</button>
-    </div>
-  </div>
-
-  <!-- ПОПАП ЦЕЛЬ НЕ ДОСТИГНУТА -->
-  <div class="popup" id="goal-failed-popup">
-    <div class="popup-content">
-      <div class="popup-title" style="color: #666;">Ничего страшного</div>
-      <div class="popup-text">Не все цели достигаются с первого раза. Проанализируй, что помешало, и попробуй снова с новым подходом.</div>
-      <div class="popup-buttons">
-        <button class="popup-btn secondary" onclick="closePopup()">Закрыть</button>
-        <button class="popup-btn primary" onclick="retryGoal()">Попробовать снова</button>
-      </div>
-    </div>
-  </div>
-  
-  <div class="navigation">
-    <button class="nav-btn" data-page="checkin">Чекин</button>
-    <button class="nav-btn" data-page="style">Стиль</button>
-    <button class="nav-btn active" data-page="chat">Чат</button>
-    <button class="nav-btn" data-page="goals">Цели</button>
-    <button class="nav-btn" data-page="profile">Профиль</button>
-  </div>
-
-  <!-- ONBOARDING STORIES -->
-  <div class="story-overlay" id="story-overlay">
-    <div class="story-progress-bar" id="story-progress-bar"></div>
-    <div class="story-content" id="story-content"></div>
-    <div class="story-tap-zones">
-      <div class="story-tap-left" onclick="prevStory()"></div>
-      <div class="story-tap-right" onclick="nextStory()"></div>
-    </div>
-    <div class="story-tap-hint">Tap to continue</div>
-  </div>
-  
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.ready();
-
-    // Request fullscreen mode for native app feel
-    if (tg.requestFullscreen) {
-      tg.requestFullscreen();
-    }
-
-    // Set header and background colors to match app theme
-    if (tg.setHeaderColor) {
-      tg.setHeaderColor('#7B68EE');
-    }
-    if (tg.setBackgroundColor) {
-      tg.setBackgroundColor('#FAFAFA');
-    }
-    if (tg.setBottomBarColor) {
-      tg.setBottomBarColor('#FFFFFF');
-    }
-
-    // Disable vertical swipes to close (for better UX in fullscreen)
-    if (tg.disableVerticalSwipes) {
-      tg.disableVerticalSwipes();
-    }
-
-    // Apply safe area insets from Telegram WebApp API (more reliable than CSS env())
-    function applySafeAreaInsets() {
-      const root = document.documentElement;
-
-      // Get safe area insets from Telegram WebApp
-      if (tg.safeAreaInset) {
-        root.style.setProperty('--tg-safe-area-top', `${tg.safeAreaInset.top || 0}px`);
-        root.style.setProperty('--tg-safe-area-bottom', `${tg.safeAreaInset.bottom || 0}px`);
-        root.style.setProperty('--tg-safe-area-left', `${tg.safeAreaInset.left || 0}px`);
-        root.style.setProperty('--tg-safe-area-right', `${tg.safeAreaInset.right || 0}px`);
-      }
-
-      // Get content safe area insets (additional padding for notches)
-      if (tg.contentSafeAreaInset) {
-        root.style.setProperty('--tg-content-safe-area-top', `${tg.contentSafeAreaInset.top || 0}px`);
-        root.style.setProperty('--tg-content-safe-area-bottom', `${tg.contentSafeAreaInset.bottom || 0}px`);
-      }
-    }
-
-    // Apply on load and when viewport changes
-    applySafeAreaInsets();
-
-    // Listen for safe area changes
-    if (tg.onEvent) {
-      tg.onEvent('safeAreaChanged', applySafeAreaInsets);
-      tg.onEvent('contentSafeAreaChanged', applySafeAreaInsets);
-      tg.onEvent('viewportChanged', applySafeAreaInsets);
-    }
-
-    // Note: addToHomeScreen moved to Profile page button
-
-    const user = tg.initDataUnsafe?.user;
-
-    if (user) {
-      document.getElementById('profile-username').textContent = `@${user.username || user.first_name}`;
-    }
-    
-    const chatContainer = document.getElementById('chat-container');
-    const messageInput = document.getElementById('message-input');
-    const sendBtn = document.getElementById('send-btn');
-
-    // Auto-resize textarea function
-    function autoResizeTextarea() {
-      messageInput.style.height = 'auto';
-      const newHeight = Math.min(messageInput.scrollHeight, 120);
-      messageInput.style.height = newHeight + 'px';
-      // Switch to scroll when max height reached
-      messageInput.style.overflowY = messageInput.scrollHeight > 120 ? 'auto' : 'hidden';
-    }
-
-    // Initialize textarea auto-resize
-    messageInput.addEventListener('input', autoResizeTextarea);
-    
-    let currentTone = 'baddy'; // По умолчанию
-    let userStats = {
-      plan: 'FREE',
-      messagesUsed: 0,
-      messagesLimit: 50,
-      totalMessages: 0,
-      streak: 0,
-      checkinDates: []
-    };
-
-    // ========== ONBOARDING STORIES ==========
-    const onboardingStories = [
-      {
-        type: 'text',
-        icon: ' ',
-        title: 'Ты получил тонну советов от ChatGPT',
-        subtitle: 'Сколько из них ты применил?'
-      },
-      {
-        type: 'text',
-        icon: ' ',
-        title: 'Советы не работают',
-        subtitle: 'Потому что это НЕ твои решения. Информация извне не становится действием.'
-      },
-      {
-        type: 'text',
-        icon: ' ',
-        title: 'Коуч не даёт советы',
-        subtitle: 'Он задаёт вопросы, которые помогают ТЕБЕ найти решение. Твоё решение = твоё действие.'
-      },
-      {
-        type: 'grow',
-        icon: ' ',
-        title: 'GROW-inspired',
-        subtitle: 'От цели к действию через 4 шага'
-      },
-      {
-        type: 'text',
-        icon: ' ',
-        title: 'Ставь цели с дедлайнами',
-        subtitle: 'Коуч напомнит и поможет довести до конца. Цели отображаются в календаре чекина.'
-      },
-      {
-        type: 'text',
-        icon: ' ',
-        title: 'Ежедневный check-in',
-        subtitle: 'Одно действие в день формирует привычку. Через неделю заметишь разницу.'
-      },
-      {
-        type: 'text',
-        icon: ' ',
-        title: 'Напоминания в Telegram',
-        subtitle: 'Скажи коучу "напомни мне завтра в 9:00" или "через X минут/часов" и он пришлет тебе уведомление в нужный момент.'
-      },
-      {
-        type: 'text',
-        icon: ' ',
-        title: 'Готов к изменениям?',
-        subtitle: 'Большинство видят первые результаты уже через неделю работы с коучем.'
-      },
-      {
-        type: 'tone-selector',
-        icon: ' ',
-        title: 'Выбери стиль коуча',
-        subtitle: 'Как он будет с тобой общаться'
-      },
-      {
-        type: 'cta',
-        icon: ' ',
-        title: 'Начинаем',
-        subtitle: 'Расскажи, какую цель хочешь достичь на этой неделе'
-      }
-    ];
-
-    let currentStoryIndex = 0;
-    let selectedOnboardingTone = 'baddy';
-
-    function showOnboarding() {
-      // Check if onboarding already completed
-      const onboardingCompleted = localStorage.getItem('onboarding_completed');
-      if (onboardingCompleted === 'true') return;
-
-      currentStoryIndex = 0;
-      selectedOnboardingTone = 'baddy';
-      renderStory();
-      document.getElementById('story-overlay').classList.add('active');
-    }
-
-    function renderStory() {
-      const story = onboardingStories[currentStoryIndex];
-      const contentEl = document.getElementById('story-content');
-      const progressEl = document.getElementById('story-progress-bar');
-
-      // Update progress bar
-      progressEl.innerHTML = onboardingStories.map((_, i) => {
-        let className = 'story-progress-segment';
-        if (i < currentStoryIndex) className += ' completed';
-        else if (i === currentStoryIndex) className += ' active';
-        return `<div class="${className}"></div>`;
-      }).join('');
-
-      // Render content based on type
-      let contentHtml = `<div class="story-icon">${story.icon}</div>`;
-      contentHtml += `<div class="story-title">${story.title}</div>`;
-
-      if (story.type === 'grow') {
-        contentHtml += `
-          <div class="grow-visual">
-            <div class="grow-step"><span class="grow-letter">G</span><span class="grow-label">Goal — Цель</span></div>
-            <div class="grow-step"><span class="grow-letter">R</span><span class="grow-label">Reality — Реальность</span></div>
-            <div class="grow-step"><span class="grow-letter">O</span><span class="grow-label">Options — Варианты</span></div>
-            <div class="grow-step"><span class="grow-letter">W</span><span class="grow-label">Will — Действие</span></div>
-          </div>
-        `;
-      } else if (story.type === 'tone-selector') {
-        contentHtml += `<div class="story-subtitle">${story.subtitle}</div>`;
-        contentHtml += `
-          <div class="onboarding-tone-selector">
-            <div class="onboarding-tone-card ${selectedOnboardingTone === 'focused' ? 'selected' : ''}" onclick="selectOnboardingTone('focused', event)">
-              <div class="onboarding-tone-name">Focused</div>
-              <div class="onboarding-tone-desc">Минимум слов, максимум действий</div>
-              <div class="onboarding-tone-badge">FREE</div>
-            </div>
-            <div class="onboarding-tone-card ${selectedOnboardingTone === 'baddy' ? 'selected' : ''}" onclick="selectOnboardingTone('baddy', event)">
-              <div class="onboarding-tone-name">Baddy</div>
-              <div class="onboarding-tone-desc">Друг, который не даст тебе слиться в очередной раз</div>
-              <div class="onboarding-tone-badge">FREE</div>
-            </div>
-          </div>
-        `;
-        contentHtml += `<button class="onboarding-cta" onclick="advanceFromToneSelector(event)">Продолжить</button>`;
-      } else if (story.type === 'cta') {
-        contentHtml += `<div class="story-subtitle">${story.subtitle}</div>`;
-        contentHtml += `<button class="onboarding-cta" onclick="completeOnboarding(event)">Начать</button>`;
-      } else {
-        contentHtml += `<div class="story-subtitle">${story.subtitle}</div>`;
-      }
-
-      contentEl.innerHTML = contentHtml;
-    }
-
-    function selectOnboardingTone(tone, event) {
-      event.stopPropagation();
-      selectedOnboardingTone = tone;
-
-      // Update UI
-      document.querySelectorAll('.onboarding-tone-card').forEach(card => {
-        card.classList.remove('selected');
-      });
-      event.currentTarget.classList.add('selected');
-    }
-
-    function advanceFromToneSelector(event) {
-      event.stopPropagation();
-      currentStoryIndex++;
-      renderStory();
-    }
-
-    function prevStory() {
-      if (currentStoryIndex > 0) {
-        currentStoryIndex--;
-        renderStory();
-      }
-    }
-
-    function nextStory() {
-      // Don't auto-advance on tone selector or CTA
-      const story = onboardingStories[currentStoryIndex];
-      if (story.type === 'tone-selector' || story.type === 'cta') {
-        return;
-      }
-
-      currentStoryIndex++;
-
-      if (currentStoryIndex >= onboardingStories.length) {
-        completeOnboarding();
-      } else {
-        renderStory();
-      }
-    }
-
-    async function completeOnboarding(event) {
-      if (event) event.stopPropagation();
-
-      // Save selected tone
-      try {
-        await fetch('/api/tone', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': tg.initData
-          },
-          body: JSON.stringify({
-            user_id: user?.id || 0,
-            tone: selectedOnboardingTone
-          })
-        });
-
-        currentTone = selectedOnboardingTone;
-
-        // Update style page UI
-        document.querySelectorAll('.style-card').forEach(card => {
-          card.classList.remove('active');
-        });
-        document.querySelector(`[data-tone="${selectedOnboardingTone}"]`)?.classList.add('active');
-
-        // Update profile
-        const toneNames = { focused: 'Focused', baddy: 'Baddy', mentor: 'Mentor' };
-        document.getElementById('profile-tone').textContent = toneNames[selectedOnboardingTone];
-      } catch (error) {
-        console.error('Save tone error:', error);
-      }
-
-      // Mark onboarding as completed
-      localStorage.setItem('onboarding_completed', 'true');
-
-      // Close overlay
-      const overlay = document.getElementById('story-overlay');
-      overlay.classList.add('fade-out');
-      setTimeout(() => {
-        overlay.classList.remove('active', 'fade-out');
-      }, 500);
-    }
-
-    // Legacy function name for compatibility
-    function showStories() {
-      showOnboarding();
-    }
-
-    // Calendar state (using GMT)
-    let currentCalendarDate = new Date(Date.UTC(
-      new Date().getUTCFullYear(),
-      new Date().getUTCMonth(),
-      1
-    ));
-
-    // Get current date in GMT
-    function getGMTDate() {
-      const now = new Date();
-      return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    }
-
-    // Format date as YYYY-MM-DD in GMT
-    function formatDateGMT(date) {
-      const year = date.getUTCFullYear();
-      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(date.getUTCDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-
-    // Month names in Russian
-    const monthNames = [
-      'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-    ];
-
-    // Render calendar for current month
-    function renderCalendar() {
-      const year = currentCalendarDate.getUTCFullYear();
-      const month = currentCalendarDate.getUTCMonth();
-
-      // Update title
-      document.getElementById('calendar-title').textContent = `${monthNames[month]} ${year}`;
-
-      // Get first day of month and total days
-      const firstDay = new Date(Date.UTC(year, month, 1));
-      const lastDay = new Date(Date.UTC(year, month + 1, 0));
-      const daysInMonth = lastDay.getUTCDate();
-      const startDayOfWeek = firstDay.getUTCDay(); // 0 = Sunday
-
-      // Get today in GMT
-      const today = getGMTDate();
-      const todayStr = formatDateGMT(today);
-
-      // Build calendar grid
-      const calendarDays = document.getElementById('calendar-days');
-      calendarDays.innerHTML = '';
-
-      // Previous month days
-      const prevMonth = new Date(Date.UTC(year, month, 0));
-      const prevMonthDays = prevMonth.getUTCDate();
-
-      for (let i = startDayOfWeek - 1; i >= 0; i--) {
-        const day = prevMonthDays - i;
-        const div = document.createElement('div');
-        div.className = 'calendar-day other-month';
-        div.textContent = day;
-        calendarDays.appendChild(div);
-      }
-
-      // Current month days
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const div = document.createElement('div');
-        div.className = 'calendar-day';
-        div.textContent = day;
-
-        // Check if this day has a check-in
-        if (userStats.checkinDates.includes(dateStr)) {
-          div.classList.add('checked');
-        }
-
-        // Check if today
-        if (dateStr === todayStr) {
-          div.classList.add('today');
-        }
-
-        // Check if this day has a goal
-        const goalsOnDate = userGoals.filter(g => g.target_date === dateStr);
-        if (goalsOnDate.length > 0) {
-          // Determine goal indicator based on status
-          const hasAchieved = goalsOnDate.some(g => g.status === 'achieved');
-          const hasFailed = goalsOnDate.some(g => g.status === 'failed');
-          const hasExtended = goalsOnDate.some(g => g.was_extended && (!g.status || g.status === 'active'));
-          const hasActive = goalsOnDate.some(g => !g.status || g.status === 'active');
-
-          if (hasAchieved && !hasFailed && !hasActive) {
-            // All goals achieved - green circle
-            div.classList.add('has-goal', 'goal-achieved');
-          } else if (hasFailed && !hasAchieved && !hasActive) {
-            // All goals failed - gray circle
-            div.classList.add('has-goal', 'goal-failed');
-          } else if (hasActive && dateStr < todayStr) {
-            // Has active goals but date has passed - red circle (overdue)
-            div.classList.add('has-goal', 'goal-overdue');
-          } else if (hasExtended) {
-            // Goal was extended - yellow circle
-            div.classList.add('has-goal', 'goal-extended');
-          } else if (hasActive) {
-            // Active goals - check if needs validation
-            if (dateStr === todayStr) {
-              div.classList.add('has-goal', 'goal-pending');
-            } else {
-              div.classList.add('has-goal');
-            }
-          } else {
-            // Mixed statuses or other
-            div.classList.add('has-goal');
-          }
-
-          div.addEventListener('click', () => showGoalOnDate(dateStr, goalsOnDate));
-        }
-
-        calendarDays.appendChild(div);
-      }
-
-      // Next month days to fill the grid
-      const totalCells = startDayOfWeek + daysInMonth;
-      const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
-
-      for (let day = 1; day <= remainingCells; day++) {
-        const div = document.createElement('div');
-        div.className = 'calendar-day other-month';
-        div.textContent = day;
-        calendarDays.appendChild(div);
-      }
-    }
-
-    // Calendar navigation
-    function prevMonth() {
-      currentCalendarDate = new Date(Date.UTC(
-        currentCalendarDate.getUTCFullYear(),
-        currentCalendarDate.getUTCMonth() - 1,
-        1
-      ));
-      renderCalendar();
-    }
-
-    function nextMonth() {
-      currentCalendarDate = new Date(Date.UTC(
-        currentCalendarDate.getUTCFullYear(),
-        currentCalendarDate.getUTCMonth() + 1,
-        1
-      ));
-      renderCalendar();
-    }
-
-    // Initialize calendar navigation
-    document.getElementById('prev-month').addEventListener('click', prevMonth);
-    document.getElementById('next-month').addEventListener('click', nextMonth);
-
-    // ========== ЦЕЛИ ==========
-    let userGoals = [];
-
-    // Render goals list
-    function renderGoals() {
-      const container = document.getElementById('goals-container');
-      container.innerHTML = '';
-
-      // Filter out completed goals for main display (only show active)
-      const activeGoals = userGoals.filter(g => !g.status || g.status === 'active');
-      const completedGoals = userGoals.filter(g => g.status && g.status !== 'active');
-
-      if (activeGoals.length === 0 && completedGoals.length === 0) {
-        container.innerHTML = '<div class="goals-empty">Пока нет целей. Добавьте свою первую цель!</div>';
-        return;
-      }
-
-      const today = formatDateGMT(getGMTDate());
-
-      // Sort by target_date ascending (nearest first)
-      const sortedGoals = [...activeGoals].sort((a, b) => {
-        if (!a.target_date && !b.target_date) return 0;
-        if (!a.target_date) return 1;
-        if (!b.target_date) return -1;
-        return new Date(a.target_date) - new Date(b.target_date);
-      });
-
-      sortedGoals.forEach(goal => {
-        const div = document.createElement('div');
-        div.className = 'goal-item';
-
-        // Check if goal is overdue (past date but still active)
-        const isOverdue = goal.target_date && goal.target_date < today;
-        const isToday = goal.target_date && goal.target_date === today;
-
-        if (isOverdue) {
-          div.classList.add('overdue');
-        } else if (isToday) {
-          div.classList.add('needs-validation');
-        }
-
-        // Check if goal was extended
-        if (goal.was_extended) {
-          div.classList.add('extended');
-        }
-
-        let dateText = '';
-        let validationButtons = '';
-        let statusText = '';
-
-        if (goal.target_date) {
-          const date = new Date(goal.target_date);
-          const day = date.getUTCDate();
-          const month = monthNames[date.getUTCMonth()];
-          const year = date.getUTCFullYear();
-
-          const isTodayDate = goal.target_date === today;
-          const isPast = goal.target_date < today;
-
-          let dateLabel = `До ${day} ${month.toLowerCase()} ${year}`;
-          if (isTodayDate) {
-            dateLabel += ' - СЕГОДНЯ';
-          } else if (isPast) {
-            dateLabel += ' - ПРОСРОЧЕНО';
-            statusText = '<div class="goal-status overdue">Просрочена</div>';
-          }
-
-          dateText = `<div class="goal-date">${dateLabel}</div>`;
-
-          // Show validation buttons only for today's goals, not overdue ones
-          if (isToday) {
-            validationButtons = `
-              <div class="goal-validation-buttons">
-                <button class="goal-validation-btn achieved" onclick="validateGoalFromCard(${goal.id}, 'achieved')">Достигнута</button>
-                <button class="goal-validation-btn extend" onclick="validateGoalFromCard(${goal.id}, 'extend')">Продлить</button>
-                <button class="goal-validation-btn failed" onclick="validateGoalFromCard(${goal.id}, 'failed')">Нет</button>
-              </div>
-            `;
-          }
-        }
-
-        div.innerHTML = `
-          <div class="goal-text">${goal.text}</div>
-          ${dateText}
-          ${statusText}
-          ${validationButtons}
-          <button class="goal-delete" onclick="showDeleteConfirmation(${goal.id})">x</button>
-        `;
-        container.appendChild(div);
-      });
-
-      // Show completed goals section if any
-      if (completedGoals.length > 0) {
-        const completedSection = document.createElement('div');
-        completedSection.style.marginTop = '24px';
-        completedSection.innerHTML = '<h4 style="color: #999; font-size: 12px; margin-bottom: 12px;">ЗАВЕРШЕННЫЕ ЦЕЛИ</h4>';
-
-        // Sort completed goals: achieved first, then failed, all by date descending
-        const sortedCompletedGoals = [...completedGoals].sort((a, b) => {
-          // First sort by status: achieved comes before failed
-          if (a.status === 'achieved' && b.status !== 'achieved') return -1;
-          if (a.status !== 'achieved' && b.status === 'achieved') return 1;
-
-          // Then sort by date descending (newest first)
-          if (!a.target_date && !b.target_date) return 0;
-          if (!a.target_date) return 1;
-          if (!b.target_date) return -1;
-          return new Date(b.target_date) - new Date(a.target_date);
-        });
-
-        sortedCompletedGoals.forEach(goal => {
-          const div = document.createElement('div');
-          div.className = `goal-item ${goal.status}`;
-
-          let dateText = '';
-          let statusText = '';
-
-          if (goal.target_date) {
-            const date = new Date(goal.target_date);
-            const day = date.getUTCDate();
-            const month = monthNames[date.getUTCMonth()];
-            dateText = `<div class="goal-date">${day} ${month.toLowerCase()}</div>`;
-          }
-
-          if (goal.status === 'achieved') {
-            statusText = '<div class="goal-status achieved">Достигнута</div>';
-          } else if (goal.status === 'failed') {
-            statusText = '<div class="goal-status failed">Не достигнута</div>';
-          }
-
-          div.innerHTML = `
-            <div class="goal-text">${goal.text}</div>
-            ${dateText}
-            ${statusText}
-            <button class="goal-delete" onclick="showDeleteConfirmation(${goal.id})">x</button>
-          `;
-          completedSection.appendChild(div);
-        });
-
-        container.appendChild(completedSection);
-      }
-
-      // Update profile goals count (only active)
-      const goalsCountEl = document.getElementById('profile-goals-count');
-      if (goalsCountEl) {
-        goalsCountEl.textContent = activeGoals.length;
-      }
-
-      // Re-render calendar to update goal highlights
-      renderCalendar();
-    }
-
-    // Show goal on date popup
-    function showGoalOnDate(dateStr, goals) {
-      const container = document.getElementById('view-goal-text');
-      const today = formatDateGMT(getGMTDate());
-
-      // Function to determine goal status display
-      function getGoalStatusHtml(goal) {
-        if (goal.status === 'achieved') {
-          return '<span style="color: #4CAF50; font-weight: 600; font-size: 11px;">Достигнута</span>';
-        } else if (goal.status === 'failed') {
-          return '<span style="color: #9E9E9E; font-weight: 600; font-size: 11px;">Не достигнута</span>';
-        } else if (goal.target_date && goal.target_date < today) {
-          return '<span style="color: #FF5252; font-weight: 600; font-size: 11px;">Просрочена</span>';
-        }
-        return '';
-      }
-
-      if (goals.length === 1) {
-        // Single goal - display without numbering
-        const statusHtml = getGoalStatusHtml(goals[0]);
-        container.innerHTML = `<div style="text-align: left; padding: 8px 0;">
-          ${goals[0].text}
-          ${statusHtml ? `<div style="margin-top: 6px;">${statusHtml}</div>` : ''}
-        </div>`;
-      } else {
-        // Multiple goals - sort by status: achieved first, then overdue, then failed
-        const sortedGoals = [...goals].sort((a, b) => {
-          const statusOrder = { 'achieved': 0, 'active': 1, 'failed': 2 };
-          const aStatus = a.status || 'active';
-          const bStatus = b.status || 'active';
-          // Overdue (active but past) should come after achieved
-          const aOverdue = aStatus === 'active' && a.target_date < today;
-          const bOverdue = bStatus === 'active' && b.target_date < today;
-          if (aStatus === 'achieved' && bStatus !== 'achieved') return -1;
-          if (bStatus === 'achieved' && aStatus !== 'achieved') return 1;
-          if (aOverdue && !bOverdue) return -1;
-          if (bOverdue && !aOverdue) return 1;
-          return (statusOrder[aStatus] || 1) - (statusOrder[bStatus] || 1);
-        });
-
-        // Multiple goals - display numbered list with status
-        const goalItems = sortedGoals.map((g, index) => {
-          const statusHtml = getGoalStatusHtml(g);
-          return `<div style="text-align: left; padding: 8px 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px;">
-            <strong>${index + 1}.</strong> ${g.text}
-            ${statusHtml ? `<div style="margin-top: 4px;">${statusHtml}</div>` : ''}
-          </div>`;
-        }).join('');
-        container.innerHTML = goalItems;
-      }
-
-      document.getElementById('view-goal-popup').classList.add('active');
-    }
-
-    // Delete confirmation
-    let goalToDelete = null;
-
-    function showDeleteConfirmation(goalId) {
-      goalToDelete = goalId;
-      document.getElementById('delete-goal-popup').classList.add('active');
-    }
-
-    async function confirmDeleteGoal() {
-      if (!goalToDelete) return;
-      closePopup();
-      await deleteGoalFromServer(goalToDelete);
-      goalToDelete = null;
-    }
-
-    // Show add goal popup
-    function showAddGoalPopup() {
-      document.getElementById('goal-text-input').value = '';
-      document.getElementById('goal-date-input').value = '';
-      // Set minimum date to tomorrow (cannot set goals for past dates)
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      document.getElementById('goal-date-input').min = tomorrow.toISOString().split('T')[0];
-      document.getElementById('add-goal-popup').classList.add('active');
-    }
-
-    // Save new goal
-    async function saveGoal() {
-      const text = document.getElementById('goal-text-input').value.trim();
-      const targetDate = document.getElementById('goal-date-input').value;
-
-      if (!text) {
-        tg.showAlert('Введите описание цели');
-        return;
-      }
-
-      // Validate date is not in the past
-      if (targetDate) {
-        const today = formatDateGMT(getGMTDate());
-        if (targetDate <= today) {
-          tg.showAlert('Дата цели должна быть в будущем');
-          return;
-        }
-      }
-
-      // Warn about goals without deadline - must specify date
-      if (!targetDate) {
-        tg.showAlert('У бессрочных целей очень плохая статистика, укажите пожалуйста дату');
-        return;
-      }
-
-      await saveGoalToServer(text, targetDate);
-    }
-
-    // Actually save goal to server
-    async function saveGoalToServer(text, targetDate) {
-      try {
-        const response = await fetch('/api/goals', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': tg.initData
-          },
-          body: JSON.stringify({
-            user_id: user?.id || 0,
-            text: text,
-            target_date: targetDate || null
-          })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          userGoals.push(data.goal);
-          renderGoals();
-          closePopup();
-
-          // Show confirmation with coach suggestion
-          if (targetDate) {
-            // Save goal text for coach suggestion
-            lastCreatedGoal = text;
-
-            setTimeout(() => {
-              // Show the goal text in confirmation popup
-              const date = new Date(targetDate);
-              const day = date.getUTCDate();
-              const month = monthNames[date.getUTCMonth()].toLowerCase();
-              const year = date.getUTCFullYear();
-              document.getElementById('goal-saved-text').innerHTML =
-                `<strong>"${text}"</strong><br><br>Цель зафиксирована на ${day} ${month} ${year} в календаре раздела чекин.`;
-              document.getElementById('goal-saved-popup').classList.add('active');
-            }, 300);
-          }
-        } else {
-          tg.showAlert(data.message || 'Ошибка сохранения');
-        }
-      } catch (error) {
-        console.error('Save goal error:', error);
-        tg.showAlert('Ошибка сохранения цели');
-      }
-    }
-
-    // Delete goal from server
-    async function deleteGoalFromServer(goalId) {
-      try {
-        const response = await fetch('/api/goals', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': tg.initData
-          },
-          body: JSON.stringify({
-            user_id: user?.id || 0,
-            goal_id: goalId
-          })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          userGoals = userGoals.filter(g => g.id !== goalId);
-          renderGoals();
-        } else {
-          tg.showAlert(data.message || 'Ошибка удаления');
-        }
-      } catch (error) {
-        console.error('Delete goal error:', error);
-        tg.showAlert('Ошибка удаления цели');
-      }
-    }
-
-    // Go to chat with the last created goal to discuss plan
-    function goToChatWithGoal() {
-      if (!lastCreatedGoal) {
-        closePopup();
-        return;
-      }
-
-      closePopup();
-
-      // Navigate to chat page
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelector('[data-page="chat"]').classList.add('active');
-      document.getElementById('chat-page').classList.add('active');
-
-      // Set message in input and send it
-      const goalMessage = `Я поставил цель: "${lastCreatedGoal}". Помоги составить план её достижения.`;
-      messageInput.value = goalMessage;
-
-      // Small delay to ensure navigation completes
-      setTimeout(() => {
-        sendMessage();
-        lastCreatedGoal = null;
-      }, 100);
-    }
-
-    // Goal validation system
-    let currentValidationGoal = null;
-    let lastCreatedGoal = null; // For coach suggestion after goal creation
-
-    // Check if any goals need validation on app load
-    function checkGoalsForValidation() {
-      const today = formatDateGMT(getGMTDate());
-
-      // Find goals that need validation (date is today or past, and still active)
-      const goalsNeedingValidation = userGoals.filter(g => {
-        if (!g.target_date) return false;
-        if (g.status && g.status !== 'active') return false;
-        return g.target_date <= today;
-      });
-
-      if (goalsNeedingValidation.length > 0) {
-        // Show validation popup for the first goal
-        currentValidationGoal = goalsNeedingValidation[0];
-        document.getElementById('goal-validation-text').textContent =
-          `Цель: "${currentValidationGoal.text}". Как результат?`;
-        document.getElementById('goal-validation-popup').classList.add('active');
-      }
-    }
-
-    // Validate goal with status
-    async function validateGoal(status) {
-      if (!currentValidationGoal) return;
-
-      try {
-        const response = await fetch('/api/goals', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': tg.initData
-          },
-          body: JSON.stringify({
-            user_id: user?.id || 0,
-            goal_id: currentValidationGoal.id,
-            status: status
-          })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          // Update local goal
-          const goalIndex = userGoals.findIndex(g => g.id === currentValidationGoal.id);
-          if (goalIndex !== -1) {
-            userGoals[goalIndex] = data.goal;
-          }
-
-          closePopup();
-          renderGoals();
-
-          // Show appropriate feedback
-          if (status === 'achieved') {
-            showConfetti();
-            setTimeout(() => {
-              document.getElementById('goal-achieved-popup').classList.add('active');
-            }, 500);
-          } else if (status === 'failed') {
-            setTimeout(() => {
-              document.getElementById('goal-failed-popup').classList.add('active');
-            }, 300);
-          }
-
-          currentValidationGoal = null;
-        } else {
-          tg.showAlert(data.message || 'Ошибка обновления');
-        }
-      } catch (error) {
-        console.error('Validate goal error:', error);
-        tg.showAlert('Ошибка обновления цели');
-      }
-    }
-
-    // Show extend goal popup
-    function showExtendGoalPopup() {
-      closePopup();
-      // Set minimum date to tomorrow
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      document.getElementById('extend-goal-date').min = tomorrow.toISOString().split('T')[0];
-      document.getElementById('extend-goal-date').value = '';
-      setTimeout(() => {
-        document.getElementById('extend-goal-popup').classList.add('active');
-      }, 300);
-    }
-
-    // Extend goal with new date
-    async function extendGoal() {
-      if (!currentValidationGoal) return;
-
-      const newDate = document.getElementById('extend-goal-date').value;
-      if (!newDate) {
-        tg.showAlert('Выбери новую дату');
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/goals', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': tg.initData
-          },
-          body: JSON.stringify({
-            user_id: user?.id || 0,
-            goal_id: currentValidationGoal.id,
-            status: 'extended',
-            new_date: newDate
-          })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          // Update local goal
-          const goalIndex = userGoals.findIndex(g => g.id === currentValidationGoal.id);
-          if (goalIndex !== -1) {
-            userGoals[goalIndex] = data.goal;
-          }
-
-          closePopup();
-          renderGoals();
-          tg.showAlert('Цель продлена. Продолжай работать!');
-
-          currentValidationGoal = null;
-        } else {
-          tg.showAlert(data.message || 'Ошибка продления');
-        }
-      } catch (error) {
-        console.error('Extend goal error:', error);
-        tg.showAlert('Ошибка продления цели');
-      }
-    }
-
-    // Retry failed goal
-    function retryGoal() {
-      closePopup();
-      // Navigate to goals page and show add goal popup
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelector('[data-page="goals"]').classList.add('active');
-      document.getElementById('goals-page').classList.add('active');
-      setTimeout(() => showAddGoalPopup(), 300);
-    }
-
-    // Close achieved popup and check for more goals
-    function closeAchievedPopup() {
-      closePopup();
-      // Check if there are more goals to validate
-      setTimeout(() => checkGoalsForValidation(), 500);
-    }
-
-    // Show confetti animation
-    function showConfetti() {
-      const container = document.createElement('div');
-      container.className = 'confetti-container';
-      document.body.appendChild(container);
-
-      const colors = ['#7B68EE', '#4CAF50', '#FF9800', '#E91E63', '#00BCD4'];
-
-      for (let i = 0; i < 50; i++) {
-        const confetti = document.createElement('div');
-        confetti.className = 'confetti';
-        confetti.style.left = Math.random() * 100 + '%';
-        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-        confetti.style.animationDelay = Math.random() * 0.5 + 's';
-        confetti.style.animationDuration = (2 + Math.random()) + 's';
-        container.appendChild(confetti);
-      }
-
-      // Remove container after animation
-      setTimeout(() => container.remove(), 4000);
-    }
-
-    // Validate goal from card button
-    async function validateGoalFromCard(goalId, status) {
-      currentValidationGoal = userGoals.find(g => g.id === goalId);
-      if (!currentValidationGoal) return;
-
-      if (status === 'extend') {
-        showExtendGoalPopup();
-      } else {
-        await validateGoal(status);
-      }
-    }
-
-    // Add to home screen function
-    function addToHomeScreen() {
-      if (tg.addToHomeScreen) {
-        tg.addToHomeScreen();
-      } else {
-        tg.showAlert('Функция недоступна в этой версии Telegram');
-      }
-    }
-
-    // Support functions
-    function showSupportPopup() {
-      document.getElementById('support-message-input').value = '';
-      document.getElementById('support-popup').classList.add('active');
-    }
-
-    async function sendSupport() {
-      const message = document.getElementById('support-message-input').value.trim();
-
-      if (!message) {
-        tg.showAlert('Введите сообщение');
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/support', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': tg.initData
-          },
-          body: JSON.stringify({
-            user_id: user?.id || 0,
-            message: message
-          })
-        });
-
-        const data = await response.json();
-
-        closePopup();
-        if (data.success) {
-          setTimeout(() => {
-            document.getElementById('support-sent-popup').classList.add('active');
-          }, 300);
-        } else {
-          tg.showAlert(data.message || 'Ошибка отправки');
-        }
-      } catch (error) {
-        console.error('Send support error:', error);
-        tg.showAlert('Ошибка отправки сообщения');
-      }
-    }
-
-    // Load goals from API
-    async function loadGoals() {
-      try {
-        const response = await fetch(`/api/goals?user_id=${user?.id || 0}`, {
-          headers: { 'X-Telegram-Init-Data': tg.initData }
-        });
-        const data = await response.json();
-
-        if (data.goals) {
-          userGoals = data.goals;
-          renderGoals();
-
-          // Check for goals that need validation after loading
-          setTimeout(() => checkGoalsForValidation(), 1000);
-        }
-      } catch (error) {
-        console.error('Load goals error:', error);
-        renderGoals(); // Render empty state
-      }
-    }
-
-    // НАВИГАЦИЯ
-    const navBtns = document.querySelectorAll('.nav-btn');
-    const pages = document.querySelectorAll('.page');
-    
-    navBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const pageName = btn.dataset.page;
-        
-        navBtns.forEach(b => b.classList.remove('active'));
-        pages.forEach(p => p.classList.remove('active'));
-        
-        btn.classList.add('active');
-        document.getElementById(`${pageName}-page`).classList.add('active');
-      });
-    });
-    
-    // ВЫБОР СТИЛЯ
-    async function selectTone(tone) {
-      // Проверка Premium для Mentor
-      if (tone === 'mentor' && userStats.plan === 'FREE') {
-        document.getElementById('premium-popup').classList.add('active');
-        return;
-      }
-      
-      try {
-        const response = await fetch('/api/tone', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': tg.initData
-          },
-          body: JSON.stringify({
-            user_id: user?.id || 0,
-            tone: tone
-          })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          currentTone = tone;
-          
-          // Обновить UI
-          document.querySelectorAll('.style-card').forEach(card => {
-            card.classList.remove('active');
-          });
-          document.querySelector(`[data-tone="${tone}"]`).classList.add('active');
-          
-          // Обновить профиль
-          const toneNames = {
-            focused: 'Focused',
-            baddy: 'Baddy',
-            mentor: 'Mentor'
-          };
-          document.getElementById('profile-tone').textContent = toneNames[tone];
-
-          tg.showAlert(`Стиль изменён на ${toneNames[tone]}`);
-        }
-      } catch (error) {
-        console.error('Select tone error:', error);
-        tg.showAlert('Ошибка при смене стиля. Попробуй ещё раз.');
-      }
-    }
-    
-    // ЧЕКИН
-    async function doCheckin() {
-      try {
-        const response = await fetch('/api/checkin', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': tg.initData
-          },
-          body: JSON.stringify({
-            user_id: user?.id || 0
-          })
-        });
-
-        const data = await response.json();
-        const popupText = document.getElementById('popup-text');
-
-        if (data.success) {
-          if (data.streak === 1) {
-            popupText.textContent = 'Начинаем отсчёт streak.';
-          } else {
-            popupText.textContent = `Твой streak: ${data.streak} дней подряд. Продолжай!`;
-          }
-          userStats.streak = data.streak;
-
-          // Add today's date to checkinDates
-          const today = formatDateGMT(getGMTDate());
-          if (!userStats.checkinDates.includes(today)) {
-            userStats.checkinDates.push(today);
-          }
-
-          // Update UI
-          document.getElementById('profile-streak').textContent = `${data.streak} дней`;
-          document.getElementById('checkin-streak').textContent = data.streak;
-          renderCalendar();
-        } else {
-          popupText.textContent = data.message || 'Ты уже сделал чекин сегодня!';
-        }
-
-        document.getElementById('checkin-popup').classList.add('active');
-      } catch (error) {
-        console.error('Checkin error:', error);
-        tg.showAlert('Ошибка чекина. Попробуй ещё раз.');
-      }
-    }
-    
-    function closePopup() {
-      document.querySelectorAll('.popup').forEach(popup => {
-        popup.classList.remove('active');
-      });
-    }
-    
-    // ЧАТ
-    let lastMessageDate = null;
-    let historyOffset = 0;
-    let historyHasMore = false;
-    let isLoadingMore = false;
-
-    function formatTime(date) {
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${hours}:${minutes}`;
-    }
-
-    function formatDayDivider(date) {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-
-      if (date.toDateString() === today.toDateString()) {
-        return 'Сегодня';
-      } else if (date.toDateString() === yesterday.toDateString()) {
-        return 'Вчера';
-      } else {
-        const day = date.getDate();
-        const month = monthNames[date.getMonth()].toLowerCase();
-        return `${day} ${month}`;
-      }
-    }
-
-    function addDayDivider(date) {
-      const dateStr = date.toDateString();
-      if (lastMessageDate !== dateStr) {
-        lastMessageDate = dateStr;
-        const divider = document.createElement('div');
-        divider.className = 'chat-day-divider';
-        divider.innerHTML = `<span>${formatDayDivider(date)}</span>`;
-        chatContainer.appendChild(divider);
-      }
-    }
-
-    function addMessage(text, role, timestamp = null) {
-      // Strip any REMINDER markup that wasn't parsed (safety filter)
-      const cleanText = text.replace(/\[\[REMINDER:[^\]]+\]\]/g, '').trim();
-
-      const msgDate = timestamp ? new Date(timestamp) : new Date();
-      addDayDivider(msgDate);
-
-      const div = document.createElement('div');
-      div.className = `message ${role}`;
-      div.innerHTML = `
-        ${cleanText}
-        <div class="message-time">${formatTime(msgDate)}</div>
-      `;
-      chatContainer.appendChild(div);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    // Typing indicator functions
-    function showTypingIndicator() {
-      // Remove existing indicator if any
-      hideTypingIndicator();
-
-      const indicator = document.createElement('div');
-      indicator.className = 'typing-indicator';
-      indicator.id = 'typing-indicator';
-      indicator.innerHTML = `
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-      `;
-      chatContainer.appendChild(indicator);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    function hideTypingIndicator() {
-      const indicator = document.getElementById('typing-indicator');
-      if (indicator) {
-        indicator.remove();
-      }
-    }
-    
-    async function sendMessage() {
-      const message = messageInput.value.trim();
-      if (!message) return;
-
-      addMessage(message, 'user');
-      messageInput.value = '';
-      messageInput.style.height = 'auto';
-      messageInput.style.overflowY = 'hidden';
-      sendBtn.disabled = true;
-
-      // Show typing indicator while waiting for response
-      showTypingIndicator();
-
-      try {
-        // Get user's timezone offset in minutes (positive for west of UTC)
-        const timezoneOffset = new Date().getTimezoneOffset();
-
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': tg.initData
-          },
-          body: JSON.stringify({
-            message: message,
-            user_id: user?.id || 0,
-            timezone_offset: timezoneOffset
-          })
-        });
-
-        const data = await response.json();
-
-        // Hide typing indicator before showing response
-        hideTypingIndicator();
-
-        if (data.limit_reached) {
-          addMessage(data.message || 'Лимит FREE достигнут', 'assistant');
-          tg.showAlert('Лимит FREE (50 сообщений) достигнут. Купи Premium для продолжения.');
-        } else {
-          addMessage(data.reply || 'Ошибка ответа', 'assistant');
-
-          // Обновить статистику
-          if (data.stats) {
-            userStats.messagesUsed = data.stats.messagesUsed;
-            userStats.totalMessages = data.stats.totalMessages;
-            document.getElementById('profile-messages').textContent =
-              `${userStats.messagesUsed} / ${userStats.messagesLimit}`;
-            document.getElementById('profile-total').textContent = userStats.totalMessages;
-          }
-        }
-
-      } catch (error) {
-        console.error('Error:', error);
-        hideTypingIndicator();
-        addMessage('Ошибка. Попробуй ещё раз.', 'assistant');
-      } finally {
-        sendBtn.disabled = false;
-      }
-    }
-    
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-    
-    // ЗАГРУЗКА ИСТОРИИ И СТАТИСТИКИ
-    async function loadHistory() {
-      try {
-        const response = await fetch(`/api/history?user_id=${user?.id || 0}&offset=0&limit=50`, {
-          headers: { 'X-Telegram-Init-Data': tg.initData }
-        });
-        const data = await response.json();
-
-        if (data.history && data.history.length > 0) {
-          // Store pagination state
-          historyOffset = data.history.length;
-          historyHasMore = data.hasMore;
-
-          // Add "Load more" button if there are more messages
-          if (historyHasMore) {
-            const loadMoreContainer = document.createElement('div');
-            loadMoreContainer.className = 'load-more-container';
-            loadMoreContainer.id = 'load-more-container';
-            loadMoreContainer.innerHTML = `
-              <button class="load-more-btn" onclick="loadMoreHistory()">
-                Загрузить ещё
-              </button>
-            `;
-            chatContainer.appendChild(loadMoreContainer);
-          }
-
-          data.history.forEach(msg => {
-            addMessage(msg.content, msg.role, msg.created_at);
-          });
-        } else {
-          // Check if user completed onboarding
-          const onboardingCompleted = localStorage.getItem('onboarding_completed');
-          if (onboardingCompleted === 'true') {
-            addMessage('Привет! Ты прошёл онбординг — значит, готов к работе. Над чем хочешь поработать в ближайшую неделю?', 'assistant');
-          } else {
-            addMessage('Привет! Я твой AI-коуч. Над чем хочешь поработать?', 'assistant');
-          }
-        }
-      } catch (error) {
-        console.error('Load history error:', error);
-        addMessage('Привет! Я твой AI-коуч. Над чем хочешь поработать?', 'assistant');
-      }
-    }
-
-    async function loadMoreHistory() {
-      if (isLoadingMore || !historyHasMore) return;
-
-      isLoadingMore = true;
-      const loadMoreBtn = document.querySelector('.load-more-btn');
-      if (loadMoreBtn) {
-        loadMoreBtn.disabled = true;
-        loadMoreBtn.textContent = 'Загрузка...';
-      }
-
-      try {
-        const response = await fetch(`/api/history?user_id=${user?.id || 0}&offset=${historyOffset}&limit=50`, {
-          headers: { 'X-Telegram-Init-Data': tg.initData }
-        });
-        const data = await response.json();
-
-        if (data.history && data.history.length > 0) {
-          // Update pagination state
-          historyOffset += data.history.length;
-          historyHasMore = data.hasMore;
-
-          // Get the load-more container to insert messages after it
-          const loadMoreContainer = document.getElementById('load-more-container');
-
-          // Reset lastMessageDate to properly add day dividers for older messages
-          const oldLastMessageDate = lastMessageDate;
-
-          // Find the first message element (after load-more button)
-          const firstMessageElement = loadMoreContainer ? loadMoreContainer.nextElementSibling : chatContainer.firstChild;
-
-          // Track day dividers we need to add
-          let currentDate = null;
-
-          // Insert older messages after the load-more button
-          data.history.forEach(msg => {
-            const msgDate = new Date(msg.created_at);
-            const dateStr = msgDate.toDateString();
-
-            // Add day divider if needed
-            if (currentDate !== dateStr) {
-              currentDate = dateStr;
-              const divider = document.createElement('div');
-              divider.className = 'chat-day-divider';
-              divider.innerHTML = `<span>${formatDayDivider(msgDate)}</span>`;
-
-              if (firstMessageElement) {
-                chatContainer.insertBefore(divider, firstMessageElement);
-              } else {
-                chatContainer.appendChild(divider);
-              }
-            }
-
-            // Strip any REMINDER markup
-            const cleanText = msg.content.replace(/\[\[REMINDER:[^\]]+\]\]/g, '').trim();
-
-            // Create message element
-            const div = document.createElement('div');
-            div.className = `message ${msg.role}`;
-            div.innerHTML = `
-              ${cleanText}
-              <div class="message-time">${formatTime(msgDate)}</div>
-            `;
-
-            if (firstMessageElement) {
-              chatContainer.insertBefore(div, firstMessageElement);
-            } else {
-              chatContainer.appendChild(div);
-            }
-          });
-
-          // Remove duplicate day dividers if the oldest loaded message has same date as first existing message
-          if (firstMessageElement && firstMessageElement.classList.contains('chat-day-divider')) {
-            const prevElement = firstMessageElement.previousElementSibling;
-            if (prevElement && prevElement.classList.contains('chat-day-divider') &&
-                prevElement.textContent === firstMessageElement.textContent) {
-              firstMessageElement.remove();
-            }
-          }
-
-          // Update button state
-          if (!historyHasMore && loadMoreContainer) {
-            loadMoreContainer.remove();
-          } else if (loadMoreBtn) {
-            loadMoreBtn.disabled = false;
-            loadMoreBtn.textContent = 'Загрузить ещё';
-          }
-        }
-      } catch (error) {
-        console.error('Load more history error:', error);
-        if (loadMoreBtn) {
-          loadMoreBtn.disabled = false;
-          loadMoreBtn.textContent = 'Загрузить ещё';
-        }
-      } finally {
-        isLoadingMore = false;
-      }
-    }
-    
-    async function loadStats() {
-      try {
-        const response = await fetch(`/api/stats?user_id=${user?.id || 0}`, {
-          headers: { 'X-Telegram-Init-Data': tg.initData }
-        });
-        const data = await response.json();
-
-        if (data.stats) {
-          // Set limit based on plan
-          const messagesLimit = data.stats.plan === 'FREE' ? 50 : 500;
-
-          userStats = {
-            ...data.stats,
-            messagesLimit: messagesLimit,
-            checkinDates: data.stats.checkinDates || []
-          };
-
-          // Обновить UI
-          document.getElementById('profile-plan').textContent = userStats.plan;
-
-          // Show expiration date for premium plans
-          const expiresRow = document.getElementById('profile-expires-row');
-          const expiresValue = document.getElementById('profile-expires');
-          if (data.stats.expiresAt && userStats.plan !== 'FREE') {
-            const expiresDate = new Date(data.stats.expiresAt);
-            const day = expiresDate.getDate();
-            const month = monthNames[expiresDate.getMonth()].toLowerCase();
-            const year = expiresDate.getFullYear();
-            expiresValue.textContent = `${day} ${month} ${year}`;
-            expiresRow.style.display = 'flex';
-          } else {
-            expiresRow.style.display = 'none';
-          }
-
-          document.getElementById('profile-messages').textContent =
-            `${userStats.messagesUsed} / ${userStats.messagesLimit}`;
-          document.getElementById('profile-total').textContent = userStats.totalMessages;
-          document.getElementById('profile-streak').textContent = `${userStats.streak} дней`;
-          document.getElementById('checkin-streak').textContent = userStats.streak;
-
-          const toneNames = {
-            focused: 'Focused',
-            baddy: 'Baddy',
-            mentor: 'Mentor'
-          };
-          document.getElementById('profile-tone').textContent = toneNames[data.tone] || 'Baddy';
-          currentTone = data.tone || 'baddy';
-
-          // Установить активную карточку стиля
-          document.querySelectorAll('.style-card').forEach(card => {
-            card.classList.remove('active');
-          });
-          document.querySelector(`[data-tone="${currentTone}"]`)?.classList.add('active');
-
-          // Render calendar with check-in data
-          renderCalendar();
-        }
-      } catch (error) {
-        console.error('Load stats error:', error);
-        // Render calendar even on error
-        renderCalendar();
-      }
-    }
-
-    // Инициализация
-    renderCalendar(); // Initial render
-    renderGoals(); // Initial empty state
-    loadHistory();
-    loadStats();
-    loadGoals();
-    showStories(); // Show daily motivational stories
-  </script>
+  <div class="header">
+    <h1>SelfHack</h1>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+      <span id="theme-icon">🌙</span>
+    </button>
+  </div>
+  
+  <div class="content">
+    <!-- ЧЕКИН -->
+    <div id="checkin-page" class="page">
+      <div class="streak-container">
+        <div class="streak-label">Твой streak</div>
+        <div class="streak-value"><span id="checkin-streak">0</span> <span>дней</span></div>
+      </div>
+
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <button class="calendar-nav" id="prev-month">←</button>
+          <div class="calendar-title" id="calendar-title">Ноябрь 2025</div>
+          <button class="calendar-nav" id="next-month">→</button>
+        </div>
+        <div class="calendar-weekdays">
+          <div class="calendar-weekday">Вс</div>
+          <div class="calendar-weekday">Пн</div>
+          <div class="calendar-weekday">Вт</div>
+          <div class="calendar-weekday">Ср</div>
+          <div class="calendar-weekday">Чт</div>
+          <div class="calendar-weekday">Пт</div>
+          <div class="calendar-weekday">Сб</div>
+        </div>
+        <div class="calendar-days" id="calendar-days"></div>
+      </div>
+
+      <button class="checkin-button" id="checkin-btn" onclick="doCheckin()">Сделать чекин</button>
+      <p class="checkin-motivation">Последовательность создает импульс</p>
+    </div>
+    
+    <!-- СТИЛЬ -->
+    <div id="style-page" class="page">
+      <div style="padding: 16px 0;">
+        <h2 style="margin-bottom: 8px;">Выбери стиль коуча</h2>
+        <p style="color: var(--text-secondary); font-size: 14px;">Как я буду с тобой общаться</p>
+      </div>
+      
+      <div class="style-card" data-tone="focused" onclick="selectTone('focused')">
+        <h3>Focused</h3>
+        <p>Жесткий, но честный. Идеально подойдет тем, кто не любит лишнюю болтовню.</p>
+        <span class="style-badge free">FREE</span>
+      </div>
+
+      <div class="style-card active" data-tone="baddy" onclick="selectTone('baddy')">
+        <h3>Baddy</h3>
+        <p>Тот самый друг, который не даст тебе слиться в очередной раз.</p>
+        <span class="style-badge free">FREE</span>
+      </div>
+
+      <div class="style-card" data-tone="mentor" onclick="selectTone('mentor')">
+        <h3>Mentor</h3>
+        <p>Персональный коуч уровня executive. Помогает видеть картину выше, шире и глубже.</p>
+        <span class="style-badge premium">PREMIUM</span>
+      </div>
+    </div>
+    
+    <!-- ЧАТ -->
+    <div id="chat-page" class="page active">
+      <div id="chat-container"></div>
+      <div class="input-area">
+        <textarea id="message-input" placeholder="Напиши что-то..." rows="1"></textarea>
+        <button id="send-btn">→</button>
+      </div>
+    </div>
+    
+    <!-- ЦЕЛИ -->
+    <div id="goals-page" class="page">
+      <div style="padding: 16px 16px 0;">
+        <h2 style="margin-bottom: 8px;">Твои цели</h2>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 16px;">Чего ты хочешь достичь</p>
+      </div>
+
+      <div style="padding: 0 16px 16px;">
+        <div id="goals-container"></div>
+        <div class="add-goal" onclick="showAddGoalPopup()">+ Добавить свою цель</div>
+      </div>
+    </div>
+    
+    <!-- ПРОФИЛЬ -->
+    <div id="profile-page" class="page">
+      <div class="profile-section" style="margin-bottom: 12px;">
+        <h3>Подписка</h3>
+        <div class="profile-row">
+          <span class="profile-label">Тариф</span>
+          <span class="profile-value" id="profile-plan">FREE</span>
+        </div>
+        <div class="profile-row" id="profile-expires-row" style="display: none;">
+          <span class="profile-label">Действует до</span>
+          <span class="profile-value" id="profile-expires"></span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-label">Сообщений использовано</span>
+          <span class="profile-value" id="profile-messages">0 / 50</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-label">Текущий стиль</span>
+          <span class="profile-value" id="profile-tone">💬 Baddy</span>
+        </div>
+      </div>
+
+      <div class="profile-section" style="margin-bottom: 12px;">
+        <h3>Активность</h3>
+        <div class="profile-row">
+          <span class="profile-label">Чекинов подряд</span>
+          <span class="profile-value" id="profile-streak">0 дней</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-label">Всего сообщений</span>
+          <span class="profile-value" id="profile-total">0</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-label">Активных целей</span>
+          <span class="profile-value" id="profile-goals-count">0</span>
+        </div>
+      </div>
+
+      <div class="profile-section" style="margin-bottom: 12px;">
+        <h3>Аккаунт</h3>
+        <div class="profile-row">
+          <span class="profile-label">Username</span>
+          <span class="profile-value" id="profile-username">@username</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-label">Дата регистрации</span>
+          <span class="profile-value">19 ноября 2024</span>
+        </div>
+      </div>
+
+      <button class="support-btn" onclick="showSupportPopup()">Support</button>
+    </div>
+  </div>
+  
+  <!-- ПОПАП ЧЕКИНА -->
+  <div class="popup" id="checkin-popup">
+    <div class="popup-content">
+      <div class="popup-title">Чекин выполнен!</div>
+      <div class="popup-text" id="popup-text">Начинаем отсчёт streak.</div>
+      <button class="popup-close" onclick="closePopup()">Отлично!</button>
+    </div>
+  </div>
+  
+  <!-- ПОПАП PREMIUM -->
+  <div class="popup" id="premium-popup">
+    <div class="popup-content">
+      <div class="popup-title">Нужен Premium</div>
+      <div class="popup-text">Стиль Mentor доступен только в Premium.<br><br>Premium $10.99/мес:<br>• Безлимитные сообщения<br>• 3 тональности коуча<br>• История 30 дней</div>
+      <button class="popup-close" onclick="closePopup()">Понятно</button>
+    </div>
+  </div>
+
+  <!-- ПОПАП ДОБАВЛЕНИЯ ЦЕЛИ -->
+  <div class="popup" id="add-goal-popup">
+    <div class="popup-content large" style="text-align: left;">
+      <div class="popup-title" style="text-align: center;">Новая цель</div>
+      <label class="popup-label">Описание цели</label>
+      <textarea id="goal-text-input" class="popup-input" style="resize: none;" placeholder="Чего ты хочешь достичь?"></textarea>
+      <label class="popup-label">Дата достижения</label>
+      <input type="date" id="goal-date-input" class="popup-input">
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
+        <button class="popup-btn primary" onclick="saveGoal()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ -->
+  <div class="popup" id="delete-goal-popup">
+    <div class="popup-content">
+      <div class="popup-title">Удалить цель?</div>
+      <div class="popup-text">Вы уверены, что хотите удалить эту цель?</div>
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Нет</button>
+        <button class="popup-btn primary" onclick="confirmDeleteGoal()">Да</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП ЦЕЛЬ СОХРАНЕНА С ПРЕДЛОЖЕНИЕМ КОУЧА -->
+  <div class="popup" id="goal-saved-popup">
+    <div class="popup-content">
+      <div class="popup-title">Цель добавлена!</div>
+      <div class="popup-text" id="goal-saved-text">Цель зафиксирована в календаре раздела чекин, желаем вам достигнуть её</div>
+      <div class="popup-suggestion" id="coach-suggestion">
+        <div class="suggestion-text">Хочешь обсудить план достижения с коучем?</div>
+        <div class="popup-buttons">
+          <button class="popup-btn secondary" onclick="closePopup()">Не сейчас</button>
+          <button class="popup-btn primary" onclick="goToChatWithGoal()">Обсудить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП ПРОСМОТРА ЦЕЛИ -->
+  <div class="popup" id="view-goal-popup">
+    <div class="popup-content">
+      <div class="popup-title">Цель на эту дату</div>
+      <div class="popup-text" id="view-goal-text"></div>
+      <button class="popup-close" onclick="closePopup()">Окей</button>
+    </div>
+  </div>
+
+  <!-- ПОПАП SUPPORT -->
+  <div class="popup" id="support-popup">
+    <div class="popup-content large" style="text-align: left;">
+      <div class="popup-title" style="text-align: center;">Support</div>
+      <div class="popup-text" style="text-align: center; margin-bottom: 16px;">Напишите в службу поддержки, если у вас есть вопросы или предложение по улучшению продукта.</div>
+      <textarea id="support-message-input" class="popup-input" style="resize: none;" placeholder="Ваше сообщение..."></textarea>
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
+        <button class="popup-btn primary" onclick="sendSupport()">Отправить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП SUPPORT ОТПРАВЛЕН -->
+  <div class="popup" id="support-sent-popup">
+    <div class="popup-content">
+      <div class="popup-title">Отправлено!</div>
+      <div class="popup-text">Ваше обращение успешно отправлено. Мы свяжемся с вами в ближайшее время.</div>
+      <button class="popup-close" onclick="closePopup()">Окей</button>
+    </div>
+  </div>
+
+  <!-- ПОПАП ВАЛИДАЦИИ ЦЕЛИ (при входе) -->
+  <div class="popup" id="goal-validation-popup">
+    <div class="popup-content">
+      <div class="popup-title">Время подвести итог!</div>
+      <div class="popup-text" id="goal-validation-text">Сегодня дата твоей цели. Как результат?</div>
+      <div class="popup-buttons" style="flex-direction: column; gap: 10px;">
+        <button class="popup-btn primary" onclick="validateGoal('achieved')" style="background: var(--success);">Достигнута!</button>
+        <button class="popup-btn secondary" onclick="showExtendGoalPopup()" style="background: var(--warning-light); color: var(--warning);">Нужно больше времени</button>
+        <button class="popup-btn secondary" onclick="validateGoal('failed')" style="background: var(--bg-primary); color: var(--info);">Не удалось</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП ПРОДЛЕНИЯ ЦЕЛИ -->
+  <div class="popup" id="extend-goal-popup">
+    <div class="popup-content large" style="text-align: left;">
+      <div class="popup-title" style="text-align: center;">Продлить цель</div>
+      <div class="popup-text" style="text-align: center; margin-bottom: 16px;">Сколько времени ещё нужно?</div>
+      <label class="popup-label">Новая дата</label>
+      <input type="date" id="extend-goal-date" class="popup-input">
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
+        <button class="popup-btn primary" onclick="extendGoal()">Продлить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП ЦЕЛЬ ДОСТИГНУТА -->
+  <div class="popup" id="goal-achieved-popup">
+    <div class="popup-content">
+      <div class="popup-title" style="color: var(--success);">Поздравляем!</div>
+      <div class="popup-text">Ты справился! Это отличный результат. Продолжай в том же духе!</div>
+      <button class="popup-close" onclick="closeAchievedPopup()" style="background: var(--success);">Отлично!</button>
+    </div>
+  </div>
+
+  <!-- ПОПАП ЦЕЛЬ НЕ ДОСТИГНУТА -->
+  <div class="popup" id="goal-failed-popup">
+    <div class="popup-content">
+      <div class="popup-title" style="color: var(--text-secondary);">Ничего страшного</div>
+      <div class="popup-text">Не все цели достигаются с первого раза. Проанализируй, что помешало, и попробуй снова с новым подходом.</div>
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Закрыть</button>
+        <button class="popup-btn primary" onclick="retryGoal()">Попробовать снова</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="navigation">
+    <button class="nav-btn" data-page="checkin">Чекин</button>
+    <button class="nav-btn" data-page="style">Стиль</button>
+    <button class="nav-btn active" data-page="chat">Чат</button>
+    <button class="nav-btn" data-page="goals">Цели</button>
+    <button class="nav-btn" data-page="profile">Профиль</button>
+  </div>
+
+  <!-- ONBOARDING STORIES -->
+  <div class="story-overlay" id="story-overlay">
+    <div class="story-progress-bar" id="story-progress-bar"></div>
+    <div class="story-content" id="story-content"></div>
+    <div class="story-tap-zones">
+      <div class="story-tap-left" onclick="prevStory()"></div>
+      <div class="story-tap-right" onclick="nextStory()"></div>
+    </div>
+    <div class="story-tap-hint">Tap to continue</div>
+  </div>
+  
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.ready();
+
+    // Request fullscreen mode for native app feel
+    if (tg.requestFullscreen) {
+      tg.requestFullscreen();
+    }
+
+    // Set header and background colors to match app theme
+    function updateTelegramTheme() {
+      const styles = getComputedStyle(document.documentElement);
+      const accentPrimary = styles.getPropertyValue('--accent-primary').trim();
+      const bgPrimary = styles.getPropertyValue('--bg-primary').trim();
+      const bgSecondary = styles.getPropertyValue('--bg-secondary').trim();
+
+      if (tg.setHeaderColor) {
+        tg.setHeaderColor(accentPrimary);
+      }
+      if (tg.setBackgroundColor) {
+        tg.setBackgroundColor(bgPrimary);
+      }
+      if (tg.setBottomBarColor) {
+        tg.setBottomBarColor(bgSecondary);
+      }
+    }
+    updateTelegramTheme();
+
+    // ========== THEME MANAGEMENT ==========
+    // Load saved theme preference
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+
+      if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-icon').textContent = '☀️';
+      } else {
+        document.body.classList.remove('dark-mode');
+        document.getElementById('theme-icon').textContent = '🌙';
+      }
+
+      // Update Telegram theme colors after applying theme
+      setTimeout(updateTelegramTheme, 100);
+    }
+
+    // Toggle theme function
+    function toggleTheme() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      const themeIcon = document.getElementById('theme-icon');
+
+      if (isDark) {
+        themeIcon.textContent = '☀️';
+        localStorage.setItem('theme', 'dark');
+      } else {
+        themeIcon.textContent = '🌙';
+        localStorage.setItem('theme', 'light');
+      }
+
+      // Update Telegram theme colors after toggle
+      setTimeout(updateTelegramTheme, 100);
+
+      // Haptic feedback
+      if (tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('light');
+      }
+    }
+
+    // Load theme on startup
+    loadTheme();
+
+    // Disable vertical swipes to close (for better UX in fullscreen)
+    if (tg.disableVerticalSwipes) {
+      tg.disableVerticalSwipes();
+    }
+
+    // Apply safe area insets from Telegram WebApp API (more reliable than CSS env())
+    function applySafeAreaInsets() {
+      const root = document.documentElement;
+
+      // Get safe area insets from Telegram WebApp
+      if (tg.safeAreaInset) {
+        root.style.setProperty('--tg-safe-area-top', `${tg.safeAreaInset.top || 0}px`);
+        root.style.setProperty('--tg-safe-area-bottom', `${tg.safeAreaInset.bottom || 0}px`);
+        root.style.setProperty('--tg-safe-area-left', `${tg.safeAreaInset.left || 0}px`);
+        root.style.setProperty('--tg-safe-area-right', `${tg.safeAreaInset.right || 0}px`);
+      }
+
+      // Get content safe area insets (additional padding for notches)
+      if (tg.contentSafeAreaInset) {
+        root.style.setProperty('--tg-content-safe-area-top', `${tg.contentSafeAreaInset.top || 0}px`);
+        root.style.setProperty('--tg-content-safe-area-bottom', `${tg.contentSafeAreaInset.bottom || 0}px`);
+      }
+    }
+
+    // Apply on load and when viewport changes
+    applySafeAreaInsets();
+
+    // Listen for safe area changes
+    if (tg.onEvent) {
+      tg.onEvent('safeAreaChanged', applySafeAreaInsets);
+      tg.onEvent('contentSafeAreaChanged', applySafeAreaInsets);
+      tg.onEvent('viewportChanged', applySafeAreaInsets);
+    }
+
+    // Note: addToHomeScreen moved to Profile page button
+
+    const user = tg.initDataUnsafe?.user;
+
+    if (user) {
+      document.getElementById('profile-username').textContent = `@${user.username || user.first_name}`;
+    }
+    
+    const chatContainer = document.getElementById('chat-container');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    // Auto-resize textarea function
+    function autoResizeTextarea() {
+      messageInput.style.height = 'auto';
+      const newHeight = Math.min(messageInput.scrollHeight, 120);
+      messageInput.style.height = newHeight + 'px';
+      // Switch to scroll when max height reached
+      messageInput.style.overflowY = messageInput.scrollHeight > 120 ? 'auto' : 'hidden';
+    }
+
+    // Initialize textarea auto-resize
+    messageInput.addEventListener('input', autoResizeTextarea);
+    
+    let currentTone = 'baddy'; // По умолчанию
+    let userStats = {
+      plan: 'FREE',
+      messagesUsed: 0,
+      messagesLimit: 50,
+      totalMessages: 0,
+      streak: 0,
+      checkinDates: []
+    };
+
+    // ========== ONBOARDING STORIES ==========
+    const onboardingStories = [
+      {
+        type: 'text',
+        icon: '💬',
+        title: 'Ты получил 10 советов от ChatGPT',
+        subtitle: 'Сколько из них ты применил?'
+      },
+      {
+        type: 'text',
+        icon: '🧠',
+        title: 'Советы не работают',
+        subtitle: 'Потому что это НЕ твои решения. Информация извне не становится действием.'
+      },
+      {
+        type: 'text',
+        icon: '❓',
+        title: 'Коуч не даёт ответы',
+        subtitle: 'Он задаёт вопросы, которые помогают ТЕБЕ найти решение. Твоё решение = твоё действие.'
+      },
+      {
+        type: 'grow',
+        icon: '🎯',
+        title: 'Методология GROW',
+        subtitle: 'От цели к действию через 4 шага'
+      },
+      {
+        type: 'text',
+        icon: '📋',
+        title: 'Ставь цели с дедлайнами',
+        subtitle: 'Коуч напомнит и поможет довести до конца. Цели отображаются в календаре.'
+      },
+      {
+        type: 'text',
+        icon: '🔥',
+        title: 'Ежедневный check-in',
+        subtitle: 'Формирует привычку возвращаться. Не разрывай цепочку — это работает.'
+      },
+      {
+        type: 'text',
+        icon: '🔔',
+        title: 'Напоминания в Telegram',
+        subtitle: 'Коуч отправит напоминание в нужный момент. Прямо в личку.'
+      },
+      {
+        type: 'text',
+        icon: '⚡',
+        title: 'Это будет непривычно',
+        subtitle: 'Вопросы требуют усилий. Но через неделю ты увидишь разницу.'
+      },
+      {
+        type: 'tone-selector',
+        icon: '🎨',
+        title: 'Выбери стиль коуча',
+        subtitle: 'Как он будет с тобой общаться'
+      },
+      {
+        type: 'cta',
+        icon: '🚀',
+        title: 'Готов начать?',
+        subtitle: 'Расскажи, над чем хочешь поработать в ближайшую неделю'
+      }
+    ];
+
+    let currentStoryIndex = 0;
+    let selectedOnboardingTone = 'baddy';
+
+    function showOnboarding() {
+      // Check if onboarding already completed
+      const onboardingCompleted = localStorage.getItem('onboarding_completed');
+      if (onboardingCompleted === 'true') return;
+
+      currentStoryIndex = 0;
+      selectedOnboardingTone = 'baddy';
+      renderStory();
+      document.getElementById('story-overlay').classList.add('active');
+    }
+
+    function renderStory() {
+      const story = onboardingStories[currentStoryIndex];
+      const contentEl = document.getElementById('story-content');
+      const progressEl = document.getElementById('story-progress-bar');
+
+      // Update progress bar
+      progressEl.innerHTML = onboardingStories.map((_, i) => {
+        let className = 'story-progress-segment';
+        if (i < currentStoryIndex) className += ' completed';
+        else if (i === currentStoryIndex) className += ' active';
+        return `<div class="${className}"></div>`;
+      }).join('');
+
+      // Render content based on type
+      let contentHtml = `<div class="story-icon">${story.icon}</div>`;
+      contentHtml += `<div class="story-title">${story.title}</div>`;
+
+      if (story.type === 'grow') {
+        contentHtml += `
+          <div class="grow-visual">
+            <div class="grow-step"><span class="grow-letter">G</span><span class="grow-label">Goal — Цель</span></div>
+            <div class="grow-step"><span class="grow-letter">R</span><span class="grow-label">Reality — Реальность</span></div>
+            <div class="grow-step"><span class="grow-letter">O</span><span class="grow-label">Options — Варианты</span></div>
+            <div class="grow-step"><span class="grow-letter">W</span><span class="grow-label">Will — Действие</span></div>
+          </div>
+        `;
+      } else if (story.type === 'tone-selector') {
+        contentHtml += `<div class="story-subtitle">${story.subtitle}</div>`;
+        contentHtml += `
+          <div class="onboarding-tone-selector">
+            <div class="onboarding-tone-card ${selectedOnboardingTone === 'focused' ? 'selected' : ''}" onclick="selectOnboardingTone('focused', event)">
+              <div class="onboarding-tone-name">Focused</div>
+              <div class="onboarding-tone-desc">Минимум слов, максимум действий</div>
+              <div class="onboarding-tone-badge">FREE</div>
+            </div>
+            <div class="onboarding-tone-card ${selectedOnboardingTone === 'baddy' ? 'selected' : ''}" onclick="selectOnboardingTone('baddy', event)">
+              <div class="onboarding-tone-name">Baddy</div>
+              <div class="onboarding-tone-desc">Друг, который не даст слиться</div>
+              <div class="onboarding-tone-badge">FREE</div>
+            </div>
+          </div>
+        `;
+        contentHtml += `<button class="onboarding-cta" onclick="advanceFromToneSelector(event)">Продолжить</button>`;
+      } else if (story.type === 'cta') {
+        contentHtml += `<div class="story-subtitle">${story.subtitle}</div>`;
+        contentHtml += `<button class="onboarding-cta" onclick="completeOnboarding(event)">Начать</button>`;
+      } else {
+        contentHtml += `<div class="story-subtitle">${story.subtitle}</div>`;
+      }
+
+      contentEl.innerHTML = contentHtml;
+    }
+
+    function selectOnboardingTone(tone, event) {
+      event.stopPropagation();
+      selectedOnboardingTone = tone;
+
+      // Update UI
+      document.querySelectorAll('.onboarding-tone-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      event.currentTarget.classList.add('selected');
+    }
+
+    function advanceFromToneSelector(event) {
+      event.stopPropagation();
+      currentStoryIndex++;
+      renderStory();
+    }
+
+    function prevStory() {
+      if (currentStoryIndex > 0) {
+        currentStoryIndex--;
+        renderStory();
+      }
+    }
+
+    function nextStory() {
+      // Don't auto-advance on tone selector or CTA
+      const story = onboardingStories[currentStoryIndex];
+      if (story.type === 'tone-selector' || story.type === 'cta') {
+        return;
+      }
+
+      currentStoryIndex++;
+
+      if (currentStoryIndex >= onboardingStories.length) {
+        completeOnboarding();
+      } else {
+        renderStory();
+      }
+    }
+
+    async function completeOnboarding(event) {
+      if (event) event.stopPropagation();
+
+      // Save selected tone
+      try {
+        await fetch('/api/tone', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            tone: selectedOnboardingTone
+          })
+        });
+
+        currentTone = selectedOnboardingTone;
+
+        // Update style page UI
+        document.querySelectorAll('.style-card').forEach(card => {
+          card.classList.remove('active');
+        });
+        document.querySelector(`[data-tone="${selectedOnboardingTone}"]`)?.classList.add('active');
+
+        // Update profile
+        const toneNames = { focused: 'Focused', baddy: 'Baddy', mentor: 'Mentor' };
+        document.getElementById('profile-tone').textContent = toneNames[selectedOnboardingTone];
+      } catch (error) {
+        console.error('Save tone error:', error);
+      }
+
+      // Mark onboarding as completed
+      localStorage.setItem('onboarding_completed', 'true');
+
+      // Close overlay
+      const overlay = document.getElementById('story-overlay');
+      overlay.classList.add('fade-out');
+      setTimeout(() => {
+        overlay.classList.remove('active', 'fade-out');
+      }, 500);
+    }
+
+    // Legacy function name for compatibility
+    function showStories() {
+      showOnboarding();
+    }
+
+    // Calendar state (using GMT)
+    let currentCalendarDate = new Date(Date.UTC(
+      new Date().getUTCFullYear(),
+      new Date().getUTCMonth(),
+      1
+    ));
+
+    // Get current date in GMT
+    function getGMTDate() {
+      const now = new Date();
+      return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    }
+
+    // Format date as YYYY-MM-DD in GMT
+    function formatDateGMT(date) {
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Month names in Russian
+    const monthNames = [
+      'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+    ];
+
+    // Render calendar for current month
+    function renderCalendar() {
+      const year = currentCalendarDate.getUTCFullYear();
+      const month = currentCalendarDate.getUTCMonth();
+
+      // Update title
+      document.getElementById('calendar-title').textContent = `${monthNames[month]} ${year}`;
+
+      // Get first day of month and total days
+      const firstDay = new Date(Date.UTC(year, month, 1));
+      const lastDay = new Date(Date.UTC(year, month + 1, 0));
+      const daysInMonth = lastDay.getUTCDate();
+      const startDayOfWeek = firstDay.getUTCDay(); // 0 = Sunday
+
+      // Get today in GMT
+      const today = getGMTDate();
+      const todayStr = formatDateGMT(today);
+
+      // Build calendar grid
+      const calendarDays = document.getElementById('calendar-days');
+      calendarDays.innerHTML = '';
+
+      // Previous month days
+      const prevMonth = new Date(Date.UTC(year, month, 0));
+      const prevMonthDays = prevMonth.getUTCDate();
+
+      for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const day = prevMonthDays - i;
+        const div = document.createElement('div');
+        div.className = 'calendar-day other-month';
+        div.textContent = day;
+        calendarDays.appendChild(div);
+      }
+
+      // Current month days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const div = document.createElement('div');
+        div.className = 'calendar-day';
+        div.textContent = day;
+
+        // Check if this day has a check-in
+        if (userStats.checkinDates.includes(dateStr)) {
+          div.classList.add('checked');
+        }
+
+        // Check if today
+        if (dateStr === todayStr) {
+          div.classList.add('today');
+        }
+
+        // Check if this day has a goal
+        const goalsOnDate = userGoals.filter(g => g.target_date === dateStr);
+        if (goalsOnDate.length > 0) {
+          // Determine goal indicator based on status
+          const hasAchieved = goalsOnDate.some(g => g.status === 'achieved');
+          const hasFailed = goalsOnDate.some(g => g.status === 'failed');
+          const hasExtended = goalsOnDate.some(g => g.was_extended && (!g.status || g.status === 'active'));
+          const hasActive = goalsOnDate.some(g => !g.status || g.status === 'active');
+
+          if (hasAchieved && !hasFailed && !hasActive) {
+            // All goals achieved - green circle
+            div.classList.add('has-goal', 'goal-achieved');
+          } else if (hasFailed && !hasAchieved && !hasActive) {
+            // All goals failed - gray circle
+            div.classList.add('has-goal', 'goal-failed');
+          } else if (hasActive && dateStr < todayStr) {
+            // Has active goals but date has passed - red circle (overdue)
+            div.classList.add('has-goal', 'goal-overdue');
+          } else if (hasExtended) {
+            // Goal was extended - yellow circle
+            div.classList.add('has-goal', 'goal-extended');
+          } else if (hasActive) {
+            // Active goals - check if needs validation
+            if (dateStr === todayStr) {
+              div.classList.add('has-goal', 'goal-pending');
+            } else {
+              div.classList.add('has-goal');
+            }
+          } else {
+            // Mixed statuses or other
+            div.classList.add('has-goal');
+          }
+
+          div.addEventListener('click', () => showGoalOnDate(dateStr, goalsOnDate));
+        }
+
+        calendarDays.appendChild(div);
+      }
+
+      // Next month days to fill the grid
+      const totalCells = startDayOfWeek + daysInMonth;
+      const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+
+      for (let day = 1; day <= remainingCells; day++) {
+        const div = document.createElement('div');
+        div.className = 'calendar-day other-month';
+        div.textContent = day;
+        calendarDays.appendChild(div);
+      }
+    }
+
+    // Calendar navigation
+    function prevMonth() {
+      currentCalendarDate = new Date(Date.UTC(
+        currentCalendarDate.getUTCFullYear(),
+        currentCalendarDate.getUTCMonth() - 1,
+        1
+      ));
+      renderCalendar();
+    }
+
+    function nextMonth() {
+      currentCalendarDate = new Date(Date.UTC(
+        currentCalendarDate.getUTCFullYear(),
+        currentCalendarDate.getUTCMonth() + 1,
+        1
+      ));
+      renderCalendar();
+    }
+
+    // Initialize calendar navigation
+    document.getElementById('prev-month').addEventListener('click', prevMonth);
+    document.getElementById('next-month').addEventListener('click', nextMonth);
+
+    // ========== ЦЕЛИ ==========
+    let userGoals = [];
+
+    // Render goals list
+    function renderGoals() {
+      const container = document.getElementById('goals-container');
+      container.innerHTML = '';
+
+      // Filter out completed goals for main display (only show active)
+      const activeGoals = userGoals.filter(g => !g.status || g.status === 'active');
+      const completedGoals = userGoals.filter(g => g.status && g.status !== 'active');
+
+      if (activeGoals.length === 0 && completedGoals.length === 0) {
+        container.innerHTML = '<div class="goals-empty">Пока нет целей. Добавьте свою первую цель!</div>';
+        return;
+      }
+
+      const today = formatDateGMT(getGMTDate());
+
+      // Sort by target_date ascending (nearest first)
+      const sortedGoals = [...activeGoals].sort((a, b) => {
+        if (!a.target_date && !b.target_date) return 0;
+        if (!a.target_date) return 1;
+        if (!b.target_date) return -1;
+        return new Date(a.target_date) - new Date(b.target_date);
+      });
+
+      sortedGoals.forEach(goal => {
+        const div = document.createElement('div');
+        div.className = 'goal-item';
+
+        // Check if goal is overdue (past date but still active)
+        const isOverdue = goal.target_date && goal.target_date < today;
+        const isToday = goal.target_date && goal.target_date === today;
+
+        if (isOverdue) {
+          div.classList.add('overdue');
+        } else if (isToday) {
+          div.classList.add('needs-validation');
+        }
+
+        // Check if goal was extended
+        if (goal.was_extended) {
+          div.classList.add('extended');
+        }
+
+        let dateText = '';
+        let validationButtons = '';
+        let statusText = '';
+
+        if (goal.target_date) {
+          const date = new Date(goal.target_date);
+          const day = date.getUTCDate();
+          const month = monthNames[date.getUTCMonth()];
+          const year = date.getUTCFullYear();
+
+          const isTodayDate = goal.target_date === today;
+          const isPast = goal.target_date < today;
+
+          let dateLabel = `До ${day} ${month.toLowerCase()} ${year}`;
+          if (isTodayDate) {
+            dateLabel += ' - СЕГОДНЯ';
+          } else if (isPast) {
+            dateLabel += ' - ПРОСРОЧЕНО';
+            statusText = '<div class="goal-status overdue">Просрочена</div>';
+          }
+
+          dateText = `<div class="goal-date">${dateLabel}</div>`;
+
+          // Show validation buttons only for today's goals, not overdue ones
+          if (isToday) {
+            validationButtons = `
+              <div class="goal-validation-buttons">
+                <button class="goal-validation-btn achieved" onclick="validateGoalFromCard(${goal.id}, 'achieved')">Достигнута</button>
+                <button class="goal-validation-btn extend" onclick="validateGoalFromCard(${goal.id}, 'extend')">Продлить</button>
+                <button class="goal-validation-btn failed" onclick="validateGoalFromCard(${goal.id}, 'failed')">Нет</button>
+              </div>
+            `;
+          }
+        }
+
+        div.innerHTML = `
+          <div class="goal-text">${goal.text}</div>
+          ${dateText}
+          ${statusText}
+          ${validationButtons}
+          <button class="goal-delete" onclick="showDeleteConfirmation(${goal.id})">x</button>
+        `;
+        container.appendChild(div);
+      });
+
+      // Show completed goals section if any
+      if (completedGoals.length > 0) {
+        const completedSection = document.createElement('div');
+        completedSection.style.marginTop = '24px';
+        completedSection.innerHTML = '<h4 style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 12px;">ЗАВЕРШЕННЫЕ ЦЕЛИ</h4>';
+
+        // Sort completed goals: achieved first, then failed, all by date descending
+        const sortedCompletedGoals = [...completedGoals].sort((a, b) => {
+          // First sort by status: achieved comes before failed
+          if (a.status === 'achieved' && b.status !== 'achieved') return -1;
+          if (a.status !== 'achieved' && b.status === 'achieved') return 1;
+
+          // Then sort by date descending (newest first)
+          if (!a.target_date && !b.target_date) return 0;
+          if (!a.target_date) return 1;
+          if (!b.target_date) return -1;
+          return new Date(b.target_date) - new Date(a.target_date);
+        });
+
+        sortedCompletedGoals.forEach(goal => {
+          const div = document.createElement('div');
+          div.className = `goal-item ${goal.status}`;
+
+          let dateText = '';
+          let statusText = '';
+
+          if (goal.target_date) {
+            const date = new Date(goal.target_date);
+            const day = date.getUTCDate();
+            const month = monthNames[date.getUTCMonth()];
+            dateText = `<div class="goal-date">${day} ${month.toLowerCase()}</div>`;
+          }
+
+          if (goal.status === 'achieved') {
+            statusText = '<div class="goal-status achieved">Достигнута</div>';
+          } else if (goal.status === 'failed') {
+            statusText = '<div class="goal-status failed">Не достигнута</div>';
+          }
+
+          div.innerHTML = `
+            <div class="goal-text">${goal.text}</div>
+            ${dateText}
+            ${statusText}
+            <button class="goal-delete" onclick="showDeleteConfirmation(${goal.id})">x</button>
+          `;
+          completedSection.appendChild(div);
+        });
+
+        container.appendChild(completedSection);
+      }
+
+      // Update profile goals count (only active)
+      const goalsCountEl = document.getElementById('profile-goals-count');
+      if (goalsCountEl) {
+        goalsCountEl.textContent = activeGoals.length;
+      }
+
+      // Re-render calendar to update goal highlights
+      renderCalendar();
+    }
+
+    // Show goal on date popup
+    function showGoalOnDate(dateStr, goals) {
+      const container = document.getElementById('view-goal-text');
+      const today = formatDateGMT(getGMTDate());
+
+      // Function to determine goal status display
+      function getGoalStatusHtml(goal) {
+        if (goal.status === 'achieved') {
+          return '<span style="color: var(--success); font-weight: 600; font-size: 11px;">Достигнута</span>';
+        } else if (goal.status === 'failed') {
+          return '<span style="color: var(--info); font-weight: 600; font-size: 11px;">Не достигнута</span>';
+        } else if (goal.target_date && goal.target_date < today) {
+          return '<span style="color: var(--error); font-weight: 600; font-size: 11px;">Просрочена</span>';
+        }
+        return '';
+      }
+
+      if (goals.length === 1) {
+        // Single goal - display without numbering
+        const statusHtml = getGoalStatusHtml(goals[0]);
+        container.innerHTML = `<div style="text-align: left; padding: 8px 0;">
+          ${goals[0].text}
+          ${statusHtml ? `<div style="margin-top: 6px;">${statusHtml}</div>` : ''}
+        </div>`;
+      } else {
+        // Multiple goals - sort by status: achieved first, then overdue, then failed
+        const sortedGoals = [...goals].sort((a, b) => {
+          const statusOrder = { 'achieved': 0, 'active': 1, 'failed': 2 };
+          const aStatus = a.status || 'active';
+          const bStatus = b.status || 'active';
+          // Overdue (active but past) should come after achieved
+          const aOverdue = aStatus === 'active' && a.target_date < today;
+          const bOverdue = bStatus === 'active' && b.target_date < today;
+          if (aStatus === 'achieved' && bStatus !== 'achieved') return -1;
+          if (bStatus === 'achieved' && aStatus !== 'achieved') return 1;
+          if (aOverdue && !bOverdue) return -1;
+          if (bOverdue && !aOverdue) return 1;
+          return (statusOrder[aStatus] || 1) - (statusOrder[bStatus] || 1);
+        });
+
+        // Multiple goals - display numbered list with status
+        const goalItems = sortedGoals.map((g, index) => {
+          const statusHtml = getGoalStatusHtml(g);
+          return `<div style="text-align: left; padding: 8px 0; border-bottom: 1px solid var(--border-light); margin-bottom: 8px;">
+            <strong>${index + 1}.</strong> ${g.text}
+            ${statusHtml ? `<div style="margin-top: 4px;">${statusHtml}</div>` : ''}
+          </div>`;
+        }).join('');
+        container.innerHTML = goalItems;
+      }
+
+      document.getElementById('view-goal-popup').classList.add('active');
+    }
+
+    // Delete confirmation
+    let goalToDelete = null;
+
+    function showDeleteConfirmation(goalId) {
+      goalToDelete = goalId;
+      document.getElementById('delete-goal-popup').classList.add('active');
+    }
+
+    async function confirmDeleteGoal() {
+      if (!goalToDelete) return;
+      closePopup();
+      await deleteGoalFromServer(goalToDelete);
+      goalToDelete = null;
+    }
+
+    // Show add goal popup
+    function showAddGoalPopup() {
+      document.getElementById('goal-text-input').value = '';
+      document.getElementById('goal-date-input').value = '';
+      // Set minimum date to tomorrow (cannot set goals for past dates)
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      document.getElementById('goal-date-input').min = tomorrow.toISOString().split('T')[0];
+      document.getElementById('add-goal-popup').classList.add('active');
+    }
+
+    // Save new goal
+    async function saveGoal() {
+      const text = document.getElementById('goal-text-input').value.trim();
+      const targetDate = document.getElementById('goal-date-input').value;
+
+      if (!text) {
+        tg.showAlert('Введите описание цели');
+        return;
+      }
+
+      // Validate date is not in the past
+      if (targetDate) {
+        const today = formatDateGMT(getGMTDate());
+        if (targetDate <= today) {
+          tg.showAlert('Дата цели должна быть в будущем');
+          return;
+        }
+      }
+
+      // Warn about goals without deadline - must specify date
+      if (!targetDate) {
+        tg.showAlert('У бессрочных целей очень плохая статистика, укажите пожалуйста дату');
+        return;
+      }
+
+      await saveGoalToServer(text, targetDate);
+    }
+
+    // Actually save goal to server
+    async function saveGoalToServer(text, targetDate) {
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            text: text,
+            target_date: targetDate || null
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          userGoals.push(data.goal);
+          renderGoals();
+          closePopup();
+
+          // Show confirmation with coach suggestion
+          if (targetDate) {
+            // Save goal text for coach suggestion
+            lastCreatedGoal = text;
+
+            setTimeout(() => {
+              // Show the goal text in confirmation popup
+              const date = new Date(targetDate);
+              const day = date.getUTCDate();
+              const month = monthNames[date.getUTCMonth()].toLowerCase();
+              const year = date.getUTCFullYear();
+              document.getElementById('goal-saved-text').innerHTML =
+                `<strong>"${text}"</strong><br><br>Цель зафиксирована на ${day} ${month} ${year} в календаре раздела чекин.`;
+              document.getElementById('goal-saved-popup').classList.add('active');
+            }, 300);
+          }
+        } else {
+          tg.showAlert(data.message || 'Ошибка сохранения');
+        }
+      } catch (error) {
+        console.error('Save goal error:', error);
+        tg.showAlert('Ошибка сохранения цели');
+      }
+    }
+
+    // Delete goal from server
+    async function deleteGoalFromServer(goalId) {
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            goal_id: goalId
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          userGoals = userGoals.filter(g => g.id !== goalId);
+          renderGoals();
+        } else {
+          tg.showAlert(data.message || 'Ошибка удаления');
+        }
+      } catch (error) {
+        console.error('Delete goal error:', error);
+        tg.showAlert('Ошибка удаления цели');
+      }
+    }
+
+    // Go to chat with the last created goal to discuss plan
+    function goToChatWithGoal() {
+      if (!lastCreatedGoal) {
+        closePopup();
+        return;
+      }
+
+      closePopup();
+
+      // Navigate to chat page
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-page="chat"]').classList.add('active');
+      document.getElementById('chat-page').classList.add('active');
+
+      // Set message in input and send it
+      const goalMessage = `Я поставил цель: "${lastCreatedGoal}". Помоги составить план её достижения.`;
+      messageInput.value = goalMessage;
+
+      // Small delay to ensure navigation completes
+      setTimeout(() => {
+        sendMessage();
+        lastCreatedGoal = null;
+      }, 100);
+    }
+
+    // Goal validation system
+    let currentValidationGoal = null;
+    let lastCreatedGoal = null; // For coach suggestion after goal creation
+
+    // Check if any goals need validation on app load
+    function checkGoalsForValidation() {
+      const today = formatDateGMT(getGMTDate());
+
+      // Find goals that need validation (date is today or past, and still active)
+      const goalsNeedingValidation = userGoals.filter(g => {
+        if (!g.target_date) return false;
+        if (g.status && g.status !== 'active') return false;
+        return g.target_date <= today;
+      });
+
+      if (goalsNeedingValidation.length > 0) {
+        // Show validation popup for the first goal
+        currentValidationGoal = goalsNeedingValidation[0];
+        document.getElementById('goal-validation-text').textContent =
+          `Цель: "${currentValidationGoal.text}". Как результат?`;
+        document.getElementById('goal-validation-popup').classList.add('active');
+      }
+    }
+
+    // Validate goal with status
+    async function validateGoal(status) {
+      if (!currentValidationGoal) return;
+
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            goal_id: currentValidationGoal.id,
+            status: status
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Update local goal
+          const goalIndex = userGoals.findIndex(g => g.id === currentValidationGoal.id);
+          if (goalIndex !== -1) {
+            userGoals[goalIndex] = data.goal;
+          }
+
+          closePopup();
+          renderGoals();
+
+          // Show appropriate feedback
+          if (status === 'achieved') {
+            showConfetti();
+            setTimeout(() => {
+              document.getElementById('goal-achieved-popup').classList.add('active');
+            }, 500);
+          } else if (status === 'failed') {
+            setTimeout(() => {
+              document.getElementById('goal-failed-popup').classList.add('active');
+            }, 300);
+          }
+
+          currentValidationGoal = null;
+        } else {
+          tg.showAlert(data.message || 'Ошибка обновления');
+        }
+      } catch (error) {
+        console.error('Validate goal error:', error);
+        tg.showAlert('Ошибка обновления цели');
+      }
+    }
+
+    // Show extend goal popup
+    function showExtendGoalPopup() {
+      closePopup();
+      // Set minimum date to tomorrow
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      document.getElementById('extend-goal-date').min = tomorrow.toISOString().split('T')[0];
+      document.getElementById('extend-goal-date').value = '';
+      setTimeout(() => {
+        document.getElementById('extend-goal-popup').classList.add('active');
+      }, 300);
+    }
+
+    // Extend goal with new date
+    async function extendGoal() {
+      if (!currentValidationGoal) return;
+
+      const newDate = document.getElementById('extend-goal-date').value;
+      if (!newDate) {
+        tg.showAlert('Выбери новую дату');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            goal_id: currentValidationGoal.id,
+            status: 'extended',
+            new_date: newDate
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Update local goal
+          const goalIndex = userGoals.findIndex(g => g.id === currentValidationGoal.id);
+          if (goalIndex !== -1) {
+            userGoals[goalIndex] = data.goal;
+          }
+
+          closePopup();
+          renderGoals();
+          tg.showAlert('Цель продлена. Продолжай работать!');
+
+          currentValidationGoal = null;
+        } else {
+          tg.showAlert(data.message || 'Ошибка продления');
+        }
+      } catch (error) {
+        console.error('Extend goal error:', error);
+        tg.showAlert('Ошибка продления цели');
+      }
+    }
+
+    // Retry failed goal
+    function retryGoal() {
+      closePopup();
+      // Navigate to goals page and show add goal popup
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-page="goals"]').classList.add('active');
+      document.getElementById('goals-page').classList.add('active');
+      setTimeout(() => showAddGoalPopup(), 300);
+    }
+
+    // Close achieved popup and check for more goals
+    function closeAchievedPopup() {
+      closePopup();
+      // Check if there are more goals to validate
+      setTimeout(() => checkGoalsForValidation(), 500);
+    }
+
+    // Show confetti animation
+    function showConfetti() {
+      const container = document.createElement('div');
+      container.className = 'confetti-container';
+      document.body.appendChild(container);
+
+      // Get current theme colors
+      const styles = getComputedStyle(document.documentElement);
+      const colors = [
+        styles.getPropertyValue('--accent-primary').trim(),
+        styles.getPropertyValue('--success').trim(),
+        styles.getPropertyValue('--warning').trim(),
+        '#E91E63', // Pink (not theme-dependent)
+        '#00BCD4'  // Cyan (not theme-dependent)
+      ];
+
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 0.5 + 's';
+        confetti.style.animationDuration = (2 + Math.random()) + 's';
+        container.appendChild(confetti);
+      }
+
+      // Remove container after animation
+      setTimeout(() => container.remove(), 4000);
+    }
+
+    // Validate goal from card button
+    async function validateGoalFromCard(goalId, status) {
+      currentValidationGoal = userGoals.find(g => g.id === goalId);
+      if (!currentValidationGoal) return;
+
+      if (status === 'extend') {
+        showExtendGoalPopup();
+      } else {
+        await validateGoal(status);
+      }
+    }
+
+    // Add to home screen function
+    function addToHomeScreen() {
+      if (tg.addToHomeScreen) {
+        tg.addToHomeScreen();
+      } else {
+        tg.showAlert('Функция недоступна в этой версии Telegram');
+      }
+    }
+
+    // Support functions
+    function showSupportPopup() {
+      document.getElementById('support-message-input').value = '';
+      document.getElementById('support-popup').classList.add('active');
+    }
+
+    async function sendSupport() {
+      const message = document.getElementById('support-message-input').value.trim();
+
+      if (!message) {
+        tg.showAlert('Введите сообщение');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/support', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            message: message
+          })
+        });
+
+        const data = await response.json();
+
+        closePopup();
+        if (data.success) {
+          setTimeout(() => {
+            document.getElementById('support-sent-popup').classList.add('active');
+          }, 300);
+        } else {
+          tg.showAlert(data.message || 'Ошибка отправки');
+        }
+      } catch (error) {
+        console.error('Send support error:', error);
+        tg.showAlert('Ошибка отправки сообщения');
+      }
+    }
+
+    // Load goals from API
+    async function loadGoals() {
+      try {
+        const response = await fetch(`/api/goals?user_id=${user?.id || 0}`, {
+          headers: { 'X-Telegram-Init-Data': tg.initData }
+        });
+        const data = await response.json();
+
+        if (data.goals) {
+          userGoals = data.goals;
+          renderGoals();
+
+          // Check for goals that need validation after loading
+          setTimeout(() => checkGoalsForValidation(), 1000);
+        }
+      } catch (error) {
+        console.error('Load goals error:', error);
+        renderGoals(); // Render empty state
+      }
+    }
+
+    // НАВИГАЦИЯ
+    const navBtns = document.querySelectorAll('.nav-btn');
+    const pages = document.querySelectorAll('.page');
+    
+    navBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pageName = btn.dataset.page;
+        
+        navBtns.forEach(b => b.classList.remove('active'));
+        pages.forEach(p => p.classList.remove('active'));
+        
+        btn.classList.add('active');
+        document.getElementById(`${pageName}-page`).classList.add('active');
+      });
+    });
+    
+    // ВЫБОР СТИЛЯ
+    async function selectTone(tone) {
+      // Проверка Premium для Mentor
+      if (tone === 'mentor' && userStats.plan === 'FREE') {
+        document.getElementById('premium-popup').classList.add('active');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/tone', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            tone: tone
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          currentTone = tone;
+          
+          // Обновить UI
+          document.querySelectorAll('.style-card').forEach(card => {
+            card.classList.remove('active');
+          });
+          document.querySelector(`[data-tone="${tone}"]`).classList.add('active');
+          
+          // Обновить профиль
+          const toneNames = {
+            focused: 'Focused',
+            baddy: 'Baddy',
+            mentor: 'Mentor'
+          };
+          document.getElementById('profile-tone').textContent = toneNames[tone];
+
+          tg.showAlert(`Стиль изменён на ${toneNames[tone]}`);
+        }
+      } catch (error) {
+        console.error('Select tone error:', error);
+        tg.showAlert('Ошибка при смене стиля. Попробуй ещё раз.');
+      }
+    }
+    
+    // ЧЕКИН
+    async function doCheckin() {
+      try {
+        const response = await fetch('/api/checkin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0
+          })
+        });
+
+        const data = await response.json();
+        const popupText = document.getElementById('popup-text');
+
+        if (data.success) {
+          if (data.streak === 1) {
+            popupText.textContent = 'Начинаем отсчёт streak.';
+          } else {
+            popupText.textContent = `Твой streak: ${data.streak} дней подряд. Продолжай!`;
+          }
+          userStats.streak = data.streak;
+
+          // Add today's date to checkinDates
+          const today = formatDateGMT(getGMTDate());
+          if (!userStats.checkinDates.includes(today)) {
+            userStats.checkinDates.push(today);
+          }
+
+          // Update UI
+          document.getElementById('profile-streak').textContent = `${data.streak} дней`;
+          document.getElementById('checkin-streak').textContent = data.streak;
+          renderCalendar();
+        } else {
+          popupText.textContent = data.message || 'Ты уже сделал чекин сегодня!';
+        }
+
+        document.getElementById('checkin-popup').classList.add('active');
+      } catch (error) {
+        console.error('Checkin error:', error);
+        tg.showAlert('Ошибка чекина. Попробуй ещё раз.');
+      }
+    }
+    
+    function closePopup() {
+      document.querySelectorAll('.popup').forEach(popup => {
+        popup.classList.remove('active');
+      });
+    }
+    
+    // ЧАТ
+    let lastMessageDate = null;
+    let historyOffset = 0;
+    let historyHasMore = false;
+    let isLoadingMore = false;
+
+    function formatTime(date) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+
+    function formatDayDivider(date) {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      if (date.toDateString() === today.toDateString()) {
+        return 'Сегодня';
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Вчера';
+      } else {
+        const day = date.getDate();
+        const month = monthNames[date.getMonth()].toLowerCase();
+        return `${day} ${month}`;
+      }
+    }
+
+    function addDayDivider(date) {
+      const dateStr = date.toDateString();
+      if (lastMessageDate !== dateStr) {
+        lastMessageDate = dateStr;
+        const divider = document.createElement('div');
+        divider.className = 'chat-day-divider';
+        divider.innerHTML = `<span>${formatDayDivider(date)}</span>`;
+        chatContainer.appendChild(divider);
+      }
+    }
+
+    function addMessage(text, role, timestamp = null) {
+      // Strip any REMINDER markup that wasn't parsed (safety filter)
+      const cleanText = text.replace(/\[\[REMINDER:[^\]]+\]\]/g, '').trim();
+
+      const msgDate = timestamp ? new Date(timestamp) : new Date();
+      addDayDivider(msgDate);
+
+      const div = document.createElement('div');
+      div.className = `message ${role}`;
+      div.innerHTML = `
+        ${cleanText}
+        <div class="message-time">${formatTime(msgDate)}</div>
+      `;
+      chatContainer.appendChild(div);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Typing indicator functions
+    function showTypingIndicator() {
+      // Remove existing indicator if any
+      hideTypingIndicator();
+
+      const indicator = document.createElement('div');
+      indicator.className = 'typing-indicator';
+      indicator.id = 'typing-indicator';
+      indicator.innerHTML = `
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      `;
+      chatContainer.appendChild(indicator);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+      const indicator = document.getElementById('typing-indicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+    
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      addMessage(message, 'user');
+      messageInput.value = '';
+      messageInput.style.height = 'auto';
+      messageInput.style.overflowY = 'hidden';
+      sendBtn.disabled = true;
+
+      // Show typing indicator while waiting for response
+      showTypingIndicator();
+
+      try {
+        // Get user's timezone offset in minutes (positive for west of UTC)
+        const timezoneOffset = new Date().getTimezoneOffset();
+
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            message: message,
+            user_id: user?.id || 0,
+            timezone_offset: timezoneOffset
+          })
+        });
+
+        const data = await response.json();
+
+        // Hide typing indicator before showing response
+        hideTypingIndicator();
+
+        if (data.limit_reached) {
+          addMessage(data.message || 'Лимит FREE достигнут', 'assistant');
+          tg.showAlert('Лимит FREE (50 сообщений) достигнут. Купи Premium для продолжения.');
+        } else {
+          addMessage(data.reply || 'Ошибка ответа', 'assistant');
+
+          // Обновить статистику
+          if (data.stats) {
+            userStats.messagesUsed = data.stats.messagesUsed;
+            userStats.totalMessages = data.stats.totalMessages;
+            document.getElementById('profile-messages').textContent =
+              `${userStats.messagesUsed} / ${userStats.messagesLimit}`;
+            document.getElementById('profile-total').textContent = userStats.totalMessages;
+          }
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+        hideTypingIndicator();
+        addMessage('Ошибка. Попробуй ещё раз.', 'assistant');
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+    
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    
+    // ЗАГРУЗКА ИСТОРИИ И СТАТИСТИКИ
+    async function loadHistory() {
+      try {
+        const response = await fetch(`/api/history?user_id=${user?.id || 0}&offset=0&limit=50`, {
+          headers: { 'X-Telegram-Init-Data': tg.initData }
+        });
+        const data = await response.json();
+
+        if (data.history && data.history.length > 0) {
+          // Store pagination state
+          historyOffset = data.history.length;
+          historyHasMore = data.hasMore;
+
+          // Add "Load more" button if there are more messages
+          if (historyHasMore) {
+            const loadMoreContainer = document.createElement('div');
+            loadMoreContainer.className = 'load-more-container';
+            loadMoreContainer.id = 'load-more-container';
+            loadMoreContainer.innerHTML = `
+              <button class="load-more-btn" onclick="loadMoreHistory()">
+                Загрузить ещё
+              </button>
+            `;
+            chatContainer.appendChild(loadMoreContainer);
+          }
+
+          data.history.forEach(msg => {
+            addMessage(msg.content, msg.role, msg.created_at);
+          });
+        } else {
+          // Check if user completed onboarding
+          const onboardingCompleted = localStorage.getItem('onboarding_completed');
+          if (onboardingCompleted === 'true') {
+            addMessage('Привет! Ты прошёл онбординг — значит, готов к работе. Над чем хочешь поработать в ближайшую неделю?', 'assistant');
+          } else {
+            addMessage('Привет! Я твой AI-коуч. Над чем хочешь поработать?', 'assistant');
+          }
+        }
+      } catch (error) {
+        console.error('Load history error:', error);
+        addMessage('Привет! Я твой AI-коуч. Над чем хочешь поработать?', 'assistant');
+      }
+    }
+
+    async function loadMoreHistory() {
+      if (isLoadingMore || !historyHasMore) return;
+
+      isLoadingMore = true;
+      const loadMoreBtn = document.querySelector('.load-more-btn');
+      if (loadMoreBtn) {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Загрузка...';
+      }
+
+      try {
+        const response = await fetch(`/api/history?user_id=${user?.id || 0}&offset=${historyOffset}&limit=50`, {
+          headers: { 'X-Telegram-Init-Data': tg.initData }
+        });
+        const data = await response.json();
+
+        if (data.history && data.history.length > 0) {
+          // Update pagination state
+          historyOffset += data.history.length;
+          historyHasMore = data.hasMore;
+
+          // Get the load-more container to insert messages after it
+          const loadMoreContainer = document.getElementById('load-more-container');
+
+          // Reset lastMessageDate to properly add day dividers for older messages
+          const oldLastMessageDate = lastMessageDate;
+
+          // Find the first message element (after load-more button)
+          const firstMessageElement = loadMoreContainer ? loadMoreContainer.nextElementSibling : chatContainer.firstChild;
+
+          // Track day dividers we need to add
+          let currentDate = null;
+
+          // Insert older messages after the load-more button
+          data.history.forEach(msg => {
+            const msgDate = new Date(msg.created_at);
+            const dateStr = msgDate.toDateString();
+
+            // Add day divider if needed
+            if (currentDate !== dateStr) {
+              currentDate = dateStr;
+              const divider = document.createElement('div');
+              divider.className = 'chat-day-divider';
+              divider.innerHTML = `<span>${formatDayDivider(msgDate)}</span>`;
+
+              if (firstMessageElement) {
+                chatContainer.insertBefore(divider, firstMessageElement);
+              } else {
+                chatContainer.appendChild(divider);
+              }
+            }
+
+            // Strip any REMINDER markup
+            const cleanText = msg.content.replace(/\[\[REMINDER:[^\]]+\]\]/g, '').trim();
+
+            // Create message element
+            const div = document.createElement('div');
+            div.className = `message ${msg.role}`;
+            div.innerHTML = `
+              ${cleanText}
+              <div class="message-time">${formatTime(msgDate)}</div>
+            `;
+
+            if (firstMessageElement) {
+              chatContainer.insertBefore(div, firstMessageElement);
+            } else {
+              chatContainer.appendChild(div);
+            }
+          });
+
+          // Remove duplicate day dividers if the oldest loaded message has same date as first existing message
+          if (firstMessageElement && firstMessageElement.classList.contains('chat-day-divider')) {
+            const prevElement = firstMessageElement.previousElementSibling;
+            if (prevElement && prevElement.classList.contains('chat-day-divider') &&
+                prevElement.textContent === firstMessageElement.textContent) {
+              firstMessageElement.remove();
+            }
+          }
+
+          // Update button state
+          if (!historyHasMore && loadMoreContainer) {
+            loadMoreContainer.remove();
+          } else if (loadMoreBtn) {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Загрузить ещё';
+          }
+        }
+      } catch (error) {
+        console.error('Load more history error:', error);
+        if (loadMoreBtn) {
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = 'Загрузить ещё';
+        }
+      } finally {
+        isLoadingMore = false;
+      }
+    }
+    
+    async function loadStats() {
+      try {
+        const response = await fetch(`/api/stats?user_id=${user?.id || 0}`, {
+          headers: { 'X-Telegram-Init-Data': tg.initData }
+        });
+        const data = await response.json();
+
+        if (data.stats) {
+          // Set limit based on plan
+          const messagesLimit = data.stats.plan === 'FREE' ? 50 : 500;
+
+          userStats = {
+            ...data.stats,
+            messagesLimit: messagesLimit,
+            checkinDates: data.stats.checkinDates || []
+          };
+
+          // Обновить UI
+          document.getElementById('profile-plan').textContent = userStats.plan;
+
+          // Show expiration date for premium plans
+          const expiresRow = document.getElementById('profile-expires-row');
+          const expiresValue = document.getElementById('profile-expires');
+          if (data.stats.expiresAt && userStats.plan !== 'FREE') {
+            const expiresDate = new Date(data.stats.expiresAt);
+            const day = expiresDate.getDate();
+            const month = monthNames[expiresDate.getMonth()].toLowerCase();
+            const year = expiresDate.getFullYear();
+            expiresValue.textContent = `${day} ${month} ${year}`;
+            expiresRow.style.display = 'flex';
+          } else {
+            expiresRow.style.display = 'none';
+          }
+
+          document.getElementById('profile-messages').textContent =
+            `${userStats.messagesUsed} / ${userStats.messagesLimit}`;
+          document.getElementById('profile-total').textContent = userStats.totalMessages;
+          document.getElementById('profile-streak').textContent = `${userStats.streak} дней`;
+          document.getElementById('checkin-streak').textContent = userStats.streak;
+
+          const toneNames = {
+            focused: 'Focused',
+            baddy: 'Baddy',
+            mentor: 'Mentor'
+          };
+          document.getElementById('profile-tone').textContent = toneNames[data.tone] || 'Baddy';
+          currentTone = data.tone || 'baddy';
+
+          // Установить активную карточку стиля
+          document.querySelectorAll('.style-card').forEach(card => {
+            card.classList.remove('active');
+          });
+          document.querySelector(`[data-tone="${currentTone}"]`)?.classList.add('active');
+
+          // Render calendar with check-in data
+          renderCalendar();
+        }
+      } catch (error) {
+        console.error('Load stats error:', error);
+        // Render calendar even on error
+        renderCalendar();
+      }
+    }
+
+    // Инициализация
+    renderCalendar(); // Initial render
+    renderGoals(); // Initial empty state
+    loadHistory();
+    loadStats();
+    loadGoals();
+    showStories(); // Show daily motivational stories
+  </script>
 </body>
 </html>
