@@ -134,32 +134,59 @@
       font-weight: 700;
     }
 
-    /* Theme toggle button */
-    .theme-toggle {
+    /* Theme toggle switch - iOS/Android style */
+    .theme-switch {
+      position: relative;
+      display: inline-block;
+      width: 51px;
+      height: 31px;
+    }
+
+    .theme-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .theme-slider {
       position: absolute;
-      right: 16px;
-      width: 36px;
-      height: 36px;
-      border: none;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      color: white;
-      font-size: 18px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s ease;
+      border-radius: 31px;
     }
 
-    .theme-toggle:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(1.05);
+    .theme-slider:before {
+      position: absolute;
+      content: "";
+      height: 23px;
+      width: 23px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: 0.3s ease;
+      border-radius: 50%;
     }
 
-    .theme-toggle:active {
-      transform: scale(0.95);
+    .theme-switch input:checked + .theme-slider {
+      background-color: #9D8EFF;
+    }
+
+    .theme-switch input:checked + .theme-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Dark mode styles */
+    body.dark-mode .theme-slider {
+      background-color: #4a4a4a;
+    }
+
+    body.dark-mode .theme-switch input:checked + .theme-slider {
+      background-color: #9D8EFF;
     }
     
     .content {
@@ -1352,9 +1379,6 @@
 <body>
   <div class="header">
     <h1>SelfHack</h1>
-    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
-      <span id="theme-icon">🌙</span>
-    </button>
   </div>
   
   <div class="content">
@@ -1454,6 +1478,20 @@
         <div class="profile-row">
           <span class="profile-label">Текущий стиль</span>
           <span class="profile-value" id="profile-tone">Baddy</span>
+        </div>
+      </div>
+
+      <div class="profile-section" style="margin-bottom: 12px;">
+        <h3>Внешний вид</h3>
+        <div class="profile-row">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">🌙</span>
+            <span class="profile-label">Темная тема</span>
+          </div>
+          <label class="theme-switch">
+            <input type="checkbox" id="theme-toggle-input" onchange="toggleTheme()">
+            <span class="theme-slider"></span>
+          </label>
         </div>
       </div>
 
@@ -1682,13 +1720,18 @@
       const savedTheme = localStorage.getItem('theme');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+      const themeToggleInput = document.getElementById('theme-toggle-input');
 
       if (theme === 'dark') {
         document.body.classList.add('dark-mode');
-        document.getElementById('theme-icon').textContent = '☀️';
+        if (themeToggleInput) {
+          themeToggleInput.checked = true;
+        }
       } else {
         document.body.classList.remove('dark-mode');
-        document.getElementById('theme-icon').textContent = '🌙';
+        if (themeToggleInput) {
+          themeToggleInput.checked = false;
+        }
       }
 
       // Update Telegram theme colors after applying theme
@@ -1697,14 +1740,14 @@
 
     // Toggle theme function
     function toggleTheme() {
-      const isDark = document.body.classList.toggle('dark-mode');
-      const themeIcon = document.getElementById('theme-icon');
+      const themeToggleInput = document.getElementById('theme-toggle-input');
+      const isDark = themeToggleInput ? themeToggleInput.checked : document.body.classList.contains('dark-mode');
 
       if (isDark) {
-        themeIcon.textContent = '☀️';
+        document.body.classList.add('dark-mode');
         localStorage.setItem('theme', 'dark');
       } else {
-        themeIcon.textContent = '🌙';
+        document.body.classList.remove('dark-mode');
         localStorage.setItem('theme', 'light');
       }
 
