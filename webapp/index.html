@@ -53,24 +53,6 @@
       --error-light: #FFF5F5;
 
       --info: #9E9E9E;
-
-      /* Transparent variations for compatibility */
-      --accent-primary-15: rgba(123, 104, 238, 0.15);
-      --accent-primary-30: rgba(123, 104, 238, 0.3);
-      --accent-primary-40: rgba(123, 104, 238, 0.4);
-      --accent-primary-70: rgba(123, 104, 238, 0.7);
-      --success-60: rgba(76, 175, 80, 0.6);
-      --success-80: rgba(76, 175, 80, 0.8);
-      --warning-30: rgba(255, 152, 0, 0.3);
-      --warning-50: rgba(255, 152, 0, 0.5);
-      --warning-80: rgba(255, 152, 0, 0.8);
-      --warning-80-mix: rgba(255, 152, 0, 0.8);
-      --warning-light-mix: rgba(255, 243, 224, 1);
-      --warning-alt-40: rgba(255, 193, 7, 0.4);
-      --warning-alt-60: rgba(255, 193, 7, 0.6);
-      --warning-alt-80: rgba(255, 193, 7, 0.8);
-      --error-70: rgba(255, 82, 82, 0.7);
-      --info-60: rgba(158, 158, 158, 0.6);
     }
 
     /* ========== DARK MODE COLORS ========== */
@@ -111,24 +93,6 @@
       --error-light: #3A1F1F;
 
       --info: #BDBDBD;
-
-      /* Transparent variations for dark mode */
-      --accent-primary-15: rgba(157, 142, 255, 0.15);
-      --accent-primary-30: rgba(157, 142, 255, 0.3);
-      --accent-primary-40: rgba(157, 142, 255, 0.4);
-      --accent-primary-70: rgba(157, 142, 255, 0.7);
-      --success-60: rgba(102, 187, 106, 0.6);
-      --success-80: rgba(102, 187, 106, 0.8);
-      --warning-30: rgba(255, 167, 38, 0.3);
-      --warning-50: rgba(255, 167, 38, 0.5);
-      --warning-80: rgba(255, 167, 38, 0.8);
-      --warning-80-mix: rgba(255, 167, 38, 0.8);
-      --warning-light-mix: rgba(58, 47, 26, 1);
-      --warning-alt-40: rgba(255, 213, 79, 0.4);
-      --warning-alt-60: rgba(255, 213, 79, 0.6);
-      --warning-alt-80: rgba(255, 213, 79, 0.8);
-      --error-70: rgba(239, 83, 80, 0.7);
-      --info-60: rgba(189, 189, 189, 0.6);
     }
 
     /* Fix for Android fullscreen mode safe area handling */
@@ -170,59 +134,32 @@
       font-weight: 700;
     }
 
-    /* Theme toggle switch - iOS/Android style */
-    .theme-switch {
-      position: relative;
-      display: inline-block;
-      width: 51px;
-      height: 31px;
-    }
-
-    .theme-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .theme-slider {
+    /* Theme toggle button */
+    .theme-toggle {
       position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      transition: 0.3s ease;
-      border-radius: 31px;
-    }
-
-    .theme-slider:before {
-      position: absolute;
-      content: "";
-      height: 23px;
-      width: 23px;
-      left: 4px;
-      bottom: 4px;
-      background-color: white;
-      transition: 0.3s ease;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
       border-radius: 50%;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
     }
 
-    .theme-switch input:checked + .theme-slider {
-      background-color: #9D8EFF;
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
     }
 
-    .theme-switch input:checked + .theme-slider:before {
-      transform: translateX(20px);
-    }
-
-    /* Dark mode styles */
-    body.dark-mode .theme-slider {
-      background-color: #4a4a4a;
-    }
-
-    body.dark-mode .theme-switch input:checked + .theme-slider {
-      background-color: #9D8EFF;
+    .theme-toggle:active {
+      transform: scale(0.95);
     }
     
     .content {
@@ -556,24 +493,24 @@
 
     /* Goal indicators in calendar */
     .calendar-day.has-goal {
-      box-shadow: 0 0 0 2px var(--accent-primary-40);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 40%, transparent);
       cursor: pointer;
       animation: goalPulse 2s ease-in-out infinite;
       transition: box-shadow 0.3s ease;
     }
 
     .calendar-day.has-goal:hover {
-      box-shadow: 0 0 0 2px var(--accent-primary-70);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 70%, transparent);
     }
 
     .calendar-day.goal-achieved {
-      box-shadow: 0 0 0 2px var(--success-60);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 60%, transparent);
       animation: none;
       transition: box-shadow 0.3s ease;
     }
 
     .calendar-day.goal-extended {
-      box-shadow: 0 0 0 2px var(--warning-alt-60);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--warning-alt) 60%, transparent);
       animation: none;
       transition: box-shadow 0.3s ease;
     }
@@ -585,25 +522,25 @@
     }
 
     .calendar-day.goal-overdue {
-      box-shadow: 0 0 0 2px var(--error-70);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--error) 70%, transparent);
       animation: none;
       transition: box-shadow 0.3s ease;
     }
 
     .calendar-day.goal-failed {
-      box-shadow: 0 0 0 2px var(--info-60);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 60%, transparent);
       animation: none;
       transition: box-shadow 0.3s ease;
     }
 
     @keyframes goalPulse {
-      0%, 100% { box-shadow: 0 0 0 2px var(--accent-primary-40); }
-      50% { box-shadow: 0 0 0 2px var(--accent-primary-70); }
+      0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 40%, transparent); }
+      50% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 70%, transparent); }
     }
 
     @keyframes pendingPulse {
-      0%, 100% { box-shadow: 0 0 0 2px var(--warning-alt-40); }
-      50% { box-shadow: 0 0 0 3px var(--warning-alt-80); }
+      0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--warning-alt) 40%, transparent); }
+      50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning-alt) 80%, transparent); }
     }
 
     /* Goal card statuses */
@@ -637,8 +574,8 @@
     }
 
     @keyframes cardPulse {
-      0%, 100% { box-shadow: 0 2px 8px var(--warning-30); }
-      50% { box-shadow: 0 4px 16px var(--warning-50); }
+      0%, 100% { box-shadow: 0 2px 8px color-mix(in srgb, var(--warning) 30%, transparent); }
+      50% { box-shadow: 0 4px 16px color-mix(in srgb, var(--warning) 50%, transparent); }
     }
 
     .goal-status {
@@ -696,7 +633,7 @@
     }
 
     .goal-validation-btn.extend:hover {
-      background: var(--warning-light-mix);
+      background: color-mix(in srgb, var(--warning-light) 80%, var(--warning) 20%);
     }
 
     .goal-validation-btn.failed {
@@ -912,12 +849,12 @@
       padding: 2px 8px;
       border-radius: 8px;
       margin-top: 8px;
-      background: var(--success-80);
+      background: color-mix(in srgb, var(--success) 80%, transparent);
       transition: background 0.3s ease;
     }
 
     .onboarding-tone-badge.premium {
-      background: var(--warning-80-mix);
+      background: color-mix(in srgb, var(--warning) 80%, transparent);
     }
 
     /* CTA button in onboarding */
@@ -981,7 +918,7 @@
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 12px var(--accent-primary-30);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 30%, transparent);
       transition: all 0.3s ease;
     }
 
@@ -1019,7 +956,7 @@
 
     .style-card:hover {
       border-color: var(--accent-primary);
-      box-shadow: 0 4px 12px var(--accent-primary-15);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 15%, transparent);
     }
 
     .style-card.active {
@@ -1415,6 +1352,9 @@
 <body>
   <div class="header">
     <h1>SelfHack</h1>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+      <span id="theme-icon">🌙</span>
+    </button>
   </div>
   
   <div class="content">
@@ -1513,21 +1453,7 @@
         </div>
         <div class="profile-row">
           <span class="profile-label">Текущий стиль</span>
-          <span class="profile-value" id="profile-tone">Baddy</span>
-        </div>
-      </div>
-
-      <div class="profile-section" style="margin-bottom: 12px;">
-        <h3>Внешний вид</h3>
-        <div class="profile-row">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 18px;">🌙</span>
-            <span class="profile-label">Темная тема</span>
-          </div>
-          <label class="theme-switch">
-            <input type="checkbox" id="theme-toggle-input" onchange="toggleTheme()">
-            <span class="theme-slider"></span>
-          </label>
+          <span class="profile-value" id="profile-tone">💬 Baddy</span>
         </div>
       </div>
 
@@ -1756,18 +1682,13 @@
       const savedTheme = localStorage.getItem('theme');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const theme = savedTheme || (prefersDark ? 'dark' : 'light');
-      const themeToggleInput = document.getElementById('theme-toggle-input');
 
       if (theme === 'dark') {
         document.body.classList.add('dark-mode');
-        if (themeToggleInput) {
-          themeToggleInput.checked = true;
-        }
+        document.getElementById('theme-icon').textContent = '☀️';
       } else {
         document.body.classList.remove('dark-mode');
-        if (themeToggleInput) {
-          themeToggleInput.checked = false;
-        }
+        document.getElementById('theme-icon').textContent = '🌙';
       }
 
       // Update Telegram theme colors after applying theme
@@ -1776,14 +1697,14 @@
 
     // Toggle theme function
     function toggleTheme() {
-      const themeToggleInput = document.getElementById('theme-toggle-input');
-      const isDark = themeToggleInput ? themeToggleInput.checked : document.body.classList.contains('dark-mode');
+      const isDark = document.body.classList.toggle('dark-mode');
+      const themeIcon = document.getElementById('theme-icon');
 
       if (isDark) {
-        document.body.classList.add('dark-mode');
+        themeIcon.textContent = '☀️';
         localStorage.setItem('theme', 'dark');
       } else {
-        document.body.classList.remove('dark-mode');
+        themeIcon.textContent = '🌙';
         localStorage.setItem('theme', 'light');
       }
 
@@ -1872,7 +1793,7 @@
       {
         type: 'text',
         icon: '💬',
-        title: 'Ты получил тонну советов от ChatGPT',
+        title: 'Ты получил 10 советов от ChatGPT',
         subtitle: 'Сколько из них ты применил?'
       },
       {
@@ -1884,38 +1805,38 @@
       {
         type: 'text',
         icon: '❓',
-        title: 'Коуч не даёт советы',
+        title: 'Коуч не даёт ответы',
         subtitle: 'Он задаёт вопросы, которые помогают ТЕБЕ найти решение. Твоё решение = твоё действие.'
       },
       {
         type: 'grow',
         icon: '🎯',
-        title: 'GROW-inspired',
+        title: 'Методология GROW',
         subtitle: 'От цели к действию через 4 шага'
       },
       {
         type: 'text',
         icon: '📋',
         title: 'Ставь цели с дедлайнами',
-        subtitle: 'Коуч напомнит и поможет довести до конца. Цели отображаются в календаре чекина.'
+        subtitle: 'Коуч напомнит и поможет довести до конца. Цели отображаются в календаре.'
       },
       {
         type: 'text',
         icon: '🔥',
         title: 'Ежедневный check-in',
-        subtitle: 'Одно действие в день формирует привычку. Через неделю заметишь разницу.'
+        subtitle: 'Формирует привычку возвращаться. Не разрывай цепочку — это работает.'
       },
       {
         type: 'text',
         icon: '🔔',
         title: 'Напоминания в Telegram',
-        subtitle: 'Скажи коучу "напомни мне завтра в 9:00" или "через X минут/часов" и он пришлет тебе уведомление в нужный момент.'
+        subtitle: 'Коуч отправит напоминание в нужный момент. Прямо в личку.'
       },
       {
         type: 'text',
         icon: '⚡',
-        title: 'Готов к изменениям?',
-        subtitle: 'Большинство видят первые результаты уже через неделю работы с коучем.'
+        title: 'Это будет непривычно',
+        subtitle: 'Вопросы требуют усилий. Но через неделю ты увидишь разницу.'
       },
       {
         type: 'tone-selector',
@@ -1926,8 +1847,8 @@
       {
         type: 'cta',
         icon: '🚀',
-        title: 'Начинаем',
-        subtitle: 'Расскажи, какую цель хочешь достичь на этой неделе'
+        title: 'Готов начать?',
+        subtitle: 'Расскажи, над чем хочешь поработать в ближайшую неделю'
       }
     ];
 
@@ -1982,7 +1903,7 @@
             </div>
             <div class="onboarding-tone-card ${selectedOnboardingTone === 'baddy' ? 'selected' : ''}" onclick="selectOnboardingTone('baddy', event)">
               <div class="onboarding-tone-name">Baddy</div>
-              <div class="onboarding-tone-desc">Друг, который не даст тебе слиться в очередной раз</div>
+              <div class="onboarding-tone-desc">Друг, который не даст слиться</div>
               <div class="onboarding-tone-badge">FREE</div>
             </div>
           </div>
