@@ -1774,15 +1774,16 @@
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const theme = savedTheme || (prefersDark ? 'dark' : 'light');
 
+      const checkbox = document.getElementById('theme-toggle-checkbox');
+      
       if (theme === 'dark') {
         document.body.classList.add('dark-mode');
-        document.getElementById('theme-icon').textContent = '☀️';
+        if (checkbox) checkbox.checked = true;
       } else {
         document.body.classList.remove('dark-mode');
-        document.getElementById('theme-icon').textContent = '🌙';
+        if (checkbox) checkbox.checked = false;
       }
 
-      // Update Telegram theme colors after applying theme
       setTimeout(updateTelegramTheme, 100);
     }
 
