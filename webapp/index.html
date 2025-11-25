@@ -1789,26 +1789,23 @@
 
     // Toggle theme function
     function toggleTheme() {
-      const isDark = document.body.classList.toggle('dark-mode');
-      const themeIcon = document.getElementById('theme-icon');
+      const checkbox = document.getElementById('theme-toggle-checkbox');
+      const isDark = checkbox ? checkbox.checked : !document.body.classList.contains('dark-mode');
 
       if (isDark) {
-        themeIcon.textContent = '☀️';
+        document.body.classList.add('dark-mode');
         localStorage.setItem('theme', 'dark');
       } else {
-        themeIcon.textContent = '🌙';
+        document.body.classList.remove('dark-mode');
         localStorage.setItem('theme', 'light');
       }
 
-      // Update Telegram theme colors after toggle
       setTimeout(updateTelegramTheme, 100);
 
-      // Haptic feedback
       if (tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('light');
       }
     }
-
     // Load theme on startup
     loadTheme();
 
