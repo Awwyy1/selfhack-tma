@@ -14,30 +14,116 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* ========== CSS VARIABLES FOR THEMING ========== */
+    :root {
+      /* Light theme colors */
+      --bg-primary: #FAFAFA;
+      --bg-secondary: #FFFFFF;
+      --bg-tertiary: #F5F3FF;
+      --bg-input: #FAFAFA;
+
+      --text-primary: #2D1B69;
+      --text-secondary: #666;
+      --text-tertiary: #999;
+      --text-muted: #CCC;
+
+      --accent-primary: #7B68EE;
+      --accent-secondary: #9D8EFF;
+      --accent-light: #E8E4FF;
+      --accent-lighter: #F0EDFF;
+      --accent-dark: #6A58DD;
+      --accent-darker: #5A4AD0;
+
+      --border-color: #E8E4FF;
+      --border-light: #F5F5F5;
+
+      --shadow-color: rgba(0, 0, 0, 0.05);
+      --shadow-medium: rgba(0, 0, 0, 0.08);
+
+      --success: #4CAF50;
+      --success-light: #E8F5E9;
+      --success-lighter: #F1F8E9;
+      --success-medium: #C8E6C9;
+
+      --warning: #FF9800;
+      --warning-light: #FFF3E0;
+      --warning-alt: #FFC107;
+
+      --error: #FF5252;
+      --error-light: #FFF5F5;
+
+      --info: #9E9E9E;
+    }
+
+    /* ========== DARK MODE COLORS ========== */
+    body.dark-mode {
+      --bg-primary: #1A1A1A;
+      --bg-secondary: #242424;
+      --bg-tertiary: #2D2447;
+      --bg-input: #2A2A2A;
+
+      --text-primary: #E8E4FF;
+      --text-secondary: #B8B8B8;
+      --text-tertiary: #888888;
+      --text-muted: #555555;
+
+      --accent-primary: #9D8EFF;
+      --accent-secondary: #B8A8FF;
+      --accent-light: #3A2F5C;
+      --accent-lighter: #2D2447;
+      --accent-dark: #8878DD;
+      --accent-darker: #7B68EE;
+
+      --border-color: #3A3A3A;
+      --border-light: #2E2E2E;
+
+      --shadow-color: rgba(0, 0, 0, 0.3);
+      --shadow-medium: rgba(0, 0, 0, 0.4);
+
+      --success: #66BB6A;
+      --success-light: #1E3A1F;
+      --success-lighter: #264428;
+      --success-medium: #2D5230;
+
+      --warning: #FFA726;
+      --warning-light: #3A2F1A;
+      --warning-alt: #FFD54F;
+
+      --error: #EF5350;
+      --error-light: #3A1F1F;
+
+      --info: #BDBDBD;
+    }
+
     /* Fix for Android fullscreen mode safe area handling */
     html {
-      background: #FAFAFA;
+      background: var(--bg-primary);
+      transition: background-color 0.3s ease;
     }
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #FAFAFA;
-      color: #2D1B69;
+      background: var(--bg-primary);
+      color: var(--text-primary);
       height: 100vh;
       height: var(--tg-viewport-stable-height, 100vh);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     .header {
       padding: 8px 16px;
       padding-top: calc(8px + var(--tg-safe-area-top, env(safe-area-inset-top, 0px)));
       padding-bottom: 6px;
-      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
       color: white;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-      text-align: center;
+      box-shadow: 0 2px 6px var(--shadow-medium);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
       /* Ensure minimum top padding for Android in fullscreen mode */
       min-height: 44px;
     }
@@ -46,6 +132,34 @@
       font-size: 20px;
       margin: 0;
       font-weight: 700;
+    }
+
+    /* Theme toggle button */
+    .theme-toggle {
+      position: absolute;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .theme-toggle:active {
+      transform: scale(0.95);
     }
     
     .content {
@@ -86,24 +200,25 @@
       width: fit-content;
       max-width: 75%;
       word-wrap: break-word;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     .message.user {
-      background: #7B68EE;
+      background: var(--accent-primary);
       color: white;
       margin-left: auto;
       border-bottom-right-radius: 4px;
     }
-    
+
     .message.assistant {
-      background: #E8E4FF;
-      color: #2D1B69;
+      background: var(--accent-light);
+      color: var(--text-primary);
       border-bottom-left-radius: 4px;
     }
 
     .message-time {
       font-size: 10px;
-      color: #999;
+      color: var(--text-tertiary);
       margin-top: 4px;
       text-align: right;
     }
@@ -117,17 +232,18 @@
       display: flex;
       align-items: center;
       padding: 12px 16px;
-      background: #E8E4FF;
+      background: var(--accent-light);
       border-radius: 16px;
       border-bottom-left-radius: 4px;
       width: fit-content;
       margin-bottom: 12px;
+      transition: background-color 0.3s ease;
     }
 
     .typing-indicator .dot {
       width: 8px;
       height: 8px;
-      background: #7B68EE;
+      background: var(--accent-primary);
       border-radius: 50%;
       margin: 0 2px;
       animation: typingBounce 1.4s ease-in-out infinite;
@@ -160,13 +276,14 @@
       text-align: center;
       padding: 16px 0;
       font-size: 12px;
-      color: #999;
+      color: var(--text-tertiary);
     }
 
     .chat-day-divider span {
-      background: #FAFAFA;
+      background: var(--bg-primary);
       padding: 4px 12px;
       border-radius: 12px;
+      transition: background-color 0.3s ease;
     }
 
     .load-more-container {
@@ -175,18 +292,18 @@
     }
 
     .load-more-btn {
-      background: #F0EDFF;
-      color: #7B68EE;
+      background: var(--accent-lighter);
+      color: var(--accent-primary);
       border: none;
       padding: 8px 16px;
       border-radius: 16px;
       font-size: 13px;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.3s;
     }
 
     .load-more-btn:hover {
-      background: #E8E4FF;
+      background: var(--accent-light);
     }
 
     .load-more-btn:disabled {
@@ -196,20 +313,21 @@
 
     .input-area {
       padding: 12px;
-      background: white;
+      background: var(--bg-secondary);
       display: flex;
       gap: 8px;
-      border-top: 1px solid #E8E4FF;
+      border-top: 1px solid var(--border-color);
       align-items: flex-end;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     #message-input {
       flex: 1;
       padding: 12px 16px;
-      border: 1px solid #E8E4FF;
+      border: 1px solid var(--border-color);
       border-radius: 24px;
-      background: #FAFAFA;
-      color: #2D1B69;
+      background: var(--bg-input);
+      color: var(--text-primary);
       font-size: 16px;
       resize: none;
       overflow-y: hidden;
@@ -217,22 +335,23 @@
       max-height: 120px;
       line-height: 1.4;
       font-family: inherit;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
-    
+
     #send-btn {
       width: 48px;
       height: 48px;
       border: none;
       border-radius: 50%;
-      background: #7B68EE;
+      background: var(--accent-primary);
       color: white;
       font-size: 20px;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.3s;
     }
-    
+
     #send-btn:active {
-      background: #6A58DD;
+      background: var(--accent-dark);
     }
     
     /* ========== ЧЕКИН ========== */
@@ -243,16 +362,17 @@
     }
 
     .streak-container {
-      background: white;
+      background: var(--bg-secondary);
       border-radius: 12px;
       padding: 20px;
       margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 8px var(--shadow-color);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     .streak-label {
       font-size: 16px;
-      color: #7B68EE;
+      color: var(--accent-primary);
       margin-bottom: 8px;
       font-weight: 600;
       animation: subtlePulse 3s ease-in-out infinite;
@@ -261,14 +381,14 @@
     .streak-value {
       font-size: 32px;
       font-weight: 700;
-      color: #7B68EE;
+      color: var(--accent-primary);
       animation: subtlePulse 3s ease-in-out infinite;
     }
 
     .streak-value span {
       font-size: 18px;
       font-weight: 600;
-      color: #7B68EE;
+      color: var(--accent-primary);
     }
 
     @keyframes subtlePulse {
@@ -277,11 +397,12 @@
     }
 
     .calendar-container {
-      background: white;
+      background: var(--bg-secondary);
       border-radius: 12px;
       padding: 16px;
       margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 8px var(--shadow-color);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     .calendar-header {
@@ -294,30 +415,31 @@
     .calendar-nav {
       width: 36px;
       height: 36px;
-      border: 1px solid #E8E4FF;
+      border: 1px solid var(--border-color);
       border-radius: 8px;
-      background: white;
-      color: #7B68EE;
+      background: var(--bg-secondary);
+      color: var(--accent-primary);
       font-size: 18px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
+      transition: all 0.3s;
     }
 
     .calendar-nav:hover {
-      background: #F5F3FF;
+      background: var(--bg-tertiary);
     }
 
     .calendar-nav:active {
-      background: #E8E4FF;
+      background: var(--accent-light);
     }
 
     .calendar-title {
       font-size: 16px;
       font-weight: 600;
-      color: #2D1B69;
+      color: var(--text-primary);
+      transition: color 0.3s ease;
     }
 
     .calendar-weekdays {
@@ -329,7 +451,7 @@
 
     .calendar-weekday {
       font-size: 11px;
-      color: #999;
+      color: var(--text-tertiary);
       text-align: center;
       padding: 4px;
       font-weight: 500;
@@ -348,122 +470,135 @@
       justify-content: center;
       font-size: 13px;
       border-radius: 50%;
-      color: #2D1B69;
+      color: var(--text-primary);
+      transition: all 0.3s ease;
     }
 
     .calendar-day.other-month {
-      color: #CCC;
+      color: var(--text-muted);
     }
 
     .calendar-day.checked {
-      background: #7B68EE;
+      background: var(--accent-primary);
       color: white;
     }
 
     .calendar-day.today {
-      border: 2px solid #7B68EE;
+      border: 2px solid var(--accent-primary);
     }
 
     .calendar-day.today.checked {
-      border: 2px solid #5A4AD0;
+      border: 2px solid var(--accent-darker);
     }
 
     /* Goal indicators in calendar */
     .calendar-day.has-goal {
-      box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.4);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 40%, transparent);
       cursor: pointer;
       animation: goalPulse 2s ease-in-out infinite;
+      transition: box-shadow 0.3s ease;
     }
 
     .calendar-day.has-goal:hover {
-      box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.7);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 70%, transparent);
     }
 
     .calendar-day.goal-achieved {
-      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.6);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 60%, transparent);
       animation: none;
+      transition: box-shadow 0.3s ease;
     }
 
     .calendar-day.goal-extended {
-      box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.6);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--warning-alt) 60%, transparent);
       animation: none;
+      transition: box-shadow 0.3s ease;
     }
 
     .calendar-day.goal-pending {
       box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
       animation: pendingPulse 1.5s ease-in-out infinite;
+      transition: box-shadow 0.3s ease;
     }
 
     .calendar-day.goal-overdue {
-      box-shadow: 0 0 0 2px rgba(255, 82, 82, 0.7);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--error) 70%, transparent);
       animation: none;
+      transition: box-shadow 0.3s ease;
     }
 
     .calendar-day.goal-failed {
-      box-shadow: 0 0 0 2px rgba(158, 158, 158, 0.6);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 60%, transparent);
       animation: none;
+      transition: box-shadow 0.3s ease;
     }
 
     @keyframes goalPulse {
-      0%, 100% { box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.4); }
-      50% { box-shadow: 0 0 0 2px rgba(123, 104, 238, 0.7); }
+      0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 40%, transparent); }
+      50% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 70%, transparent); }
     }
 
     @keyframes pendingPulse {
-      0%, 100% { box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.4); }
-      50% { box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.8); }
+      0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--warning-alt) 40%, transparent); }
+      50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning-alt) 80%, transparent); }
     }
 
     /* Goal card statuses */
     .goal-item.achieved {
-      border-left-color: #4CAF50;
-      background: #F1F8E9;
+      border-left-color: var(--success);
+      background: var(--success-lighter);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .goal-item.extended {
-      border-left-color: #FFC107;
+      border-left-color: var(--warning-alt);
+      transition: border-color 0.3s ease;
     }
 
     .goal-item.failed {
-      border-left-color: #9E9E9E;
+      border-left-color: var(--info);
       opacity: 0.7;
+      transition: border-color 0.3s ease;
     }
 
     .goal-item.overdue {
-      border-left-color: #FF5252;
-      background: #FFF5F5;
+      border-left-color: var(--error);
+      background: var(--error-light);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .goal-item.needs-validation {
       animation: cardPulse 2s ease-in-out infinite;
-      border-left-color: #FF9800;
+      border-left-color: var(--warning);
+      transition: border-color 0.3s ease;
     }
 
     @keyframes cardPulse {
-      0%, 100% { box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3); }
-      50% { box-shadow: 0 4px 16px rgba(255, 152, 0, 0.5); }
+      0%, 100% { box-shadow: 0 2px 8px color-mix(in srgb, var(--warning) 30%, transparent); }
+      50% { box-shadow: 0 4px 16px color-mix(in srgb, var(--warning) 50%, transparent); }
     }
 
     .goal-status {
       font-size: 11px;
       margin-top: 6px;
       font-weight: 600;
+      transition: color 0.3s ease;
     }
 
     .goal-status.achieved {
-      color: #4CAF50;
+      color: var(--success);
     }
 
     .goal-status.extended {
-      color: #FF9800;
+      color: var(--warning);
     }
 
     .goal-status.failed {
-      color: #9E9E9E;
+      color: var(--info);
     }
 
     .goal-status.overdue {
-      color: #FF5252;
+      color: var(--error);
     }
 
     .goal-validation-buttons {
@@ -480,34 +615,34 @@
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
     }
 
     .goal-validation-btn.achieved {
-      background: #E8F5E9;
-      color: #4CAF50;
+      background: var(--success-light);
+      color: var(--success);
     }
 
     .goal-validation-btn.achieved:hover {
-      background: #C8E6C9;
+      background: var(--success-medium);
     }
 
     .goal-validation-btn.extend {
-      background: #FFF3E0;
-      color: #FF9800;
+      background: var(--warning-light);
+      color: var(--warning);
     }
 
     .goal-validation-btn.extend:hover {
-      background: #FFE0B2;
+      background: color-mix(in srgb, var(--warning-light) 80%, var(--warning) 20%);
     }
 
     .goal-validation-btn.failed {
-      background: #FAFAFA;
-      color: #9E9E9E;
+      background: var(--bg-primary);
+      color: var(--info);
     }
 
     .goal-validation-btn.failed:hover {
-      background: #F5F5F5;
+      background: var(--border-light);
     }
 
     /* Confetti animation */
@@ -548,12 +683,12 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
       display: none;
       flex-direction: column;
       z-index: 2000;
       opacity: 0;
-      transition: opacity 0.5s ease;
+      transition: opacity 0.5s ease, background 0.3s ease;
     }
 
     .story-overlay.active {
@@ -714,17 +849,18 @@
       padding: 2px 8px;
       border-radius: 8px;
       margin-top: 8px;
-      background: rgba(76, 175, 80, 0.8);
+      background: color-mix(in srgb, var(--success) 80%, transparent);
+      transition: background 0.3s ease;
     }
 
     .onboarding-tone-badge.premium {
-      background: rgba(255, 152, 0, 0.8);
+      background: color-mix(in srgb, var(--warning) 80%, transparent);
     }
 
     /* CTA button in onboarding */
     .onboarding-cta {
       background: white;
-      color: #7B68EE;
+      color: var(--accent-primary);
       border: none;
       border-radius: 12px;
       padding: 16px 48px;
@@ -732,7 +868,7 @@
       font-weight: 600;
       cursor: pointer;
       margin-top: 32px;
-      transition: transform 0.2s;
+      transition: transform 0.2s, color 0.3s ease;
       position: relative;
       z-index: 10;
     }
@@ -775,15 +911,15 @@
     .checkin-button {
       width: 100%;
       padding: 16px;
-      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
       color: white;
       border: none;
       border-radius: 12px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(123, 104, 238, 0.3);
-      transition: all 0.2s;
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+      transition: all 0.3s ease;
     }
 
     .checkin-button:active {
@@ -791,71 +927,75 @@
     }
 
     .checkin-button:disabled {
-      background: #CCC;
+      background: var(--text-muted);
       box-shadow: none;
     }
 
     .checkin-motivation {
       font-size: 12px;
-      color: #999;
+      color: var(--text-tertiary);
       font-style: italic;
       margin-top: 12px;
+      transition: color 0.3s ease;
     }
     
     /* ========== СТИЛЬ ========== */
     #style-page {
       padding: 16px;
     }
-    
+
     .style-card {
-      background: white;
+      background: var(--bg-secondary);
       border-radius: 16px;
       padding: 20px;
       margin-bottom: 16px;
-      border: 2px solid #E8E4FF;
+      border: 2px solid var(--accent-light);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
     }
-    
+
     .style-card:hover {
-      border-color: #7B68EE;
-      box-shadow: 0 4px 12px rgba(123, 104, 238, 0.15);
+      border-color: var(--accent-primary);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 15%, transparent);
     }
-    
+
     .style-card.active {
-      border-color: #7B68EE;
-      background: #F5F3FF;
+      border-color: var(--accent-primary);
+      background: var(--bg-tertiary);
     }
-    
+
     .style-card h3 {
-      color: #7B68EE;
+      color: var(--accent-primary);
       font-size: 18px;
       margin-bottom: 8px;
+      transition: color 0.3s ease;
     }
-    
+
     .style-card p {
-      color: #666;
+      color: var(--text-secondary);
       font-size: 14px;
       line-height: 1.5;
+      transition: color 0.3s ease;
     }
-    
+
     .style-badge {
       display: inline-block;
       padding: 4px 12px;
-      background: #7B68EE;
+      background: var(--accent-primary);
       color: white;
       border-radius: 12px;
       font-size: 11px;
       font-weight: 600;
       margin-top: 8px;
+      transition: background-color 0.3s ease;
     }
-    
+
     .style-badge.free {
-      background: #4CAF50;
+      background: var(--success);
     }
-    
+
     .style-badge.premium {
-      background: #FF9800;
+      background: var(--warning);
     }
     
     /* ========== ЦЕЛИ ========== */
@@ -864,26 +1004,29 @@
     }
 
     .goal-item {
-      background: white;
+      background: var(--bg-secondary);
       border-radius: 12px;
       padding: 16px;
       padding-right: 36px;
       margin-bottom: 12px;
-      border-left: 4px solid #7B68EE;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border-left: 4px solid var(--accent-primary);
+      box-shadow: 0 2px 8px var(--shadow-color);
       position: relative;
+      transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     .goal-text {
       font-size: 14px;
-      color: #2D1B69;
+      color: var(--text-primary);
       line-height: 1.4;
+      transition: color 0.3s ease;
     }
 
     .goal-date {
       font-size: 11px;
-      color: #999;
+      color: var(--text-tertiary);
       margin-top: 6px;
+      transition: color 0.3s ease;
     }
 
     .goal-delete {
@@ -894,78 +1037,85 @@
       height: 20px;
       border: none;
       background: transparent;
-      color: #CCC;
+      color: var(--text-muted);
       font-size: 16px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 50%;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
     }
 
     .goal-delete:hover {
-      color: #999;
-      background: #F5F5F5;
+      color: var(--text-tertiary);
+      background: var(--border-light);
     }
 
     .add-goal {
-      background: #E8E4FF;
-      border: 2px dashed #7B68EE;
+      background: var(--accent-light);
+      border: 2px dashed var(--accent-primary);
       border-radius: 12px;
       padding: 16px;
       margin-top: 16px;
       text-align: center;
-      color: #7B68EE;
+      color: var(--accent-primary);
       font-weight: 600;
       cursor: pointer;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
 
     .goals-empty {
       text-align: center;
       padding: 32px 16px;
-      color: #999;
+      color: var(--text-tertiary);
       font-size: 14px;
+      transition: color 0.3s ease;
     }
     
     /* ========== ПРОФИЛЬ ========== */
     #profile-page {
       padding: 16px;
     }
-    
+
     .profile-section {
-      background: white;
+      background: var(--bg-secondary);
       border-radius: 12px;
       padding: 16px;
       margin-bottom: 16px;
+      transition: background-color 0.3s ease;
     }
-    
+
     .profile-section h3 {
-      color: #7B68EE;
+      color: var(--accent-primary);
       font-size: 16px;
       margin-bottom: 12px;
+      transition: color 0.3s ease;
     }
-    
+
     .profile-row {
       display: flex;
       justify-content: space-between;
       padding: 8px 0;
-      border-bottom: 1px solid #F5F5F5;
+      border-bottom: 1px solid var(--border-light);
+      transition: border-color 0.3s ease;
     }
-    
+
     .profile-row:last-child {
       border-bottom: none;
     }
-    
+
     .profile-label {
-      color: #666;
+      color: var(--text-secondary);
       font-size: 14px;
+      transition: color 0.3s ease;
     }
-    
+
     .profile-value {
-      color: #2D1B69;
+      color: var(--text-primary);
       font-weight: 600;
       font-size: 14px;
+      transition: color 0.3s ease;
     }
     
     /* ========== ПОПАП ========== */
@@ -981,18 +1131,19 @@
       justify-content: center;
       z-index: 1000;
     }
-    
+
     .popup.active {
       display: flex;
     }
-    
+
     .popup-content {
-      background: white;
+      background: var(--bg-secondary);
       border-radius: 20px;
       padding: 32px 24px;
       margin: 20px;
       text-align: center;
       max-width: 320px;
+      transition: background-color 0.3s ease;
     }
 
     .popup-content.large {
@@ -1017,19 +1168,21 @@
     .popup-title {
       font-size: 20px;
       font-weight: 700;
-      color: #7B68EE;
+      color: var(--accent-primary);
       margin-bottom: 12px;
+      transition: color 0.3s ease;
     }
-    
+
     .popup-text {
       font-size: 16px;
-      color: #666;
+      color: var(--text-secondary);
       line-height: 1.5;
       margin-bottom: 24px;
+      transition: color 0.3s ease;
     }
-    
+
     .popup-close {
-      background: #7B68EE;
+      background: var(--accent-primary);
       color: white;
       border: none;
       border-radius: 12px;
@@ -1037,29 +1190,33 @@
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
 
     .popup-input {
       width: 100%;
       padding: 12px;
-      border: 1px solid #E8E4FF;
+      border: 1px solid var(--accent-light);
       border-radius: 8px;
       font-size: 14px;
       margin-bottom: 12px;
-      color: #2D1B69;
+      color: var(--text-primary);
+      background: var(--bg-input);
+      transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
     }
 
     .popup-input:focus {
       outline: none;
-      border-color: #7B68EE;
+      border-color: var(--accent-primary);
     }
 
     .popup-label {
       font-size: 12px;
-      color: #666;
+      color: var(--text-secondary);
       text-align: left;
       display: block;
       margin-bottom: 4px;
+      transition: color 0.3s ease;
     }
 
     .popup-buttons {
@@ -1076,29 +1233,32 @@
       font-weight: 600;
       cursor: pointer;
       border: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     .popup-btn.primary {
-      background: #7B68EE;
+      background: var(--accent-primary);
       color: white;
     }
 
     .popup-btn.secondary {
-      background: #E8E4FF;
-      color: #7B68EE;
+      background: var(--accent-light);
+      color: var(--accent-primary);
     }
 
     .popup-suggestion {
       margin-top: 20px;
       padding-top: 16px;
-      border-top: 1px solid #E8E4FF;
+      border-top: 1px solid var(--accent-light);
+      transition: border-color 0.3s ease;
     }
 
     .suggestion-text {
       font-size: 14px;
-      color: #666;
+      color: var(--text-secondary);
       margin-bottom: 12px;
       text-align: center;
+      transition: color 0.3s ease;
     }
 
     /* Scrollable popup for viewing goals on date */
@@ -1117,18 +1277,19 @@
     /* ========== НАВИГАЦИЯ ========== */
     .navigation {
       display: flex;
-      background: white;
-      border-top: 1px solid #E8E4FF;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
       padding: 8px 4px;
       padding-bottom: calc(12px + var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
-      box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 -2px 8px var(--shadow-color);
       gap: 4px;
       /* Ensure minimum bottom padding for devices */
       min-height: 60px;
       position: relative;
+      transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
-    /* Extend white background to cover safe area on iPhone X and Android */
+    /* Extend background to cover safe area on iPhone X and Android */
     .navigation::after {
       content: '';
       position: absolute;
@@ -1136,8 +1297,9 @@
       right: 0;
       bottom: 0;
       height: var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px));
-      background: white;
+      background: var(--bg-secondary);
       transform: translateY(100%);
+      transition: background-color 0.3s ease;
     }
 
     .nav-btn {
@@ -1148,30 +1310,30 @@
       padding: 10px 4px;
       border: none;
       background: transparent;
-      color: #999;
+      color: var(--text-tertiary);
       font-size: 11px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
       border-radius: 8px;
     }
 
     .nav-btn:hover {
-      color: #7B68EE;
-      background: rgba(123, 104, 238, 0.05);
+      color: var(--accent-primary);
+      background: var(--accent-lighter);
     }
 
     .nav-btn.active {
-      color: #7B68EE;
+      color: var(--accent-primary);
       font-weight: 600;
-      background: rgba(123, 104, 238, 0.1);
-      box-shadow: 0 0 8px rgba(123, 104, 238, 0.15);
+      background: var(--accent-light);
+      box-shadow: 0 0 8px var(--shadow-color);
     }
 
     /* ========== SUPPORT BUTTON ========== */
     .support-btn {
       width: 100%;
       padding: 14px;
-      background: linear-gradient(135deg, #7B68EE 0%, #9D8EFF 100%);
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
       color: white;
       border: none;
       border-radius: 12px;
@@ -1190,6 +1352,9 @@
 <body>
   <div class="header">
     <h1>SelfHack</h1>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
+      <span id="theme-icon">🌙</span>
+    </button>
   </div>
   
   <div class="content">
@@ -1226,7 +1391,7 @@
     <div id="style-page" class="page">
       <div style="padding: 16px 0;">
         <h2 style="margin-bottom: 8px;">Выбери стиль коуча</h2>
-        <p style="color: #666; font-size: 14px;">Как я буду с тобой общаться</p>
+        <p style="color: var(--text-secondary); font-size: 14px;">Как я буду с тобой общаться</p>
       </div>
       
       <div class="style-card" data-tone="focused" onclick="selectTone('focused')">
@@ -1261,7 +1426,7 @@
     <div id="goals-page" class="page">
       <div style="padding: 16px 16px 0;">
         <h2 style="margin-bottom: 8px;">Твои цели</h2>
-        <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Чего ты хочешь достичь</p>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 16px;">Чего ты хочешь достичь</p>
       </div>
 
       <div style="padding: 0 16px 16px;">
@@ -1421,9 +1586,9 @@
       <div class="popup-title">Время подвести итог!</div>
       <div class="popup-text" id="goal-validation-text">Сегодня дата твоей цели. Как результат?</div>
       <div class="popup-buttons" style="flex-direction: column; gap: 10px;">
-        <button class="popup-btn primary" onclick="validateGoal('achieved')" style="background: #4CAF50;">Достигнута!</button>
-        <button class="popup-btn secondary" onclick="showExtendGoalPopup()" style="background: #FFF3E0; color: #FF9800;">Нужно больше времени</button>
-        <button class="popup-btn secondary" onclick="validateGoal('failed')" style="background: #FAFAFA; color: #9E9E9E;">Не удалось</button>
+        <button class="popup-btn primary" onclick="validateGoal('achieved')" style="background: var(--success);">Достигнута!</button>
+        <button class="popup-btn secondary" onclick="showExtendGoalPopup()" style="background: var(--warning-light); color: var(--warning);">Нужно больше времени</button>
+        <button class="popup-btn secondary" onclick="validateGoal('failed')" style="background: var(--bg-primary); color: var(--info);">Не удалось</button>
       </div>
     </div>
   </div>
@@ -1445,16 +1610,16 @@
   <!-- ПОПАП ЦЕЛЬ ДОСТИГНУТА -->
   <div class="popup" id="goal-achieved-popup">
     <div class="popup-content">
-      <div class="popup-title" style="color: #4CAF50;">Поздравляем!</div>
+      <div class="popup-title" style="color: var(--success);">Поздравляем!</div>
       <div class="popup-text">Ты справился! Это отличный результат. Продолжай в том же духе!</div>
-      <button class="popup-close" onclick="closeAchievedPopup()" style="background: #4CAF50;">Отлично!</button>
+      <button class="popup-close" onclick="closeAchievedPopup()" style="background: var(--success);">Отлично!</button>
     </div>
   </div>
 
   <!-- ПОПАП ЦЕЛЬ НЕ ДОСТИГНУТА -->
   <div class="popup" id="goal-failed-popup">
     <div class="popup-content">
-      <div class="popup-title" style="color: #666;">Ничего страшного</div>
+      <div class="popup-title" style="color: var(--text-secondary);">Ничего страшного</div>
       <div class="popup-text">Не все цели достигаются с первого раза. Проанализируй, что помешало, и попробуй снова с новым подходом.</div>
       <div class="popup-buttons">
         <button class="popup-btn secondary" onclick="closePopup()">Закрыть</button>
@@ -1493,15 +1658,67 @@
     }
 
     // Set header and background colors to match app theme
-    if (tg.setHeaderColor) {
-      tg.setHeaderColor('#7B68EE');
+    function updateTelegramTheme() {
+      const styles = getComputedStyle(document.documentElement);
+      const accentPrimary = styles.getPropertyValue('--accent-primary').trim();
+      const bgPrimary = styles.getPropertyValue('--bg-primary').trim();
+      const bgSecondary = styles.getPropertyValue('--bg-secondary').trim();
+
+      if (tg.setHeaderColor) {
+        tg.setHeaderColor(accentPrimary);
+      }
+      if (tg.setBackgroundColor) {
+        tg.setBackgroundColor(bgPrimary);
+      }
+      if (tg.setBottomBarColor) {
+        tg.setBottomBarColor(bgSecondary);
+      }
     }
-    if (tg.setBackgroundColor) {
-      tg.setBackgroundColor('#FAFAFA');
+    updateTelegramTheme();
+
+    // ========== THEME MANAGEMENT ==========
+    // Load saved theme preference
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+
+      if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-icon').textContent = '☀️';
+      } else {
+        document.body.classList.remove('dark-mode');
+        document.getElementById('theme-icon').textContent = '🌙';
+      }
+
+      // Update Telegram theme colors after applying theme
+      setTimeout(updateTelegramTheme, 100);
     }
-    if (tg.setBottomBarColor) {
-      tg.setBottomBarColor('#FFFFFF');
+
+    // Toggle theme function
+    function toggleTheme() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      const themeIcon = document.getElementById('theme-icon');
+
+      if (isDark) {
+        themeIcon.textContent = '☀️';
+        localStorage.setItem('theme', 'dark');
+      } else {
+        themeIcon.textContent = '🌙';
+        localStorage.setItem('theme', 'light');
+      }
+
+      // Update Telegram theme colors after toggle
+      setTimeout(updateTelegramTheme, 100);
+
+      // Haptic feedback
+      if (tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('light');
+      }
     }
+
+    // Load theme on startup
+    loadTheme();
 
     // Disable vertical swipes to close (for better UX in fullscreen)
     if (tg.disableVerticalSwipes) {
@@ -2037,7 +2254,7 @@
       if (completedGoals.length > 0) {
         const completedSection = document.createElement('div');
         completedSection.style.marginTop = '24px';
-        completedSection.innerHTML = '<h4 style="color: #999; font-size: 12px; margin-bottom: 12px;">ЗАВЕРШЕННЫЕ ЦЕЛИ</h4>';
+        completedSection.innerHTML = '<h4 style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 12px;">ЗАВЕРШЕННЫЕ ЦЕЛИ</h4>';
 
         // Sort completed goals: achieved first, then failed, all by date descending
         const sortedCompletedGoals = [...completedGoals].sort((a, b) => {
@@ -2102,11 +2319,11 @@
       // Function to determine goal status display
       function getGoalStatusHtml(goal) {
         if (goal.status === 'achieved') {
-          return '<span style="color: #4CAF50; font-weight: 600; font-size: 11px;">Достигнута</span>';
+          return '<span style="color: var(--success); font-weight: 600; font-size: 11px;">Достигнута</span>';
         } else if (goal.status === 'failed') {
-          return '<span style="color: #9E9E9E; font-weight: 600; font-size: 11px;">Не достигнута</span>';
+          return '<span style="color: var(--info); font-weight: 600; font-size: 11px;">Не достигнута</span>';
         } else if (goal.target_date && goal.target_date < today) {
-          return '<span style="color: #FF5252; font-weight: 600; font-size: 11px;">Просрочена</span>';
+          return '<span style="color: var(--error); font-weight: 600; font-size: 11px;">Просрочена</span>';
         }
         return '';
       }
@@ -2137,7 +2354,7 @@
         // Multiple goals - display numbered list with status
         const goalItems = sortedGoals.map((g, index) => {
           const statusHtml = getGoalStatusHtml(g);
-          return `<div style="text-align: left; padding: 8px 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 8px;">
+          return `<div style="text-align: left; padding: 8px 0; border-bottom: 1px solid var(--border-light); margin-bottom: 8px;">
             <strong>${index + 1}.</strong> ${g.text}
             ${statusHtml ? `<div style="margin-top: 4px;">${statusHtml}</div>` : ''}
           </div>`;
@@ -2466,7 +2683,15 @@
       container.className = 'confetti-container';
       document.body.appendChild(container);
 
-      const colors = ['#7B68EE', '#4CAF50', '#FF9800', '#E91E63', '#00BCD4'];
+      // Get current theme colors
+      const styles = getComputedStyle(document.documentElement);
+      const colors = [
+        styles.getPropertyValue('--accent-primary').trim(),
+        styles.getPropertyValue('--success').trim(),
+        styles.getPropertyValue('--warning').trim(),
+        '#E91E63', // Pink (not theme-dependent)
+        '#00BCD4'  // Cyan (not theme-dependent)
+      ];
 
       for (let i = 0; i < 50; i++) {
         const confetti = document.createElement('div');
