@@ -1430,6 +1430,133 @@
   transform: translateX(24px);
 }
 
+    /* ========== PROMO & DELETE STYLES ========== */
+.buttons-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.btn-tariffs, .btn-promo {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.btn-tariffs {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  border: none;
+  color: white;
+}
+
+.btn-promo {
+  background: var(--accent-lighter);
+  border: 1px dashed var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.btn-tariffs:active, .btn-promo:active {
+  transform: scale(0.98);
+}
+
+.promo-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 16px;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 2px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  outline: none;
+  box-sizing: border-box;
+  text-transform: uppercase;
+  transition: border-color 0.3s ease;
+}
+
+.promo-input:focus {
+  border-color: var(--accent-primary);
+}
+
+.promo-input.error {
+  border-color: var(--error);
+}
+
+.promo-error {
+  color: var(--error);
+  font-size: 12px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.promo-success {
+  background: var(--success-light);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: var(--success);
+  font-weight: 600;
+  text-align: center;
+}
+
+.delete-data-link {
+  text-align: center;
+  padding: 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.delete-data-link:hover {
+  color: var(--text-tertiary);
+}
+
+.delete-warning {
+  background: var(--error-light);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--error);
+  text-align: left;
+}
+
+.delete-warning b {
+  font-weight: 700;
+}
+
+.btn-stay {
+  flex: 1;
+  padding: 14px;
+  background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-delete-confirm {
+  flex: 1;
+  padding: 14px;
+  background: var(--bg-input);
+  border: none;
+  border-radius: 12px;
+  color: var(--error);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
   </style>
 </head>
 <body>
