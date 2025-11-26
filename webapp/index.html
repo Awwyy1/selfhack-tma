@@ -3560,6 +3560,119 @@
       }
     }
 
+    // ========== PROMO CODE ==========
+    function showPromoPopup() {
+      document.getElementById('promo-code-input').value = '';
+      document.getElementById('promo-code-input').style.display = 'block';
+      document.getElementById('promo-error-msg').style.display = 'none';
+      document.getElementById('promo-success-msg').style.display = 'none';
+      document.getElementById('promo-buttons').style.display = 'flex';
+      document.getElementById('promo-success-btn').style.display = 'none';
+      document.getElementById('promo-code-input').classList.remove('error');
+      document.getElementById('promo-popup').classList.add('active');
+    }
+
+    async function applyPromoCode() {
+      const code = document.getElementById('promo-code-input').value.trim().toUpperCase();
+      const errorMsg = document.getElementById('promo-error-msg');
+      const successMsg = document.getElementById('promo-success-msg');
+      const input = document.getElementById('promo-code-input');
+      const buttons = document.getElementById('promo-buttons');
+      const successBtn = document.getElementById('promo-success-btn');
+
+      if (code.length < 4) {
+        errorMsg.textContent = 'Промокод слишком короткий';
+        errorMsg.style.display = 'block';
+        input.classList.add('error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/account', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            action: 'apply-promo',
+            user_id: user?.id || 0,
+            code: code
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          input.style.display = 'none';
+          errorMsg.style.display = 'none';
+          successMsg.textContent = data.message || 'Premium активирован!';
+          successMsg.style.display = 'block';
+          buttons.style.display = 'none';
+          successBtn.style.display = 'block';
+
+          // Update local stats
+          userStats.plan = 'PREMIUM';
+          userStats.messagesLimit = 2000;
+        } else {
+          errorMsg.textContent = data.message || 'Промокод недействителен';
+          errorMsg.style.display = 'block';
+          input.classList.add('error');
+        }
+      } catch (error) {
+        console.error('Promo error:', error);
+        errorMsg.textContent = 'Ошибка проверки промокода';
+        errorMsg.style.display = 'block';
+        input.classList.add('error');
+      }
+    }
+
+    // ========== DELETE DATA ==========
+    function showDeleteDataPopup() {
+      const activeGoals = userGoals.filter(g => !g.status || g.status === 'active');
+      document.getElementById('delete-goals-count').textContent = activeGoals.length;
+      document.getElementById('delete-streak-count').textContent = userStats.streak;
+      document.getElementById('delete-data-popup').classList.add('active');
+    }
+
+    function stayWithUs() {
+      closePopup();
+      setTimeout(() => {
+        document.getElementById('stayed-popup').classList.add('active');
+      }, 300);
+    }
+
+    async function confirmDeleteAllData() {
+      try {
+        const response = await fetch('/api/account', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            action: 'delete',
+            user_id: user?.id || 0
+          })
+        });
+
+        const data = await response.json();
+        closePopup();
+
+        if (data.success) {
+          localStorage.clear();
+          setTimeout(() => {
+            document.getElementById('deleted-popup').classList.add('active');
+          }, 300);
+        } else {
+          tg.showAlert(data.message || 'Ошибка удаления');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        tg.showAlert('Ошибка удаления данных');
+      }
+    }
+    
     // Инициализация
     renderCalendar(); // Initial render
     renderGoals(); // Initial empty state
