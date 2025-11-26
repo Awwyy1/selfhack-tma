@@ -1841,6 +1841,80 @@
       </div>
     </div>
   </div>
+
+  <!-- ПОПАП ПРОМОКОДА -->
+  <div class="popup" id="promo-popup">
+    <div class="popup-content">
+      <div class="popup-title">Введи промокод</div>
+      <div class="popup-text" style="margin-bottom: 20px;">Получи Premium бесплатно</div>
+      <div id="promo-success-msg" class="promo-success" style="display: none;">
+        Premium активирован!
+      </div>
+      <input 
+        type="text" 
+        id="promo-code-input" 
+        class="promo-input" 
+        placeholder="ПРОМОКОД"
+        oninput="this.value = this.value.toUpperCase()"
+      >
+      <div id="promo-error-msg" class="promo-error" style="display: none;"></div>
+      <div class="popup-buttons" id="promo-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
+        <button class="popup-btn primary" onclick="applyPromoCode()">Применить</button>
+      </div>
+      <div id="promo-success-btn" style="display: none;">
+        <button class="popup-btn primary" style="width: 100%; background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);" onclick="closePopup(); location.reload();">Отлично!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП УДАЛЕНИЯ ДАННЫХ -->
+  <div class="popup" id="delete-data-popup">
+    <div class="popup-content" style="text-align: left; max-width: 360px;">
+      <div class="popup-title" style="text-align: center;">Подожди секунду...</div>
+      <div class="popup-text" style="text-align: left; line-height: 1.7;">
+        Эй, это я — твой коуч. Вижу ты хочешь удалить все данные.
+        <br><br>
+        Просто хочу убедиться что ты понимаешь:
+      </div>
+      <div class="delete-warning">
+        • Я забуду все наши разговоры<br>
+        • Твои <b id="delete-goals-count">0</b> целей пропадут<br>
+        • Твой <b id="delete-streak-count">0</b>-дневный стрик обнулится<br>
+        • Мне придётся знакомиться с тобой заново
+      </div>
+      <div style="font-size: 13px; color: var(--text-tertiary); line-height: 1.6; margin-bottom: 24px;">
+        Если что-то не так — напиши в поддержку, поможем.
+        <br><br>
+        Если нужен перерыв — просто не заходи. Я подожду.
+      </div>
+      <div style="font-weight: 600; text-align: center; margin-bottom: 16px;">
+        Всё ещё хочешь удалить?
+      </div>
+      <div class="popup-buttons">
+        <button class="btn-stay" onclick="stayWithUs()">Нет, останусь</button>
+        <button class="btn-delete-confirm" onclick="confirmDeleteAllData()">Да, удалить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОПАП РАД ЧТО ОСТАЛСЯ -->
+  <div class="popup" id="stayed-popup">
+    <div class="popup-content">
+      <div class="popup-title" style="color: var(--success);">Рад, что передумал!</div>
+      <div class="popup-text">Продолжаем работать вместе.</div>
+      <button class="popup-close" style="background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);" onclick="closePopup()">Отлично!</button>
+    </div>
+  </div>
+
+  <!-- ПОПАП ДАННЫЕ УДАЛЕНЫ -->
+  <div class="popup" id="deleted-popup">
+    <div class="popup-content">
+      <div class="popup-title">Все данные удалены</div>
+      <div class="popup-text">Если вернёшься — начнём с чистого листа.</div>
+      <button class="popup-close" onclick="closePopup(); if(tg.close) tg.close();">Закрыть</button>
+    </div>
+  </div>
   
   <div class="navigation">
     <button class="nav-btn" data-page="checkin">Чекин</button>
