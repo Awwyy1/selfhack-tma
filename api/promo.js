@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   try {
     // Проверить существует ли промокод и активен ли он
     const { data: promo, error: promoError } = await supabase
-      .from('promo_codes')
+      .from('premium_vouchers')
       .select('*')
       .eq('code', promo_code.toUpperCase().trim())
       .maybeSingle();
@@ -51,10 +51,10 @@ export default async function handler(req, res) {
 
     // Проверить не использовал ли пользователь уже этот промокод
     const { data: existingUsage } = await supabase
-      .from('promo_usage')
+      .from('voucher_usage')
       .select('*')
       .eq('telegram_user_id', user_id)
-      .eq('promo_code_id', promo.id)
+      .eq('voucher_id', promo.id)
       .maybeSingle();
 
     if (existingUsage) {
@@ -108,16 +108,16 @@ export default async function handler(req, res) {
 
     // Записать использование промокода
     await supabase
-      .from('promo_usage')
+      .from('voucher_usage')
       .insert({
         telegram_user_id: user_id,
-        promo_code_id: promo.id,
+        voucher_id: promo.id,
         used_at: now.toISOString()
       });
 
     // Увеличить счётчик использования промокода
     await supabase
-      .from('promo_codes')
+      .from('premium_vouchers')
       .update({
         used_count: (promo.used_count || 0) + 1
       })
