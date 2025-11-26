@@ -277,10 +277,10 @@ export default async function handler(req, res) {
         .eq('telegram_user_id', user_id)
         .eq('role', 'user');
 
-      if (totalMessages >= 50) {
-        return res.status(403).json({ 
+      if (totalMessages >= 2000) {
+        return res.status(403).json({
           error: 'Лимит FREE достигнут',
-          message: 'Лимит FREE (50 сообщений) достигнут. Купи Premium для продолжения.',
+          message: 'Лимит FREE (2000 сообщений) достигнут. Купи Premium для продолжения.',
           limit_reached: true
         });
       }
