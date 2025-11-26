@@ -1656,13 +1656,19 @@
         </div>
         <div class="profile-row">
           <span class="profile-label">Сообщений использовано</span>
-          <span class="profile-value" id="profile-messages">0 / 2000</span>
+          <span class="profile-value" id="profile-messages">0 / 50</span>
         </div>
         <div class="profile-row">
           <span class="profile-label">Текущий стиль</span>
-          <span class="profile-value" id="profile-tone">💬 Baddy</span>
+          <span class="profile-value" id="profile-tone">Baddy</span>
+        </div>
+        
+        <!-- Кнопки промокода -->
+        <div class="buttons-row">
+          <button class="btn-promo" onclick="showPromoPopup()">Есть промокод?</button>
         </div>
       </div>
+
       <div class="theme-section">
         <h3>Внешний вид</h3>
         <div class="theme-row">
@@ -1676,6 +1682,7 @@
           </label>
         </div>
       </div>
+
       <div class="profile-section" style="margin-bottom: 12px;">
         <h3>Активность</h3>
         <div class="profile-row">
@@ -1691,6 +1698,7 @@
           <span class="profile-value" id="profile-goals-count">0</span>
         </div>
       </div>
+
       <div class="profile-section" style="margin-bottom: 12px;">
         <h3>Аккаунт</h3>
         <div class="profile-row">
@@ -1700,8 +1708,12 @@
       </div>
 
       <button class="support-btn" onclick="showSupportPopup()">Support</button>
+      
+      <!-- Ссылка удаления данных -->
+      <div class="delete-data-link" onclick="showDeleteDataPopup()">
+        Удалить все данные
+      </div>
     </div>
-  </div>
   
   <!-- ПОПАП ЧЕКИНА -->
   <div class="popup" id="checkin-popup">
