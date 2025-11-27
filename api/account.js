@@ -43,7 +43,6 @@ export default async function handler(req, res) {
         .from('premium_vouchers')
         .select('*')
         .eq('code', code.toUpperCase())
-        .eq('is_active', true)
         .single();
 
       if (voucherError || !voucher) {
@@ -62,18 +61,11 @@ export default async function handler(req, res) {
       }
 
       // 3. Проверить лимит использований
-      if (voucher.max_uses !== null) {
-        const { count } = await supabase
-          .from('voucher_usage')
-          .select('*', { count: 'exact', head: true })
-          .eq('voucher_id', voucher.id);
-
-        if (count >= voucher.max_uses) {
-          return res.status(400).json({ 
-            success: false, 
-            message: 'Промокод больше не действителен' 
-          });
-        }
+      if (voucher.max_uses !== null && voucher.used_count >= voucher.max_uses) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Промокод больше не действителен' 
+        });
       }
 
       // 4. Проверить, не использовал ли уже этот юзер
@@ -123,7 +115,13 @@ export default async function handler(req, res) {
           used_at: new Date().toISOString()
         });
 
-      // 8. Форматировать дату для ответа
+      // 8. Увеличить used_count в промокоде
+      await supabase
+        .from('premium_vouchers')
+        .update({ used_count: (voucher.used_count || 0) + 1 })
+        .eq('id', voucher.id);
+
+      // 9. Форматировать дату для ответа
       const months = [
         'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
         'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
