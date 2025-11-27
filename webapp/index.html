@@ -1557,6 +1557,289 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+    /* ========== ACCOUNT CARD & PROGRESS ========== */
+.account-card {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-username {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.account-date {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.account-badge {
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+.account-badge.premium {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #1A1A1A;
+}
+
+.progress-container {
+  margin-bottom: 16px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.progress-label {
+  color: var(--text-secondary);
+}
+
+.progress-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.progress-bar {
+  height: 6px;
+  background: var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progress-fill.exceeded {
+  background: linear-gradient(90deg, #FF5252, #FF8A80);
+}
+
+/* ========== DASHBOARD CARD ========== */
+.dashboard-card {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-title {
+  color: var(--accent-primary);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.dashboard-subtitle {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.badge-soon {
+  background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+}
+
+/* ========== TARIFFS PAGE ========== */
+#tariffs-page {
+  padding: 16px;
+  padding-bottom: 100px;
+}
+
+.tariffs-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.tariffs-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.tariffs-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.tariff-card {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.tariff-card.active {
+  border: 2px solid var(--accent-primary);
+}
+
+.tariff-card.premium-card {
+  background: linear-gradient(135deg, rgba(123,104,238,0.1) 0%, rgba(157,142,255,0.1) 100%);
+  border: 2px solid var(--accent-primary);
+  position: relative;
+}
+
+.tariff-card.disabled {
+  opacity: 0.6;
+}
+
+.tariff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.tariff-name {
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--text-primary);
+}
+
+.tariff-price {
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+.tariff-price-big {
+  font-weight: 700;
+  font-size: 32px;
+  color: var(--accent-primary);
+  margin-bottom: 16px;
+}
+
+.tariff-price-big span {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.tariff-features {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.tariff-features b {
+  color: var(--text-primary);
+}
+
+.tariff-badge {
+  margin-top: 16px;
+  padding: 10px 16px;
+  background: var(--accent-lighter);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--accent-primary);
+  font-weight: 600;
+  text-align: center;
+}
+
+.badge-popular {
+  position: absolute;
+  top: -10px;
+  right: 20px;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+.badge-coming {
+  background: var(--border-color);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+}
+
+.btn-subscribe {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tariffs-promo-link {
+  text-align: center;
+  padding: 16px;
+  color: var(--accent-primary);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tariffs-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  padding-bottom: calc(16px + var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-back {
+  width: 100%;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
   </style>
 </head>
 <body>
@@ -1641,34 +1924,122 @@
         <div class="add-goal" onclick="showAddGoalPopup()">+ Добавить свою цель</div>
       </div>
     </div>
+
+    <!-- ТАРИФЫ (полноэкранная страница) -->
+    <div id="tariffs-page" class="page">
+      <div class="tariffs-header">
+        <div class="tariffs-title">Тарифы</div>
+        <div class="tariffs-subtitle">Выбери подходящий план</div>
+      </div>
+
+      <!-- FREE -->
+      <div class="tariff-card" id="tariff-free">
+        <div class="tariff-header">
+          <div class="tariff-name">FREE</div>
+          <div class="tariff-price">$0</div>
+        </div>
+        <div class="tariff-features">
+          • 50 сообщений в месяц<br>
+          • 2 стиля коуча<br>
+          • История 7 дней<br>
+          • Чекины и цели
+        </div>
+        <div class="tariff-badge" id="tariff-free-badge" style="display: none;">
+          Текущий тариф
+        </div>
+      </div>
+
+      <!-- PREMIUM -->
+      <div class="tariff-card premium-card" id="tariff-premium">
+        <div class="badge-popular">ПОПУЛЯРНЫЙ</div>
+        <div class="tariff-header" style="margin-top: 8px;">
+          <div class="tariff-name">PREMIUM</div>
+        </div>
+        <div class="tariff-price-big">$10.99<span>/мес</span></div>
+        <div class="tariff-features">
+          • <b>500 сообщений</b> в месяц<br>
+          • <b>3 стиля</b> коуча (+ Mentor)<br>
+          • История <b>30 дней</b><br>
+          • Приоритетная поддержка<br>
+          • Персонализация AI
+        </div>
+        <div class="tariff-badge" id="tariff-premium-badge" style="display: none;">
+          Активен
+        </div>
+        <button class="btn-subscribe" id="btn-subscribe-premium" onclick="subscribePremium()">
+          Оформить Premium
+        </button>
+      </div>
+
+      <!-- PRO -->
+      <div class="tariff-card disabled">
+        <div class="tariff-header">
+          <div class="tariff-name">PRO</div>
+          <div class="badge-coming">СКОРО</div>
+        </div>
+        <div class="tariff-features">
+          • Безлимитные сообщения<br>
+          • Персональный AI-профиль<br>
+          • Квартальные звонки с ICF коучем<br>
+          • Продвинутая аналитика
+        </div>
+      </div>
+
+      <div class="tariffs-promo-link" onclick="goToProfileAndOpenPromo()">
+        Есть промокод?
+      </div>
+
+      <div class="tariffs-bottom">
+        <button class="btn-back" onclick="goBackToProfile()">Окей, я понял</button>
+      </div>
+    </div> 
     
     <!-- ПРОФИЛЬ -->
     <div id="profile-page" class="page">
-      <div class="profile-section" style="margin-bottom: 12px;">
-        <h3>Подписка</h3>
-        <div class="profile-row">
-          <span class="profile-label">Тариф</span>
+      <!-- Account Card -->
+      <div class="account-card">
+        <div class="account-info">
+          <div class="account-username" id="profile-username">@username</div>
+          <div class="account-date">с <span id="profile-reg-date">ноября 2024</span></div>
+        </div>
+        <div class="account-badge" id="account-badge">FREE</div>
+      </div>
+
+      <!-- Subscription Section -->
+      <div class="profile-section">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <h3 style="margin: 0;">Подписка</h3>
           <span class="profile-value" id="profile-plan">FREE</span>
         </div>
-        <div class="profile-row" id="profile-expires-row" style="display: none;">
-          <span class="profile-label">Действует до</span>
-          <span class="profile-value" id="profile-expires"></span>
+        
+        <!-- Progress Bar -->
+        <div class="progress-container">
+          <div class="progress-header">
+            <span class="progress-label">Сообщений использовано</span>
+            <span class="progress-value" id="profile-messages">0 / 50</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="messages-progress" style="width: 0%;"></div>
+          </div>
         </div>
-        <div class="profile-row">
-          <span class="profile-label">Сообщений использовано</span>
-          <span class="profile-value" id="profile-messages">0 / 50</span>
-        </div>
+
         <div class="profile-row">
           <span class="profile-label">Текущий стиль</span>
           <span class="profile-value" id="profile-tone">Baddy</span>
         </div>
-        
-        <!-- Кнопки промокода -->
+        <div class="profile-row" id="profile-expires-row" style="display: none;">
+          <span class="profile-label">Действует до</span>
+          <span class="profile-value" id="profile-expires" style="color: var(--success);"></span>
+        </div>
+
+        <!-- Two Buttons -->
         <div class="buttons-row">
+          <button class="btn-tariffs" onclick="openTariffsPage()">Тарифы</button>
           <button class="btn-promo" onclick="showPromoPopup()">Есть промокод?</button>
         </div>
       </div>
 
+      <!-- Theme Section -->
       <div class="theme-section">
         <h3>Внешний вид</h3>
         <div class="theme-row">
@@ -1683,7 +2054,8 @@
         </div>
       </div>
 
-      <div class="profile-section" style="margin-bottom: 12px;">
+      <!-- Activity Section -->
+      <div class="profile-section">
         <h3>Активность</h3>
         <div class="profile-row">
           <span class="profile-label">Чекинов подряд</span>
@@ -1699,17 +2071,21 @@
         </div>
       </div>
 
-      <div class="profile-section" style="margin-bottom: 12px;">
-        <h3>Аккаунт</h3>
-        <div class="profile-row">
-          <span class="profile-label">Username</span>
-          <span class="profile-value" id="profile-username">@username</span>
+      <!-- Dashboard Card -->
+      <div class="dashboard-card" onclick="showDashboardPopup()">
+        <div class="dashboard-header">
+          <div>
+            <div class="dashboard-title">Дашборд</div>
+            <div class="dashboard-subtitle">Аналитика и инсайты</div>
+          </div>
+          <div class="badge-soon">SOON</div>
         </div>
       </div>
 
+      <!-- Support Button -->
       <button class="support-btn" onclick="showSupportPopup()">Support</button>
       
-      <!-- Ссылка удаления данных -->
+      <!-- Delete Data Link -->
       <div class="delete-data-link" onclick="showDeleteDataPopup()">
         Удалить все данные
       </div>
@@ -1919,6 +2295,21 @@
       <button class="popup-close" style="background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);" onclick="closePopup()">Отлично!</button>
     </div>
   </div>
+
+  <!-- ПОПАП ДАШБОРД -->
+  <div class="popup" id="dashboard-popup">
+    <div class="popup-content">
+      <div class="popup-title">Дашборд скоро появится!</div>
+      <div class="popup-text" style="line-height: 1.6; text-align: left;">
+        Здесь будет:<br>
+        • Графики твоего прогресса<br>
+        • Аналитика разговоров<br>
+        • Инсайты от AI коуча<br>
+        • Рекомендации по развитию
+      </div>
+      <button class="popup-close" onclick="closePopup()">Понятно, жду!</button>
+    </div>
+  </div
 
   <!-- ПОПАП ДАННЫЕ УДАЛЕНЫ -->
   <div class="popup" id="deleted-popup">
@@ -3561,6 +3952,88 @@
       }
     }
 
+    // ========== TARIFFS PAGE ==========
+    function openTariffsPage() {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      
+      document.getElementById('tariffs-page').classList.add('active');
+      document.querySelector('.navigation').style.display = 'none';
+      
+      updateTariffCards();
+    }
+
+    function goBackToProfile() {
+      document.getElementById('tariffs-page').classList.remove('active');
+      document.getElementById('profile-page').classList.add('active');
+      document.querySelector('[data-page="profile"]').classList.add('active');
+      document.querySelector('.navigation').style.display = 'flex';
+    }
+
+    function goToProfileAndOpenPromo() {
+      goBackToProfile();
+      setTimeout(() => showPromoPopup(), 100);
+    }
+
+    function updateTariffCards() {
+      const isFree = userStats.plan === 'FREE';
+      const isPremium = userStats.plan === 'PREMIUM';
+      
+      const freeCard = document.getElementById('tariff-free');
+      const freeBadge = document.getElementById('tariff-free-badge');
+      const premiumBadge = document.getElementById('tariff-premium-badge');
+      const subscribeBtn = document.getElementById('btn-subscribe-premium');
+      
+      if (isFree) {
+        freeCard.classList.add('active');
+        freeBadge.style.display = 'block';
+        premiumBadge.style.display = 'none';
+        subscribeBtn.style.display = 'block';
+      } else {
+        freeCard.classList.remove('active');
+        freeBadge.style.display = 'none';
+        premiumBadge.style.display = 'block';
+        subscribeBtn.style.display = 'none';
+      }
+    }
+
+    function subscribePremium() {
+      tg.showAlert('Оплата через Telegram Stars скоро будет доступна!');
+    }
+
+    // ========== DASHBOARD ==========
+    function showDashboardPopup() {
+      document.getElementById('dashboard-popup').classList.add('active');
+    }
+
+    // ========== UPDATE PROFILE UI ==========
+    function updateProfileUI() {
+      const badge = document.getElementById('account-badge');
+      const planValue = document.getElementById('profile-plan');
+      
+      if (userStats.plan === 'PREMIUM') {
+        badge.classList.add('premium');
+        badge.textContent = 'PREMIUM';
+        planValue.textContent = 'PREMIUM';
+        planValue.style.color = '#FFD700';
+      } else {
+        badge.classList.remove('premium');
+        badge.textContent = 'FREE';
+        planValue.textContent = 'FREE';
+        planValue.style.color = '';
+      }
+      
+      const progressPercent = (userStats.messagesUsed / userStats.messagesLimit) * 100;
+      const progressFill = document.getElementById('messages-progress');
+      progressFill.style.width = `${Math.min(progressPercent, 100)}%`;
+      
+      if (progressPercent >= 100) {
+        progressFill.classList.add('exceeded');
+      } else {
+        progressFill.classList.remove('exceeded');
+      }
+    }    
+
     // ========== PROMO CODE ==========
     function showPromoPopup() {
       document.getElementById('promo-code-input').value = '';
@@ -3676,6 +4149,7 @@
     
     // Инициализация
     renderCalendar(); // Initial render
+    updateProfileUI();
     renderGoals(); // Initial empty state
     loadHistory();
     loadStats();
