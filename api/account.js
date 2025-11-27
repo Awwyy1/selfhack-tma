@@ -1,12 +1,11 @@
 // api/account.js
 // Объединённый endpoint для: промокодов и удаления аккаунта
-// Заменяет: promo.js + delete-account.js
 
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_KEY
 );
 
 export default async function handler(req, res) {
@@ -88,22 +87,49 @@ export default async function handler(req, res) {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + daysToAdd);
 
-      // 6. Обновить пользователя на PREMIUM
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          plan: 'PREMIUM',
-          subscription_expires_at: expiresAt.toISOString(),
-          messages_limit: 2000
-        })
-        .eq('telegram_id', user_id);
+      // 6. Проверить есть ли уже подписка у пользователя
+      const { data: existingSub } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('telegram_user_id', user_id)
+        .single();
 
-      if (updateError) {
-        console.error('Update user error:', updateError);
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Ошибка активации' 
-        });
+      if (existingSub) {
+        // Обновить существующую подписку
+        const { error: updateError } = await supabase
+          .from('subscriptions')
+          .update({
+            plan: 'PREMIUM',
+            expires_at: expiresAt.toISOString(),
+            status: 'active'
+          })
+          .eq('telegram_user_id', user_id);
+
+        if (updateError) {
+          console.error('Update subscription error:', updateError);
+          return res.status(500).json({ 
+            success: false, 
+            message: 'Ошибка активации' 
+          });
+        }
+      } else {
+        // Создать новую подписку
+        const { error: insertError } = await supabase
+          .from('subscriptions')
+          .insert({
+            telegram_user_id: user_id,
+            plan: 'PREMIUM',
+            expires_at: expiresAt.toISOString(),
+            status: 'active'
+          });
+
+        if (insertError) {
+          console.error('Insert subscription error:', insertError);
+          return res.status(500).json({ 
+            success: false, 
+            message: 'Ошибка активации' 
+          });
+        }
       }
 
       // 7. Записать использование промокода
@@ -135,8 +161,7 @@ export default async function handler(req, res) {
         success: true,
         message: `Premium активирован на ${daysToAdd} дней!`,
         expiresAt: expiresAtFormatted,
-        plan: 'PREMIUM',
-        messagesLimit: 2000
+        plan: 'PREMIUM'
       });
 
     } catch (error) {
@@ -153,9 +178,9 @@ export default async function handler(req, res) {
     try {
       // 1. Удалить сообщения пользователя
       await supabase
-        .from('messages')
+        .from('telegram_chats')
         .delete()
-        .eq('user_id', user_id);
+        .eq('telegram_user_id', user_id);
 
       // 2. Удалить цели пользователя
       await supabase
@@ -181,19 +206,17 @@ export default async function handler(req, res) {
         .delete()
         .eq('user_id', user_id);
 
-      // 6. Удалить самого пользователя
-      const { error: deleteError } = await supabase
-        .from('users')
+      // 6. Удалить настройки пользователя
+      await supabase
+        .from('user_preferences')
         .delete()
-        .eq('telegram_id', user_id);
+        .eq('telegram_user_id', user_id);
 
-      if (deleteError) {
-        console.error('Delete user error:', deleteError);
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Ошибка удаления аккаунта' 
-        });
-      }
+      // 7. Удалить подписку
+      await supabase
+        .from('subscriptions')
+        .delete()
+        .eq('telegram_user_id', user_id);
 
       return res.status(200).json({
         success: true,
