@@ -1679,7 +1679,8 @@
 /* ========== TARIFFS PAGE ========== */
 #tariffs-page {
   padding: 16px;
-  padding-bottom: 100px;
+  padding-bottom: 160px;
+  overflow-y: auto;
 }
 
 .tariffs-header {
@@ -2293,6 +2294,30 @@
       <div class="popup-title" style="color: var(--success);">Рад, что передумал!</div>
       <div class="popup-text">Продолжаем работать вместе.</div>
       <button class="popup-close" style="background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);" onclick="closePopup()">Отлично!</button>
+    </div>
+  </div>
+
+  <!-- ПОПАП ДАШБОРД -->
+  <!-- ПОПАП ПЛАТЕЖИ В РАЗРАБОТКЕ -->
+  <div class="popup" id="payment-coming-popup">
+    <div class="popup-content" style="text-align: left; max-width: 340px;">
+      <div style="border: 2px dashed var(--warning); padding: 12px; text-align: center; margin-bottom: 20px; font-weight: 600;">
+        🚧 Упс, мы ещё строимся
+      </div>
+      <div style="font-size: 15px; line-height: 1.7; color: var(--text-primary); margin-bottom: 16px;">
+        Знаешь как это бывает у стартапов?<br>
+        Продукт готов, а платежи — ещё нет 😅
+      </div>
+      <div style="border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 20px 0; margin-bottom: 16px;">
+        <div style="font-size: 15px; line-height: 1.7; color: var(--text-primary);">
+          Спасибо что хочешь поддержать проект!<br>
+          Это очень мотивирует ❤️
+        </div>
+        <div style="font-size: 14px; color: var(--text-secondary); margin-top: 16px; line-height: 1.6;">
+          Платёжка будет готова примерно через<br>2 недели. Приходи тогда!
+        </div>
+      </div>
+      <button class="popup-btn secondary" style="width: 100%; border: 1px solid var(--border-color);" onclick="closePopup()">Хорошо, вернусь</button>
     </div>
   </div>
 
@@ -3944,9 +3969,11 @@
 
           // Render calendar with check-in data
           renderCalendar();
+          updateProfileUI();
         }
       } catch (error) {
         console.error('Load stats error:', error);
+        
         // Render calendar even on error
         renderCalendar();
       }
@@ -3998,7 +4025,7 @@
     }
 
     function subscribePremium() {
-      tg.showAlert('Оплата через Telegram Stars скоро будет доступна!');
+      document.getElementById('payment-coming-popup').classList.add('active');
     }
 
     // ========== DASHBOARD ==========
@@ -4011,6 +4038,7 @@
       const badge = document.getElementById('account-badge');
       const planValue = document.getElementById('profile-plan');
       
+      // Update plan badge
       if (userStats.plan === 'PREMIUM') {
         badge.classList.add('premium');
         badge.textContent = 'PREMIUM';
@@ -4023,8 +4051,13 @@
         planValue.style.color = '';
       }
       
-      const progressPercent = (userStats.messagesUsed / userStats.messagesLimit) * 100;
+      // Update progress bar
+      const used = userStats.messagesUsed || 0;
+      const limit = userStats.messagesLimit || 50;
+      const progressPercent = (used / limit) * 100;
       const progressFill = document.getElementById('messages-progress');
+      
+      // Cap visual at 100% but show exceeded state
       progressFill.style.width = `${Math.min(progressPercent, 100)}%`;
       
       if (progressPercent >= 100) {
@@ -4032,6 +4065,9 @@
       } else {
         progressFill.classList.remove('exceeded');
       }
+      
+      // Update messages display
+      document.getElementById('profile-messages').textContent = `${used} / ${limit}`;
     }    
 
     // ========== PROMO CODE ==========
@@ -4147,9 +4183,9 @@
       }
     }
     
-    // Инициализация
+    
+   // Инициализация
     renderCalendar(); // Initial render
-    updateProfileUI();
     renderGoals(); // Initial empty state
     loadHistory();
     loadStats();
