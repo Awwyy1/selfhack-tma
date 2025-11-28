@@ -3567,13 +3567,16 @@ const Analytics = {
       }
     }
 
-    // НАВИГАЦИЯ
+   // НАВИГАЦИЯ
     const navBtns = document.querySelectorAll('.nav-btn');
     const pages = document.querySelectorAll('.page');
     
     navBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const pageName = btn.dataset.page;
+        
+        // Track tab change
+        Analytics.tabChanged(pageName);
         
         navBtns.forEach(b => b.classList.remove('active'));
         pages.forEach(p => p.classList.remove('active'));
@@ -4250,11 +4253,14 @@ const Analytics = {
     }
     
     
-   // Инициализация
+    // Инициализация
     renderCalendar(); // Initial render
     renderGoals(); // Initial empty state
     loadHistory();
-    loadStats();
+    loadStats().then(() => {
+      // Track app open after stats loaded (to know user's plan)
+      Analytics.appOpen(user?.id, userStats.plan);
+    });
     loadGoals();
     showStories(); // Show daily motivational stories
   </script>
