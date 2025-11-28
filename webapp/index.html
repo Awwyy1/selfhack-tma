@@ -2517,6 +2517,42 @@
     messageInput.addEventListener('input', autoResizeTextarea);
     
     let currentTone = 'baddy'; // По умолчанию
+    // ==================== ANALYTICS ====================
+const Analytics = {
+  track: function(eventName, params = {}) {
+    if (typeof gtag !== 'undefined') {
+      gtag('event', eventName, params);
+    }
+    console.log('📊 Analytics:', eventName, params);
+  },
+  appOpen: function(userId, plan) {
+    this.track('app_open', { user_id: userId, plan: plan });
+  },
+  messageSent: function(userId, style) {
+    this.track('message_sent', { user_id: userId, coach_style: style });
+  },
+  checkinCompleted: function(userId) {
+    this.track('checkin_completed', { user_id: userId });
+  },
+  goalCreated: function(userId) {
+    this.track('goal_created', { user_id: userId });
+  },
+  styleChanged: function(userId, newStyle) {
+    this.track('style_changed', { user_id: userId, new_style: newStyle });
+  },
+  promoApplied: function(userId, code) {
+    this.track('promo_applied', { user_id: userId, promo_code: code });
+  },
+  upgradeClicked: function(userId) {
+    this.track('upgrade_clicked', { user_id: userId });
+  },
+  supportOpened: function(userId) {
+    this.track('support_opened', { user_id: userId });
+  },
+  tabChanged: function(tabName) {
+    this.track('tab_changed', { tab: tabName });
+  }
+};    
     let userStats = {
       plan: 'FREE',
       messagesUsed: 0,
