@@ -175,63 +175,76 @@ export default async function handler(req, res) {
   // ==================== DELETE ACCOUNT ====================
   if (action === 'delete') {
     try {
-      const userIdStr = String(user_id);
+      // Все таблицы используют telegram_user_id как int8
+      const odtelegramUserId = user_id;
       
-      // 1. Удалить сообщения пользователя
+      console.log('Deleting data for user:', telegramUserId);
+
+      // 1. Удалить историю чатов
       const { error: chatsError } = await supabase
         .from('telegram_chats')
         .delete()
-        .eq('telegram_user_id', user_id);
-      if (chatsError) console.error('Delete chats error:', chatsError);
+        .eq('telegram_user_id', telegramUserId);
+      if (chatsError) console.error('Delete telegram_chats error:', chatsError);
 
-      // 2. Удалить САММАРИ (откуда коуч "помнит" информацию!)
+      // 2. Удалить САММАРИ (правильное имя таблицы!)
       const { error: summariesError } = await supabase
-        .from('summaries')
+        .from('message_summaries')
         .delete()
-        .eq('user_id', userIdStr);
-      if (summariesError) console.error('Delete summaries error:', summariesError);
+        .eq('telegram_user_id', telegramUserId);
+      if (summariesError) console.error('Delete message_summaries error:', summariesError);
 
-      // 3. Удалить цели пользователя
+      // 3. Удалить цели
       const { error: goalsError } = await supabase
         .from('goals')
         .delete()
-        .eq('user_id', userIdStr);
+        .eq('telegram_user_id', telegramUserId);
       if (goalsError) console.error('Delete goals error:', goalsError);
 
       // 4. Удалить чекины
       const { error: checkinsError } = await supabase
         .from('checkins')
         .delete()
-        .eq('user_id', userIdStr);
+        .eq('telegram_user_id', telegramUserId);
       if (checkinsError) console.error('Delete checkins error:', checkinsError);
 
-      // 5. Удалить использования промокодов
-      const { error: voucherError } = await supabase
-        .from('voucher_usage')
-        .delete()
-        .eq('user_id', user_id);
-      if (voucherError) console.error('Delete voucher_usage error:', voucherError);
-
-      // 6. Удалить напоминания
+      // 5. Удалить напоминания
       const { error: remindersError } = await supabase
         .from('reminders')
         .delete()
-        .eq('user_id', userIdStr);
+        .eq('telegram_user_id', telegramUserId);
       if (remindersError) console.error('Delete reminders error:', remindersError);
+
+      // 6. Удалить использования промокодов
+      const { error: voucherError } = await supabase
+        .from('voucher_usage')
+        .delete()
+        .eq('user_id', telegramUserId);
+      if (voucherError) console.error('Delete voucher_usage error:', voucherError);
 
       // 7. Удалить настройки пользователя
       const { error: prefsError } = await supabase
         .from('user_preferences')
         .delete()
-        .eq('telegram_user_id', user_id);
+        .eq('telegram_user_id', telegramUserId);
       if (prefsError) console.error('Delete user_preferences error:', prefsError);
 
-      // 8. Удалить подписку
+      // 8. Удалить аналитику
+      const { error: analyticsError } = await supabase
+        .from('user_analytics')
+        .delete()
+        .eq('telegram_user_id', telegramUserId);
+      if (analyticsError) console.error('Delete user_analytics error:', analyticsError);
+
+      // 9. Пометить подписку как удалённую (НЕ удаляем - защита от абьюза)
       const { error: subsError } = await supabase
         .from('subscriptions')
-        .delete()
-        .eq('telegram_user_id', user_id);
-      if (subsError) console.error('Delete subscriptions error:', subsError);
+        .update({ 
+          status: 'deleted',
+          plan: 'DELETED'
+        })
+        .eq('telegram_user_id', telegramUserId);
+      if (subsError) console.error('Update subscriptions error:', subsError);
 
       return res.status(200).json({
         success: true,
