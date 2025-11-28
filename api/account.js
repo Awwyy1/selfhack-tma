@@ -1,6 +1,5 @@
 // api/account.js
 // Объединённый endpoint для: промокодов и удаления аккаунта
-
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -31,7 +30,7 @@ export default async function handler(req, res) {
   // ==================== APPLY PROMO ====================
   if (action === 'apply-promo') {
     const { code } = req.body;
-
+    
     if (!code) {
       return res.status(400).json({ success: false, message: 'Промокод не указан' });
     }
@@ -176,47 +175,63 @@ export default async function handler(req, res) {
   // ==================== DELETE ACCOUNT ====================
   if (action === 'delete') {
     try {
+      const userIdStr = String(user_id);
+      
       // 1. Удалить сообщения пользователя
-      await supabase
+      const { error: chatsError } = await supabase
         .from('telegram_chats')
         .delete()
         .eq('telegram_user_id', user_id);
+      if (chatsError) console.error('Delete chats error:', chatsError);
 
-      // 2. Удалить цели пользователя
-      await supabase
+      // 2. Удалить САММАРИ (откуда коуч "помнит" информацию!)
+      const { error: summariesError } = await supabase
+        .from('summaries')
+        .delete()
+        .eq('user_id', userIdStr);
+      if (summariesError) console.error('Delete summaries error:', summariesError);
+
+      // 3. Удалить цели пользователя
+      const { error: goalsError } = await supabase
         .from('goals')
         .delete()
-        .eq('user_id', user_id);
+        .eq('user_id', userIdStr);
+      if (goalsError) console.error('Delete goals error:', goalsError);
 
-      // 3. Удалить чекины
-      await supabase
+      // 4. Удалить чекины
+      const { error: checkinsError } = await supabase
         .from('checkins')
         .delete()
-        .eq('user_id', user_id);
+        .eq('user_id', userIdStr);
+      if (checkinsError) console.error('Delete checkins error:', checkinsError);
 
-      // 4. Удалить использования промокодов
-      await supabase
+      // 5. Удалить использования промокодов
+      const { error: voucherError } = await supabase
         .from('voucher_usage')
         .delete()
         .eq('user_id', user_id);
+      if (voucherError) console.error('Delete voucher_usage error:', voucherError);
 
-      // 5. Удалить напоминания
-      await supabase
+      // 6. Удалить напоминания
+      const { error: remindersError } = await supabase
         .from('reminders')
         .delete()
-        .eq('user_id', user_id);
+        .eq('user_id', userIdStr);
+      if (remindersError) console.error('Delete reminders error:', remindersError);
 
-      // 6. Удалить настройки пользователя
-      await supabase
+      // 7. Удалить настройки пользователя
+      const { error: prefsError } = await supabase
         .from('user_preferences')
         .delete()
         .eq('telegram_user_id', user_id);
+      if (prefsError) console.error('Delete user_preferences error:', prefsError);
 
-      // 7. Удалить подписку
-      await supabase
+      // 8. Удалить подписку
+      const { error: subsError } = await supabase
         .from('subscriptions')
         .delete()
         .eq('telegram_user_id', user_id);
+      if (subsError) console.error('Delete subscriptions error:', subsError);
 
       return res.status(200).json({
         success: true,
