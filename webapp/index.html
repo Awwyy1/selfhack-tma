@@ -2359,13 +2359,13 @@
   </div
 
   <!-- ПОПАП ДАННЫЕ УДАЛЕНЫ -->
-  <div class="popup" id="deleted-popup">
-    <div class="popup-content">
-      <div class="popup-title">Все данные удалены</div>
-      <div class="popup-text">Если вернёшься — начнём с чистого листа.</div>
-      <button class="popup-close" onclick="closePopup(); if(tg.close) tg.close();">Закрыть</button>
-    </div>
+<div class="popup" id="deleted-popup">
+  <div class="popup-content">
+    <div class="popup-title">Все данные удалены</div>
+    <div class="popup-text">Если вернёшься — начнём с чистого листа.</div>
+    <button class="popup-close" onclick="location.reload();">Закрыть</button>
   </div>
+</div>
   
   <div class="navigation">
     <button class="nav-btn" data-page="checkin">Чекин</button>
@@ -4222,36 +4222,53 @@ const Analytics = {
     }
 
     async function confirmDeleteAllData() {
-      try {
-        const response = await fetch('/api/account', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': tg.initData
-          },
-          body: JSON.stringify({
-            action: 'delete',
-            user_id: user?.id || 0
-          })
-        });
+  try {
+    const response = await fetch('/api/account', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': tg.initData
+      },
+      body: JSON.stringify({
+        action: 'delete',
+        user_id: user?.id || 0
+      })
+    });
 
-        const data = await response.json();
-        closePopup();
+    const data = await response.json();
+    closePopup();
 
-        if (data.success) {
-          localStorage.clear();
-          setTimeout(() => {
-            document.getElementById('deleted-popup').classList.add('active');
-          }, 300);
-        } else {
-          tg.showAlert(data.message || 'Ошибка удаления');
-        }
-      } catch (error) {
-        console.error('Delete error:', error);
-        tg.showAlert('Ошибка удаления данных');
-      }
+    if (data.success) {
+      // Очистить localStorage
+      localStorage.clear();
+      
+      // Очистить все локальные данные в памяти
+      userGoals = [];
+      userStats = {
+        plan: 'FREE',
+        messagesUsed: 0,
+        messagesLimit: 50,
+        totalMessages: 0,
+        streak: 0,
+        checkinDates: []
+      };
+      
+      // Очистить чат
+      chatContainer.innerHTML = '';
+      lastMessageDate = null;
+      
+      // Показать попап
+      setTimeout(() => {
+        document.getElementById('deleted-popup').classList.add('active');
+      }, 300);
+    } else {
+      tg.showAlert(data.message || 'Ошибка удаления');
     }
-    
+  } catch (error) {
+    console.error('Delete error:', error);
+    tg.showAlert('Ошибка удаления данных');
+  }
+}
     
     // Инициализация
     renderCalendar(); // Initial render
