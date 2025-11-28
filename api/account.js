@@ -176,7 +176,7 @@ export default async function handler(req, res) {
   if (action === 'delete') {
     try {
       // Все таблицы используют telegram_user_id как int8
-      const odtelegramUserId = user_id;
+      const telegramUserId = user_id;
       
       console.log('Deleting data for user:', telegramUserId);
 
