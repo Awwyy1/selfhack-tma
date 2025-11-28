@@ -3195,7 +3195,8 @@ const Analytics = {
 
     // Actually save goal to server
     async function saveGoalToServer(text, targetDate) {
-      try {
+  Analytics.goalCreated(user?.id);
+  try {
         const response = await fetch('/api/goals', {
           method: 'POST',
           headers: {
@@ -3504,6 +3505,7 @@ const Analytics = {
 
     // Support functions
     function showSupportPopup() {
+      Analytics.supportOpened(user?.id);
       document.getElementById('support-message-input').value = '';
       document.getElementById('support-popup').classList.add('active');
     }
@@ -3606,7 +3608,8 @@ const Analytics = {
         const data = await response.json();
         
         if (data.success) {
-          currentTone = tone;
+  currentTone = tone;
+  Analytics.styleChanged(user?.id, tone);
           
           // Обновить UI
           document.querySelectorAll('.style-card').forEach(card => {
@@ -3632,7 +3635,8 @@ const Analytics = {
     
     // ЧЕКИН
     async function doCheckin() {
-      try {
+  Analytics.checkinCompleted(user?.id);
+  try {
         const response = await fetch('/api/checkin', {
           method: 'POST',
           headers: {
@@ -3763,8 +3767,10 @@ const Analytics = {
     }
     
     async function sendMessage() {
-      const message = messageInput.value.trim();
-      if (!message) return;
+  const message = messageInput.value.trim();
+  if (!message) return;
+
+  Analytics.messageSent(user?.id, currentTone);
 
       addMessage(message, 'user');
       messageInput.value = '';
@@ -4084,8 +4090,9 @@ const Analytics = {
     }
 
     function subscribePremium() {
-      document.getElementById('payment-coming-popup').classList.add('active');
-    }
+  Analytics.upgradeClicked(user?.id);
+  document.getElementById('payment-coming-popup').classList.add('active');
+}
 
     // ========== DASHBOARD ==========
     function showDashboardPopup() {
@@ -4173,6 +4180,7 @@ const Analytics = {
         const data = await response.json();
 
         if (data.success) {
+          Analytics.promoApplied(user?.id, code);
           input.style.display = 'none';
           errorMsg.style.display = 'none';
           successMsg.textContent = data.message || 'Premium активирован!';
