@@ -2115,14 +2115,45 @@
     </div>
   
   <!-- ПОПАП ЧЕКИНА -->
-  <div class="popup" id="checkin-popup">
-    <div class="popup-content">
-      <div class="popup-title">Чекин выполнен!</div>
-      <div class="popup-text" id="popup-text">Начинаем отсчёт streak.</div>
-      <button class="popup-close" onclick="closePopup()">Отлично!</button>
-     </div>
+<div class="popup" id="checkin-popup">
+  <div class="popup-content">
+    <div class="popup-title">Чекин выполнен!</div>
+    <div class="popup-text" id="popup-text">Начинаем отсчёт streak.</div>
+    
+    <!-- Mood Selector для PRO -->
+    <div class="mood-selector" id="mood-selector" style="display: none;">
+      <div class="mood-question">Как настроение сейчас?</div>
+      <div class="mood-options">
+        <button class="mood-btn" data-mood="1" onclick="selectMood(1)">😫</button>
+        <button class="mood-btn" data-mood="2" onclick="selectMood(2)">😕</button>
+        <button class="mood-btn" data-mood="3" onclick="selectMood(3)">😐</button>
+        <button class="mood-btn" data-mood="4" onclick="selectMood(4)">🙂</button>
+        <button class="mood-btn" data-mood="5" onclick="selectMood(5)">😄</button>
+      </div>
+      <div class="mood-labels">
+        <span>Плохо</span>
+        <span>Отлично</span>
+      </div>
     </div>
+    
+    <!-- Upsell для FREE/PREMIUM -->
+    <div class="mood-teaser" id="mood-teaser" style="display: none;">
+      <div class="mood-teaser-text">😊 Трекинг настроения — в PRO</div>
+    </div>
+    
+    <button class="popup-close" id="checkin-close-btn" onclick="closeCheckinPopup()">Отлично!</button>
   </div>
+</div>
+
+<!-- ПОПАП MOOD СОХРАНЕНО -->
+<div class="popup" id="mood-saved-popup">
+  <div class="popup-content">
+    <div class="popup-icon" id="mood-saved-icon">😄</div>
+    <div class="popup-title">Настроение записано!</div>
+    <div class="popup-text" id="mood-saved-text">Отслеживай динамику в профиле</div>
+    <button class="popup-close" onclick="closePopup()">Супер!</button>
+  </div>
+</div>
   
   <!-- ПОПАП PREMIUM -->
   <div class="popup" id="premium-popup">
