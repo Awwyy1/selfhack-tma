@@ -4193,7 +4193,8 @@ const Analytics = {
 
         if (data.stats) {
           // Set limit based on plan
-          const messagesLimit = data.stats.plan === 'FREE' ? 50 : 500;
+    const messagesLimit = data.stats.plan === 'FREE' ? 50 : 
+                          data.stats.plan === 'PRO' ? 999999 : 500;  // PRO = безлимит
 
           userStats = {
             ...data.stats,
@@ -4307,21 +4308,26 @@ const Analytics = {
 
     // ========== UPDATE PROFILE UI ==========
     function updateProfileUI() {
-      const badge = document.getElementById('account-badge');
-      const planValue = document.getElementById('profile-plan');
-      
-      // Update plan badge
-      if (userStats.plan === 'PREMIUM') {
-        badge.classList.add('premium');
-        badge.textContent = 'PREMIUM';
-        planValue.textContent = 'PREMIUM';
-        planValue.style.color = '#FFD700';
-      } else {
-        badge.classList.remove('premium');
-        badge.textContent = 'FREE';
-        planValue.textContent = 'FREE';
-        planValue.style.color = '';
-      }
+  const badge = document.getElementById('account-badge');
+  const planValue = document.getElementById('profile-plan');
+  
+    // Update plan badge
+    if (userStats.plan === 'PRO') {
+      badge.classList.add('premium');
+      badge.textContent = 'PRO';
+      planValue.textContent = 'PRO';
+      planValue.style.color = '#FF6B35';  // Оранжевый для PRO
+    } else if (userStats.plan === 'PREMIUM') {
+      badge.classList.add('premium');
+      badge.textContent = 'PREMIUM';
+      planValue.textContent = 'PREMIUM';
+      planValue.style.color = '#FFD700';
+    } else {
+      badge.classList.remove('premium');
+      badge.textContent = 'FREE';
+      planValue.textContent = 'FREE';
+      planValue.style.color = '';
+    }
       
       // Update progress bar
       const used = userStats.messagesUsed || 0;
@@ -4389,15 +4395,15 @@ const Analytics = {
           Analytics.promoApplied(user?.id, code);
           input.style.display = 'none';
           errorMsg.style.display = 'none';
-          successMsg.textContent = data.message || 'Premium активирован!';
+          successMsg.textContent = data.message || 'Активировано!';
           successMsg.style.display = 'block';
           buttons.style.display = 'none';
           successBtn.style.display = 'block';
 
-          // Update local stats
-          userStats.plan = 'PREMIUM';
-          userStats.messagesLimit = 2000;
-        } else {
+       // Update local stats с правильным планом из ответа
+          userStats.plan = data.plan || 'PREMIUM';  // ← исправить
+          userStats.messagesLimit = data.plan === 'PRO' ? 999999 : 500;
+      } else {
           errorMsg.textContent = data.message || 'Промокод недействителен';
           errorMsg.style.display = 'block';
           input.classList.add('error');
