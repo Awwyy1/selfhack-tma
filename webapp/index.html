@@ -1295,9 +1295,13 @@
       box-shadow: 0 -2px 8px var(--shadow-color);
       gap: 4px;
       /* Ensure minimum bottom padding for devices */
-      min-height: 60px;
-      position: relative;
-      transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    min-height: 60px;
+    position: fixed;        /* БЫЛО: relative */
+    bottom: 0;              /* Добавлено: приклеить к низу */
+    left: 0;                /* Добавлено: растянуть слева */
+    right: 0;               /* Добавлено: растянуть справа */
+    z-index: 1000;          /* Добавлено: чтобы меню было поверх всего */
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     /* Extend background to cover safe area on iPhone X and Android */
