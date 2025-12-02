@@ -1530,6 +1530,77 @@
   color: var(--text-tertiary);
 }
 
+    /* ========== MOOD TRACKING ========== */
+.mood-selector {
+  background: var(--accent-lighter);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.mood-question {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.mood-options {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mood-btn {
+  width: 52px;
+  height: 52px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mood-btn:hover {
+  border-color: var(--accent-primary);
+  transform: scale(1.05);
+}
+
+.mood-btn.selected {
+  border-color: var(--accent-primary);
+  background: var(--accent-light);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+
+.mood-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.mood-teaser {
+  background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,165,0,0.1) 100%);
+  border: 1px dashed var(--warning-alt);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mood-teaser:hover {
+  background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,165,0,0.2) 100%);
+}
+
+.mood-teaser-text {
+  font-size: 13px;
+  color: var(--warning);
+  font-weight: 500;
+  text-align: center;
+}
 .delete-warning {
   background: var(--error-light);
   border-radius: 12px;
@@ -3667,9 +3738,12 @@ const Analytics = {
     }
     
     // ЧЕКИН
+    let pendingMoodSave = false;
+    let selectedMoodValue = null;
+
     async function doCheckin() {
-  Analytics.checkinCompleted(user?.id);
-  try {
+      Analytics.checkinCompleted(user?.id);
+      try {
         const response = await fetch('/api/checkin', {
           method: 'POST',
           headers: {
@@ -3677,12 +3751,16 @@ const Analytics = {
             'X-Telegram-Init-Data': tg.initData
           },
           body: JSON.stringify({
-            user_id: user?.id || 0
+            user_id: user?.id || 0,
+            action: 'checkin'
           })
         });
 
         const data = await response.json();
         const popupText = document.getElementById('popup-text');
+        const moodSelector = document.getElementById('mood-selector');
+        const moodTeaser = document.getElementById('mood-teaser');
+        const closeBtn = document.getElementById('checkin-close-btn');
 
         if (data.success) {
           if (data.streak === 1) {
@@ -3692,24 +3770,118 @@ const Analytics = {
           }
           userStats.streak = data.streak;
 
-          // Add today's date to checkinDates
           const today = formatDateGMT(getGMTDate());
           if (!userStats.checkinDates.includes(today)) {
             userStats.checkinDates.push(today);
           }
 
-          // Update UI
           document.getElementById('profile-streak').textContent = `${data.streak} дней`;
           document.getElementById('checkin-streak').textContent = data.streak;
           renderCalendar();
+
+          // Mood selector logic
+          if (data.showMoodSelector) {
+            moodSelector.style.display = 'block';
+            moodTeaser.style.display = 'none';
+            closeBtn.textContent = 'Пропустить';
+            pendingMoodSave = true;
+            selectedMoodValue = null;
+            document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('selected'));
+          } else {
+            moodSelector.style.display = 'none';
+            moodTeaser.style.display = 'block';
+            moodTeaser.onclick = () => openTariffsPage();
+            closeBtn.textContent = 'Отлично!';
+            pendingMoodSave = false;
+          }
         } else {
           popupText.textContent = data.message || 'Ты уже сделал чекин сегодня!';
+          moodSelector.style.display = 'none';
+          moodTeaser.style.display = 'none';
+          closeBtn.textContent = 'Окей';
+          pendingMoodSave = false;
         }
 
         document.getElementById('checkin-popup').classList.add('active');
       } catch (error) {
         console.error('Checkin error:', error);
         tg.showAlert('Ошибка чекина. Попробуй ещё раз.');
+      }
+    }
+
+    function selectMood(mood) {
+      selectedMoodValue = mood;
+      document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (parseInt(btn.dataset.mood) === mood) {
+          btn.classList.add('selected');
+        }
+      });
+      document.getElementById('checkin-close-btn').textContent = 'Сохранить';
+      if (tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('light');
+      }
+    }
+
+    async function closeCheckinPopup() {
+      if (pendingMoodSave && selectedMoodValue) {
+        try {
+          const response = await fetch('/api/checkin', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Telegram-Init-Data': tg.initData
+            },
+            body: JSON.stringify({
+              user_id: user?.id || 0,
+              action: 'mood',
+              mood: selectedMoodValue
+            })
+          });
+
+          const data = await response.json();
+          
+          document.getElementById('checkin-popup').classList.remove('active');
+          
+          if (data.success) {
+            const moodEmojis = ['', '😫', '😕', '😐', '🙂', '😄'];
+            document.getElementById('mood-saved-icon').textContent = moodEmojis[selectedMoodValue];
+            setTimeout(() => {
+              document.getElementById('mood-saved-popup').classList.add('active');
+              if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+              }
+            }, 300);
+          }
+        } catch (error) {
+          console.error('Save mood error:', error);
+        }
+      } else {
+        document.getElementById('checkin-popup').classList.remove('active');
+      }
+      
+      pendingMoodSave = false;
+      selectedMoodValue = null;
+    }
+
+    async function getMoodStats(days = 7) {
+      try {
+        const response = await fetch('/api/checkin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            action: 'mood-stats',
+            days: days
+          })
+        });
+        return await response.json();
+      } catch (error) {
+        console.error('Get mood stats error:', error);
+        return null;
       }
     }
     
