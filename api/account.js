@@ -81,10 +81,13 @@ export default async function handler(req, res) {
         });
       }
 
-      // 5. Вычислить дату окончания Premium
+      // 5. Вычислить дату окончания подписки
       const daysToAdd = voucher.duration_days || 7;
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + daysToAdd);
+
+      // 5.5. Определить тип плана из промокода (PRO или PREMIUM)
+      const planType = voucher.plan_type || 'PREMIUM';
 
       // 6. Проверить есть ли уже подписка у пользователя
       const { data: existingSub } = await supabase
@@ -98,7 +101,7 @@ export default async function handler(req, res) {
         const { error: updateError } = await supabase
           .from('subscriptions')
           .update({
-            plan: 'PREMIUM',
+            plan: planType,
             expires_at: expiresAt.toISOString(),
             status: 'active'
           })
@@ -117,7 +120,7 @@ export default async function handler(req, res) {
           .from('subscriptions')
           .insert({
             telegram_user_id: user_id,
-            plan: 'PREMIUM',
+            plan: planType,
             expires_at: expiresAt.toISOString(),
             status: 'active'
           });
@@ -158,9 +161,9 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: `Premium активирован на ${daysToAdd} дней!`,
+        message: `${planType} активирован на ${daysToAdd} дней!`,
         expiresAt: expiresAtFormatted,
-        plan: 'PREMIUM'
+        plan: planType
       });
 
     } catch (error) {
@@ -187,7 +190,7 @@ export default async function handler(req, res) {
         .eq('telegram_user_id', telegramUserId);
       if (chatsError) console.error('Delete telegram_chats error:', chatsError);
 
-      // 2. Удалить САММАРИ (правильное имя таблицы!)
+      // 2. Удалить САММАРИ
       const { error: summariesError } = await supabase
         .from('message_summaries')
         .delete()
@@ -236,7 +239,14 @@ export default async function handler(req, res) {
         .eq('telegram_user_id', telegramUserId);
       if (analyticsError) console.error('Delete user_analytics error:', analyticsError);
 
-      // 9. Пометить подписку как удалённую (НЕ удаляем - защита от абьюза)
+      // 9. Удалить mood tracking
+      const { error: moodError } = await supabase
+        .from('mood_tracking')
+        .delete()
+        .eq('telegram_user_id', telegramUserId);
+      if (moodError) console.error('Delete mood_tracking error:', moodError);
+
+      // 10. Пометить подписку как удалённую (НЕ удаляем - защита от абьюза)
       const { error: subsError } = await supabase
         .from('subscriptions')
         .update({ 
