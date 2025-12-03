@@ -5148,7 +5148,7 @@ const Analytics = {
       document.getElementById('portrait-content').innerHTML = html;
       
       document.getElementById('portrait-bottom').innerHTML = `
-        <button class="btn-download-portrait" onclick="downloadPortrait()">Скачать PDF</button>
+        <button class="btn-download-portrait" onclick="copyPortraitText()">Скопировать текст</button>
         <button class="btn-back-portrait" onclick="goBackFromPortrait()">Вернуться</button>
       `;
       document.getElementById('portrait-bottom').style.display = 'flex';
@@ -5248,9 +5248,102 @@ const Analytics = {
       }
     }
 
-    function downloadPortrait() {
-      // TODO: Реализовать генерацию PDF
-      tg.showAlert('Генерация PDF будет доступна в ближайшем обновлении');
+    function copyPortraitText() {
+      if (!userPortraits || userPortraits.length === 0) {
+        tg.showAlert('Нет портрета для копирования');
+        return;
+      }
+
+      const portrait = userPortraits[currentPortraitIndex];
+      const content = portrait.content;
+      const createdAt = new Date(portrait.created_at);
+      const dateStr = createdAt.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      let text = `AI-ПОРТРЕТ\nКод твоей личности\n${dateStr}\n\n`;
+
+      // Статистика
+      if (content.statistics) {
+        text += `СТАТИСТИКА\n`;
+        text += `Проанализировано сообщений: ${content.statistics.messages_analyzed || portrait.messages_analyzed}\n`;
+        text += `Целей достигнуто: ${content.statistics.goals_achieved} / ${content.statistics.goals_total}\n`;
+        text += `Чекинов: ${content.statistics.checkins}\n\n`;
+      }
+
+      // Темы
+      if (content.themes && content.themes.length > 0) {
+        text += `ДОМИНИРУЮЩИЕ ТЕМЫ\n`;
+        content.themes.forEach(t => text += `• ${t}\n`);
+        text += '\n';
+      }
+
+      // Паттерны
+      if (content.patterns && content.patterns.length > 0) {
+        text += `ПАТТЕРНЫ МЫШЛЕНИЯ\n`;
+        content.patterns.forEach(p => text += `• ${p}\n`);
+        text += '\n';
+      }
+
+      // Сильные стороны
+      if (content.strengths && content.strengths.length > 0) {
+        text += `СИЛЬНЫЕ СТОРОНЫ\n`;
+        content.strengths.forEach(s => text += `• ${s}\n`);
+        text += '\n';
+      }
+
+      // Зоны роста
+      if (content.growth_zones && content.growth_zones.length > 0) {
+        text += `ЗОНЫ РОСТА\n`;
+        content.growth_zones.forEach(g => text += `• ${g}\n`);
+        text += '\n';
+      }
+
+      // Эмоциональный фон
+      if (content.emotional_background) {
+        text += `ЭМОЦИОНАЛЬНЫЙ ФОН\n`;
+        if (content.emotional_background.summary) {
+          text += `${content.emotional_background.summary}\n`;
+        }
+        if (content.emotional_background.average_mood) {
+          text += `Средний mood score: ${content.emotional_background.average_mood}/5\n`;
+        }
+        if (content.emotional_background.trend) {
+          text += `Тренд: ${content.emotional_background.trend}\n`;
+        }
+        text += '\n';
+      }
+
+      // Рекомендации
+      if (content.recommendations && content.recommendations.length > 0) {
+        text += `РЕКОМЕНДАЦИИ\n`;
+        content.recommendations.forEach((r, i) => text += `${i + 1}. ${r}\n`);
+        text += '\n';
+      }
+
+      text += `—\nСоздано в SelfHack AI Coach`;
+
+      // Копировать в буфер обмена
+      navigator.clipboard.writeText(text).then(() => {
+        tg.showAlert('Текст скопирован!');
+        if (tg.HapticFeedback) {
+          tg.HapticFeedback.notificationOccurred('success');
+        }
+      }).catch(err => {
+        console.error('Copy error:', err);
+        // Fallback для старых браузеров
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        tg.showAlert('Текст скопирован!');
+      });
     }
 
     function goBackFromPortrait() {
