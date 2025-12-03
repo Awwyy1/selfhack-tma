@@ -1644,6 +1644,33 @@
   cursor: pointer;
 }
 
+.btn-achieved-early {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: transform 0.2s;
+}
+
+.btn-achieved-early:active {
+  transform: scale(0.98);
+}
+
+.goal-item.clickable {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.goal-item.clickable:active {
+  transform: scale(0.98);
+}    
+
     /* ========== ACCOUNT CARD & PROGRESS ========== */
 .account-card {
   background: var(--bg-secondary);
@@ -2339,6 +2366,24 @@
     </div>
   </div>
 
+  <!-- ПОПАП РЕДАКТИРОВАНИЯ ЦЕЛИ -->
+  <div class="popup" id="edit-goal-popup">
+    <div class="popup-content large" style="text-align: left;">
+      <div class="popup-title" style="text-align: center;">Редактировать цель</div>
+      <label class="popup-label">Описание цели</label>
+      <textarea id="edit-goal-text" class="popup-input" style="resize: none;" placeholder="Описание цели"></textarea>
+      <label class="popup-label">Дата достижения</label>
+      <input type="date" id="edit-goal-date" class="popup-input">
+      <button class="btn-achieved-early" id="btn-achieved-early" onclick="markGoalAchievedEarly()">
+        Отметить достигнутой
+      </button>
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Отмена</button>
+        <button class="popup-btn primary" onclick="saveGoalEdit()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+  
   <!-- ПОПАП SUPPORT -->
   <div class="popup" id="support-popup">
     <div class="popup-content large" style="text-align: left;">
@@ -3133,7 +3178,14 @@ const Analytics = {
 
       sortedGoals.forEach(goal => {
         const div = document.createElement('div');
-        div.className = 'goal-item';
+        div.className = 'goal-item clickable';
+        div.onclick = (e) => {
+          // Не открывать если клик на кнопке удаления или валидации
+          if (e.target.closest('.goal-delete') || e.target.closest('.goal-validation-btn')) {
+            return;
+          }
+          openEditGoalPopup(goal.id, e);
+        };
 
         // Check if goal is overdue (past date but still active)
         const isOverdue = goal.target_date && goal.target_date < today;
@@ -3312,11 +3364,151 @@ const Analytics = {
 
     // Delete confirmation
     let goalToDelete = null;
+    let goalToEdit = null;
 
     function showDeleteConfirmation(goalId) {
       goalToDelete = goalId;
       document.getElementById('delete-goal-popup').classList.add('active');
     }
+
+    function openEditGoalPopup(goalId, event) {
+      // Предотвратить всплытие если клик был на кнопке удаления
+      if (event) {
+        event.stopPropagation();
+      }
+      
+      const goal = userGoals.find(g => g.id === goalId);
+      if (!goal) return;
+      
+      // Не редактировать завершённые цели
+      if (goal.status && goal.status !== 'active') {
+        return;
+      }
+      
+      goalToEdit = goal;
+      
+      // Заполнить поля
+      document.getElementById('edit-goal-text').value = goal.text;
+      document.getElementById('edit-goal-date').value = goal.target_date || '';
+      
+      // Установить минимальную дату на завтра
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      document.getElementById('edit-goal-date').min = tomorrow.toISOString().split('T')[0];
+      
+      // Показать/скрыть кнопку "Отметить достигнутой"
+      const achievedBtn = document.getElementById('btn-achieved-early');
+      if (!goal.status || goal.status === 'active') {
+        achievedBtn.style.display = 'block';
+      } else {
+        achievedBtn.style.display = 'none';
+      }
+      
+      document.getElementById('edit-goal-popup').classList.add('active');
+    }
+
+    async function saveGoalEdit() {
+      if (!goalToEdit) return;
+      
+      const newText = document.getElementById('edit-goal-text').value.trim();
+      const newDate = document.getElementById('edit-goal-date').value;
+      
+      if (!newText) {
+        tg.showAlert('Введите описание цели');
+        return;
+      }
+      
+      // Проверить что дата в будущем
+      if (newDate) {
+        const today = formatDateGMT(getGMTDate());
+        if (newDate <= today) {
+          tg.showAlert('Дата цели должна быть в будущем');
+          return;
+        }
+      }
+      
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            goal_id: goalToEdit.id,
+            text: newText,
+            new_date: newDate || null
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Обновить локальную цель
+          const goalIndex = userGoals.findIndex(g => g.id === goalToEdit.id);
+          if (goalIndex !== -1) {
+            userGoals[goalIndex] = data.goal;
+          }
+          
+          closePopup();
+          renderGoals();
+          tg.showAlert('Цель обновлена');
+        } else {
+          tg.showAlert(data.message || 'Ошибка сохранения');
+        }
+      } catch (error) {
+        console.error('Save goal edit error:', error);
+        tg.showAlert('Ошибка сохранения');
+      }
+      
+      goalToEdit = null;
+    }
+
+    async function markGoalAchievedEarly() {
+      if (!goalToEdit) return;
+      
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0,
+            goal_id: goalToEdit.id,
+            status: 'achieved'
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Обновить локальную цель
+          const goalIndex = userGoals.findIndex(g => g.id === goalToEdit.id);
+          if (goalIndex !== -1) {
+            userGoals[goalIndex] = data.goal;
+          }
+          
+          closePopup();
+          renderGoals();
+          
+          // Показать конфетти и поздравление
+          showConfetti();
+          setTimeout(() => {
+            document.getElementById('goal-achieved-popup').classList.add('active');
+          }, 500);
+        } else {
+          tg.showAlert(data.message || 'Ошибка обновления');
+        }
+      } catch (error) {
+        console.error('Mark achieved error:', error);
+        tg.showAlert('Ошибка обновления');
+      }
+      
+      goalToEdit = null;
+    }    
 
     async function confirmDeleteGoal() {
       if (!goalToDelete) return;
