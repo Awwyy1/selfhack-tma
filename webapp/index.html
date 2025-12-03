@@ -1008,6 +1008,10 @@
     .style-badge.premium {
       background: var(--warning);
     }
+
+    .style-badge.pro {
+      background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
+    }    
     
     /* ========== ЦЕЛИ ========== */
     #goals-page {
@@ -2050,7 +2054,7 @@
         </div>
         <div class="tariff-features">
           • 50 сообщений в месяц<br>
-          • 2 стиля коуча<br>
+          • 1 стиль коуча Baddy<br>
           • История 7 дней<br>
           • Чекины и цели
         </div>
@@ -2068,7 +2072,7 @@
         <div class="tariff-price-big">$10.99<span>/мес</span></div>
         <div class="tariff-features">
           • <b>500 сообщений</b> в месяц<br>
-          • <b>2 стиля</b> коуча (+ Mentor)<br>
+          • <b>2 стиля</b> коуча, Baddy + Focused<br>
           • История <b>30 дней</b><br>
           • Приоритетная поддержка<br>
           • Персонализация AI
@@ -2266,11 +2270,20 @@
   </div>
 </div>
   
-  <!-- ПОПАП PREMIUM -->
+  <!-- ПОПАП PREMIUM (для Focused) -->
   <div class="popup" id="premium-popup">
     <div class="popup-content">
       <div class="popup-title">Нужен Premium</div>
-      <div class="popup-text">Стиль Mentor доступен только в Premium.<br><br>Premium $10.99/мес:<br>• Безлимитные сообщения<br>• 3 тональности коуча<br>• История 30 дней</div>
+      <div class="popup-text">Стиль Focused доступен в Premium и PRO.<br><br>Premium $10.99/мес:<br>• 400 сообщений<br>• 2 стиля коуча<br>• История 30 дней</div>
+      <button class="popup-close" onclick="closePopup()">Понятно</button>
+    </div>
+  </div>
+
+  <!-- ПОПАП PRO (для Mentor) -->
+  <div class="popup" id="pro-popup">
+    <div class="popup-content">
+      <div class="popup-title">Нужен PRO</div>
+      <div class="popup-text">Стиль Mentor доступен только в PRO.<br><br>PRO $19.99/мес:<br>• 1000 сообщений<br>• 3 стиля коуча<br>• AI Портрет и аналитика</div>
       <button class="popup-close" onclick="closePopup()">Понятно</button>
     </div>
   </div>
@@ -2811,15 +2824,15 @@ const Analytics = {
         contentHtml += `<div class="story-subtitle">${story.subtitle}</div>`;
         contentHtml += `
           <div class="onboarding-tone-selector">
-            <div class="onboarding-tone-card ${selectedOnboardingTone === 'focused' ? 'selected' : ''}" onclick="selectOnboardingTone('focused', event)">
-              <div class="onboarding-tone-name">Focused</div>
-              <div class="onboarding-tone-desc">Минимум слов, максимум действий</div>
-              <div class="onboarding-tone-badge">FREE</div>
-            </div>
             <div class="onboarding-tone-card ${selectedOnboardingTone === 'baddy' ? 'selected' : ''}" onclick="selectOnboardingTone('baddy', event)">
               <div class="onboarding-tone-name">Baddy</div>
               <div class="onboarding-tone-desc">Друг, который не даст слиться</div>
               <div class="onboarding-tone-badge">FREE</div>
+            </div>
+            <div class="onboarding-tone-card ${selectedOnboardingTone === 'focused' ? 'selected' : ''}" onclick="selectOnboardingTone('focused', event)">
+              <div class="onboarding-tone-name">Focused</div>
+              <div class="onboarding-tone-desc">Минимум слов, максимум действий</div>
+              <div class="onboarding-tone-badge premium">PREMIUM</div>
             </div>
           </div>
         `;
@@ -3730,9 +3743,18 @@ const Analytics = {
     
     // ВЫБОР СТИЛЯ
     async function selectTone(tone) {
-      // Проверка Premium для Mentor
-      if (tone === 'mentor' && userStats.plan === 'FREE') {
+      // Проверка доступа к стилям по тарифу
+      const plan = userStats.plan;
+      
+      // Focused требует PREMIUM или PRO
+      if (tone === 'focused' && plan === 'FREE') {
         document.getElementById('premium-popup').classList.add('active');
+        return;
+      }
+      
+      // Mentor требует только PRO
+      if (tone === 'mentor' && plan !== 'PRO') {
+        document.getElementById('pro-popup').classList.add('active');
         return;
       }
       
@@ -4233,7 +4255,7 @@ const Analytics = {
         if (data.stats) {
           // Set limit based on plan
     const messagesLimit = data.stats.plan === 'FREE' ? 50 : 
-                          data.stats.plan === 'PRO' ? 1000 : 500;  // PRO = 1000 смс
+                          data.stats.plan === 'PRO' ? 1000 : 400;  // PRO = 1000 смс
 
           userStats = {
             ...data.stats,
@@ -4269,8 +4291,47 @@ const Analytics = {
             baddy: 'Baddy',
             mentor: 'Mentor'
           };
-          document.getElementById('profile-tone').textContent = toneNames[data.tone] || 'Baddy';
-          currentTone = data.tone || 'baddy';
+          // Автосброс стиля если недоступен для тарифа
+          let tone = data.tone || 'baddy';
+          const plan = userStats.plan;
+          
+          // FREE может использовать только Baddy
+          if (plan === 'FREE' && tone !== 'baddy') {
+            tone = 'baddy';
+            // Сохранить изменение на сервер
+            fetch('/api/tone', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Telegram-Init-Data': tg.initData
+              },
+              body: JSON.stringify({
+                user_id: user?.id || 0,
+                tone: 'baddy'
+              })
+            });
+          }
+          
+          // PREMIUM может использовать Baddy и Focused, но не Mentor
+          if (plan === 'PREMIUM' && tone === 'mentor') {
+            tone = 'baddy';
+            fetch('/api/tone', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Telegram-Init-Data': tg.initData
+              },
+              body: JSON.stringify({
+                user_id: user?.id || 0,
+                tone: 'baddy'
+              })
+            });
+          }
+          
+          document.getElementById('profile-tone').textContent = toneNames[tone] || 'Baddy';
+          currentTone = tone;
+
+          // Установить активную карточку стиля
 
           // Установить активную карточку стиля
           document.querySelectorAll('.style-card').forEach(card => {
@@ -4458,7 +4519,7 @@ const Analytics = {
 
        // Update local stats с правильным планом из ответа
           userStats.plan = data.plan || 'PREMIUM';  // ← исправить
-          userStats.messagesLimit = data.plan === 'PRO' ? 1000 : 500;
+          userStats.messagesLimit = data.plan === 'PRO' ? 1000 : 400;
       } else {
           errorMsg.textContent = data.message || 'Промокод недействителен';
           errorMsg.style.display = 'block';
