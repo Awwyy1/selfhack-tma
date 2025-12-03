@@ -4316,42 +4316,47 @@ const Analytics = {
   const badge = document.getElementById('account-badge');
   const planValue = document.getElementById('profile-plan');
   
-    // Update plan badge
-    if (userStats.plan === 'PRO') {
-      badge.classList.add('premium');
-      badge.textContent = 'PRO';
-      planValue.textContent = 'PRO';
-      planValue.style.color = '#FF6B35';  // Оранжевый для PRO
-    } else if (userStats.plan === 'PREMIUM') {
-      badge.classList.add('premium');
-      badge.textContent = 'PREMIUM';
-      planValue.textContent = 'PREMIUM';
-      planValue.style.color = '#FFD700';
-    } else {
-      badge.classList.remove('premium');
-      badge.textContent = 'FREE';
-      planValue.textContent = 'FREE';
-      planValue.style.color = '';
-    }
-      
-      // Update progress bar
-      const used = userStats.messagesUsed || 0;
-      const limit = userStats.messagesLimit || 50;
-      const progressPercent = (used / limit) * 100;
-      const progressFill = document.getElementById('messages-progress');
-      
-      // Cap visual at 100% but show exceeded state
-      progressFill.style.width = `${Math.min(progressPercent, 100)}%`;
-      
-      if (progressPercent >= 100) {
-        progressFill.classList.add('exceeded');
-      } else {
-        progressFill.classList.remove('exceeded');
-      }
-      
-      // Update messages display
-      document.getElementById('profile-messages').textContent = `${used} / ${limit}`;
-    }    
+  // Update plan badge based on plan type
+   if (userStats.plan === 'PRO') {
+     badge.classList.remove('premium');  // ✅ Удалить старый класс
+     badge.classList.add('pro');         // ✅ Добавить правильный класс
+     badge.textContent = 'PRO';
+     planValue.textContent = 'PRO';
+     planValue.style.color = '#FF6B35';
+   } else if (userStats.plan === 'PREMIUM') {
+     badge.classList.remove('pro');      // ✅ Удалить старый класс
+     badge.classList.add('premium');
+     badge.textContent = 'PREMIUM';
+     planValue.textContent = 'PREMIUM';
+     planValue.style.color = '#FFD700';
+   } else {
+     badge.classList.remove('premium', 'pro');  // ✅ Удалить оба класса
+     badge.textContent = 'FREE';
+     planValue.textContent = 'FREE';
+     planValue.style.color = '';
+   }
+  
+    // Update progress bar
+  const used = userStats.messagesUsed || 0;
+  const limit = userStats.messagesLimit || 50;
+  const progressPercent = (used / limit) * 100;
+  const progressFill = document.getElementById('messages-progress');
+  
+  progressFill.style.width = `${Math.min(progressPercent, 100)}%`;
+  
+  if (progressPercent >= 100) {
+    progressFill.classList.add('exceeded');
+  } else {
+    progressFill.classList.remove('exceeded');
+  }
+  
+  // Update messages display - show ∞ for PRO
+  if (userStats.plan === 'PRO') {
+    document.getElementById('profile-messages').textContent = `${used} / ∞`;
+  } else {
+    document.getElementById('profile-messages').textContent = `${used} / ${limit}`;
+  }
+}   
 
     // ========== PROMO CODE ==========
     function showPromoPopup() {
