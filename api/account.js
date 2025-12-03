@@ -1,278 +1,172 @@
-// api/account.js
-// Объединённый endpoint для: промокодов и удаления аккаунта
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+import { supabase } from '../lib/supabase.js';
 
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Telegram-Init-Data');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { action, user_id } = req.body;
 
-  if (!user_id) {
-    return res.status(400).json({ success: false, message: 'user_id required' });
+  if (!action || !user_id) {
+    return res.status(400).json({ error: 'Missing action or user_id' });
   }
 
-  // ==================== APPLY PROMO ====================
-  if (action === 'apply-promo') {
-    const { code } = req.body;
+  // ========== SET TONE ==========
+  if (action === 'set-tone') {
+    const { tone } = req.body;
     
-    if (!code) {
-      return res.status(400).json({ success: false, message: 'Промокод не указан' });
+    if (!tone) {
+      return res.status(400).json({ error: 'Missing tone' });
+    }
+
+    const validTones = ['focused', 'baddy', 'mentor'];
+    if (!validTones.includes(tone)) {
+      return res.status(400).json({ error: 'Invalid tone' });
     }
 
     try {
-      // 1. Найти промокод в базе
-      const { data: voucher, error: voucherError } = await supabase
-        .from('premium_vouchers')
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          telegram_user_id: user_id,
+          tone: tone,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'telegram_user_id'
+        });
+
+      if (error) throw error;
+
+      console.log(`Tone updated for user ${user_id}: ${tone}`);
+      
+      return res.status(200).json({ 
+        success: true, 
+        tone: tone 
+      });
+    } catch (error) {
+      console.error('Set tone error:', error);
+      return res.status(500).json({ error: 'Failed to update tone' });
+    }
+  }
+
+  // ========== APPLY PROMO ==========
+  if (action === 'apply-promo') {
+    const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ success: false, message: 'Введите промокод' });
+    }
+
+    try {
+      // Найти промокод
+      const { data: promo, error: promoError } = await supabase
+        .from('promo_codes')
         .select('*')
         .eq('code', code.toUpperCase())
-        .single();
+        .eq('is_active', true)
+        .maybeSingle();
 
-      if (voucherError || !voucher) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Промокод недействителен или истёк' 
-        });
+      if (promoError) throw promoError;
+
+      if (!promo) {
+        return res.status(400).json({ success: false, message: 'Промокод не найден или неактивен' });
       }
 
-      // 2. Проверить срок действия промокода
-      if (voucher.expires_at && new Date(voucher.expires_at) < new Date()) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Срок действия промокода истёк' 
-        });
+      // Проверить лимит использований
+      if (promo.max_uses && promo.used_count >= promo.max_uses) {
+        return res.status(400).json({ success: false, message: 'Промокод больше не действителен' });
       }
 
-      // 3. Проверить лимит использований
-      if (voucher.max_uses !== null && voucher.used_count >= voucher.max_uses) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Промокод больше не действителен' 
-        });
+      // Проверить срок действия
+      if (promo.expires_at && new Date(promo.expires_at) < new Date()) {
+        return res.status(400).json({ success: false, message: 'Срок действия промокода истёк' });
       }
 
-      // 4. Проверить, не использовал ли уже этот юзер
-      const { data: existingUsage } = await supabase
-        .from('voucher_usage')
+      // Проверить не использовал ли уже этот пользователь
+      const { data: existingUse } = await supabase
+        .from('promo_uses')
         .select('id')
-        .eq('voucher_id', voucher.id)
-        .eq('user_id', user_id)
-        .single();
-
-      if (existingUsage) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Ты уже использовал этот промокод' 
-        });
-      }
-
-      // 5. Вычислить дату окончания подписки
-      const daysToAdd = voucher.duration_days || 7;
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + daysToAdd);
-
-      // 5.5. Определить тип плана из промокода (PRO или PREMIUM)
-      const planType = voucher.plan_type || 'PREMIUM';
-
-      // 6. Проверить есть ли уже подписка у пользователя
-      const { data: existingSub } = await supabase
-        .from('subscriptions')
-        .select('id')
+        .eq('promo_code_id', promo.id)
         .eq('telegram_user_id', user_id)
-        .single();
+        .maybeSingle();
 
-      if (existingSub) {
-        // Обновить существующую подписку
-        const { error: updateError } = await supabase
-          .from('subscriptions')
-          .update({
-            plan: planType,
-            expires_at: expiresAt.toISOString(),
-            status: 'active'
-          })
-          .eq('telegram_user_id', user_id);
-
-        if (updateError) {
-          console.error('Update subscription error:', updateError);
-          return res.status(500).json({ 
-            success: false, 
-            message: 'Ошибка активации' 
-          });
-        }
-      } else {
-        // Создать новую подписку
-        const { error: insertError } = await supabase
-          .from('subscriptions')
-          .insert({
-            telegram_user_id: user_id,
-            plan: planType,
-            expires_at: expiresAt.toISOString(),
-            status: 'active'
-          });
-
-        if (insertError) {
-          console.error('Insert subscription error:', insertError);
-          return res.status(500).json({ 
-            success: false, 
-            message: 'Ошибка активации' 
-          });
-        }
+      if (existingUse) {
+        return res.status(400).json({ success: false, message: 'Ты уже использовал этот промокод' });
       }
 
-      // 7. Записать использование промокода
-      await supabase
-        .from('voucher_usage')
-        .insert({
-          voucher_id: voucher.id,
-          user_id: user_id,
-          used_at: new Date().toISOString()
+      // Вычислить дату окончания подписки
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + promo.duration_days);
+
+      // Определить план из промокода (по умолчанию PREMIUM)
+      const plan = promo.plan || 'PREMIUM';
+
+      // Создать или обновить подписку
+      const { error: subError } = await supabase
+        .from('subscriptions')
+        .upsert({
+          telegram_user_id: user_id,
+          plan: plan,
+          status: 'active',
+          expires_at: expiresAt.toISOString(),
+          created_at: new Date().toISOString()
+        }, {
+          onConflict: 'telegram_user_id'
         });
 
-      // 8. Увеличить used_count в промокоде
-      await supabase
-        .from('premium_vouchers')
-        .update({ used_count: (voucher.used_count || 0) + 1 })
-        .eq('id', voucher.id);
+      if (subError) throw subError;
 
-      // 9. Форматировать дату для ответа
-      const months = [
-        'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-      ];
-      const day = expiresAt.getDate();
-      const month = months[expiresAt.getMonth()];
-      const year = expiresAt.getFullYear();
-      const expiresAtFormatted = `${day} ${month} ${year}`;
+      // Записать использование промокода
+      await supabase
+        .from('promo_uses')
+        .insert({
+          promo_code_id: promo.id,
+          telegram_user_id: user_id
+        });
+
+      // Увеличить счётчик использований
+      await supabase
+        .from('promo_codes')
+        .update({ used_count: (promo.used_count || 0) + 1 })
+        .eq('id', promo.id);
+
+      console.log(`Promo ${code} applied for user ${user_id}, plan: ${plan}, expires: ${expiresAt.toISOString()}`);
 
       return res.status(200).json({
         success: true,
-        message: `${planType} активирован на ${daysToAdd} дней!`,
-        expiresAt: expiresAtFormatted,
-        plan: planType
+        message: `${plan} активирован на ${promo.duration_days} дней!`,
+        plan: plan,
+        expires_at: expiresAt.toISOString()
       });
 
     } catch (error) {
       console.error('Promo error:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Ошибка сервера' 
-      });
+      return res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
   }
 
-  // ==================== DELETE ACCOUNT ====================
+  // ========== DELETE ACCOUNT ==========
   if (action === 'delete') {
     try {
-      // Все таблицы используют telegram_user_id как int8
-      const telegramUserId = user_id;
-      
-      console.log('Deleting data for user:', telegramUserId);
+      // Удалить все данные пользователя
+      await supabase.from('telegram_chats').delete().eq('telegram_user_id', user_id);
+      await supabase.from('checkins').delete().eq('telegram_user_id', user_id);
+      await supabase.from('goals').delete().eq('telegram_user_id', user_id);
+      await supabase.from('reminders').delete().eq('telegram_user_id', user_id);
+      await supabase.from('user_preferences').delete().eq('telegram_user_id', user_id);
+      await supabase.from('subscriptions').delete().eq('telegram_user_id', user_id);
+      await supabase.from('message_summaries').delete().eq('telegram_user_id', user_id);
+      await supabase.from('mood_tracking').delete().eq('telegram_user_id', user_id);
+      await supabase.from('portraits').delete().eq('telegram_user_id', user_id);
 
-      // 1. Удалить историю чатов
-      const { error: chatsError } = await supabase
-        .from('telegram_chats')
-        .delete()
-        .eq('telegram_user_id', telegramUserId);
-      if (chatsError) console.error('Delete telegram_chats error:', chatsError);
+      console.log(`All data deleted for user ${user_id}`);
 
-      // 2. Удалить САММАРИ
-      const { error: summariesError } = await supabase
-        .from('message_summaries')
-        .delete()
-        .eq('telegram_user_id', telegramUserId);
-      if (summariesError) console.error('Delete message_summaries error:', summariesError);
-
-      // 3. Удалить цели
-      const { error: goalsError } = await supabase
-        .from('goals')
-        .delete()
-        .eq('telegram_user_id', telegramUserId);
-      if (goalsError) console.error('Delete goals error:', goalsError);
-
-      // 4. Удалить чекины
-      const { error: checkinsError } = await supabase
-        .from('checkins')
-        .delete()
-        .eq('telegram_user_id', telegramUserId);
-      if (checkinsError) console.error('Delete checkins error:', checkinsError);
-
-      // 5. Удалить напоминания
-      const { error: remindersError } = await supabase
-        .from('reminders')
-        .delete()
-        .eq('telegram_user_id', telegramUserId);
-      if (remindersError) console.error('Delete reminders error:', remindersError);
-
-      // 6. Удалить использования промокодов
-      const { error: voucherError } = await supabase
-        .from('voucher_usage')
-        .delete()
-        .eq('user_id', telegramUserId);
-      if (voucherError) console.error('Delete voucher_usage error:', voucherError);
-
-      // 7. Удалить настройки пользователя
-      const { error: prefsError } = await supabase
-        .from('user_preferences')
-        .delete()
-        .eq('telegram_user_id', telegramUserId);
-      if (prefsError) console.error('Delete user_preferences error:', prefsError);
-
-      // 8. Удалить аналитику
-      const { error: analyticsError } = await supabase
-        .from('user_analytics')
-        .delete()
-        .eq('telegram_user_id', telegramUserId);
-      if (analyticsError) console.error('Delete user_analytics error:', analyticsError);
-
-      // 9. Удалить mood tracking
-      const { error: moodError } = await supabase
-        .from('mood_tracking')
-        .delete()
-        .eq('telegram_user_id', telegramUserId);
-      if (moodError) console.error('Delete mood_tracking error:', moodError);
-
-      // 10. Пометить подписку как удалённую (НЕ удаляем - защита от абьюза)
-      const { error: subsError } = await supabase
-        .from('subscriptions')
-        .update({ 
-          status: 'deleted',
-          plan: 'DELETED'
-        })
-        .eq('telegram_user_id', telegramUserId);
-      if (subsError) console.error('Update subscriptions error:', subsError);
-
-      return res.status(200).json({
-        success: true,
-        message: 'Все данные удалены'
-      });
-
+      return res.status(200).json({ success: true });
     } catch (error) {
-      console.error('Delete account error:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Ошибка сервера' 
-      });
+      console.error('Delete error:', error);
+      return res.status(500).json({ success: false, message: 'Ошибка удаления' });
     }
   }
 
-  // ==================== UNKNOWN ACTION ====================
-  return res.status(400).json({ 
-    success: false, 
-    message: 'Неизвестное действие. Используй action: "apply-promo" или "delete"' 
-  });
+  return res.status(400).json({ error: 'Unknown action' });
 }
