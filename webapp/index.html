@@ -4211,7 +4211,7 @@ const Analytics = {
         if (data.stats) {
           // Set limit based on plan
     const messagesLimit = data.stats.plan === 'FREE' ? 50 : 
-                          data.stats.plan === 'PRO' ? 999999 : 500;  // PRO = безлимит
+                          data.stats.plan === 'PRO' ? 1000 : 500;  // PRO = 1000 смс
 
           userStats = {
             ...data.stats,
@@ -4292,34 +4292,48 @@ const Analytics = {
     }
 
     function updateTariffCards() {
-   const isFree = userStats.plan === 'FREE';
-   const isPremium = userStats.plan === 'PREMIUM';
-   const isPro = userStats.plan === 'PRO';  // ✅ Добавить
+  const isFree = userStats.plan === 'FREE';
+  const isPremium = userStats.plan === 'PREMIUM';
+  const isPro = userStats.plan === 'PRO';
   
-   const freeCard = document.getElementById('tariff-free');
-   const freeBadge = document.getElementById('tariff-free-badge');
-   const premiumBadge = document.getElementById('tariff-premium-badge');
-   const subscribeBtn = document.getElementById('btn-subscribe-premium');
+  const freeCard = document.getElementById('tariff-free');
+  const freeBadge = document.getElementById('tariff-free-badge');
+  const premiumBadge = document.getElementById('tariff-premium-badge');
+  const proBadge = document.getElementById('tariff-pro-badge');
+  const subscribePremiumBtn = document.getElementById('btn-subscribe-premium');
+  const subscribeProBtn = document.getElementById('btn-subscribe-pro');
   
-   if (isFree) {
-     freeCard.classList.add('active');
-     freeBadge.style.display = 'block';
-     premiumBadge.style.display = 'none';
-     subscribeBtn.style.display = 'block';
-   } else if (isPremium || isPro) {  // ✅ Добавить isPro
-     freeCard.classList.remove('active');
-     freeBadge.style.display = 'none';
-     premiumBadge.style.display = 'block';
-     premiumBadge.textContent = isPro ? 'PRO активен' : 'Активен';  // ✅ Разный текст
-     subscribeBtn.style.display = 'none';
-   }
- }
+  // Reset all
+  freeCard.classList.remove('active');
+  freeBadge.style.display = 'none';
+  premiumBadge.style.display = 'none';
+  proBadge.style.display = 'none';
+  subscribePremiumBtn.style.display = 'block';
+  subscribeProBtn.style.display = 'block';
+  
+  if (isFree) {
+    freeCard.classList.add('active');
+    freeBadge.style.display = 'block';
+  } else if (isPremium) {
+    premiumBadge.style.display = 'block';
+    subscribePremiumBtn.style.display = 'none';
+  } else if (isPro) {
+    proBadge.style.display = 'block';
+    subscribeProBtn.style.display = 'none';
+    subscribePremiumBtn.style.display = 'none';
+  }
+}
 
      function subscribePremium() {
    Analytics.upgradeClicked(user?.id);
    document.getElementById('payment-coming-popup').classList.add('active');
  }
 
+    function subscribePro() {
+  Analytics.upgradeClicked(user?.id);
+  document.getElementById('payment-coming-popup').classList.add('active');
+}
+    
     // ========== DASHBOARD ==========
     function showDashboardPopup() {
       document.getElementById('dashboard-popup').classList.add('active');
@@ -4364,11 +4378,8 @@ const Analytics = {
     progressFill.classList.remove('exceeded');
   }
   
-  // Update messages display - show ∞ for PRO
-  if (userStats.plan === 'PRO') {
-    document.getElementById('profile-messages').textContent = `${used} / ∞`;
-  } else {
-    document.getElementById('profile-messages').textContent = `${used} / ${limit}`;
+    // Update messages display - show 1000 for PRO
+  document.getElementById('profile-messages').textContent = `${used} / ${limit}`;
   }
 }   
 
@@ -4426,7 +4437,7 @@ const Analytics = {
 
        // Update local stats с правильным планом из ответа
           userStats.plan = data.plan || 'PREMIUM';  // ← исправить
-          userStats.messagesLimit = data.plan === 'PRO' ? 999999 : 500;
+          userStats.messagesLimit = data.plan === 'PRO' ? 1000 : 500;
       } else {
           errorMsg.textContent = data.message || 'Промокод недействителен';
           errorMsg.style.display = 'block';
