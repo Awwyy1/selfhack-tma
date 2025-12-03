@@ -2954,13 +2954,14 @@ const Analytics = {
 
       // Save selected tone
       try {
-        await fetch('/api/tone', {
+        await fetch('/api/account', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-Telegram-Init-Data': tg.initData
           },
           body: JSON.stringify({
+            action: 'set-tone',
             user_id: user?.id || 0,
             tone: selectedOnboardingTone
           })
@@ -3968,13 +3969,14 @@ const Analytics = {
       }
       
       try {
-        const response = await fetch('/api/tone', {
+        const response = await fetch('/api/account', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-Telegram-Init-Data': tg.initData
           },
           body: JSON.stringify({
+            action: 'set-tone',
             user_id: user?.id || 0,
             tone: tone
           })
@@ -4508,13 +4510,14 @@ const Analytics = {
           if (plan === 'FREE' && tone !== 'baddy') {
             tone = 'baddy';
             // Сохранить изменение на сервер
-            fetch('/api/tone', {
+            fetch('/api/account', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'X-Telegram-Init-Data': tg.initData
               },
               body: JSON.stringify({
+                action: 'set-tone',
                 user_id: user?.id || 0,
                 tone: 'baddy'
               })
