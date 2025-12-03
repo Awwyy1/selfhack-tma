@@ -2829,10 +2829,15 @@ const Analytics = {
               <div class="onboarding-tone-desc">Друг, который не даст слиться</div>
               <div class="onboarding-tone-badge">FREE</div>
             </div>
-            <div class="onboarding-tone-card ${selectedOnboardingTone === 'focused' ? 'selected' : ''}" onclick="selectOnboardingTone('focused', event)">
+            <div class="onboarding-tone-card" style="opacity: 0.6; cursor: not-allowed;" onclick="selectOnboardingTone('focused', event)">
               <div class="onboarding-tone-name">Focused</div>
               <div class="onboarding-tone-desc">Минимум слов, максимум действий</div>
               <div class="onboarding-tone-badge premium">PREMIUM</div>
+            </div>
+            <div class="onboarding-tone-card" style="opacity: 0.6; cursor: not-allowed;" onclick="selectOnboardingTone('mentor', event)">
+              <div class="onboarding-tone-name">Mentor</div>
+              <div class="onboarding-tone-desc">Executive-коуч для глубокой работы</div>
+              <div class="onboarding-tone-badge premium" style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);">PRO</div>
             </div>
           </div>
         `;
@@ -2849,6 +2854,18 @@ const Analytics = {
 
     function selectOnboardingTone(tone, event) {
       event.stopPropagation();
+      
+      // FREE пользователи могут выбрать только Baddy
+      if (tone === 'focused') {
+        tg.showAlert('Стиль Focused доступен в тарифе PREMIUM. Пока начнём с Baddy!');
+        return;
+      }
+      
+      if (tone === 'mentor') {
+        tg.showAlert('Стиль Mentor доступен в тарифе PRO. Пока начнём с Baddy!');
+        return;
+      }
+      
       selectedOnboardingTone = tone;
 
       // Update UI
