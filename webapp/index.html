@@ -2059,18 +2059,30 @@
         </button>
       </div>
 
-      <!-- PRO -->
-      <div class="tariff-card disabled">
-        <div class="tariff-header">
+     <!-- PRO -->
+      <div class="tariff-card pro-card" id="tariff-pro">
+        <div class="badge-pro-popular">ДЛЯ СЕРЬЁЗНЫХ</div>
+        <div class="tariff-header" style="margin-top: 8px;">
           <div class="tariff-name">PRO</div>
-          <div class="badge-coming">СКОРО</div>
         </div>
+        <div class="tariff-price-big" style="color: #FF6B35;">$19.99<span>/мес</span></div>
         <div class="tariff-features">
-          • Безлимитные сообщения<br>
-          • Персональный AI-профиль<br>
-          • Квартальные звонки с ICF коучем<br>
+          • <b>1000 сообщений</b> в месяц<br>
+          • <b>Mood Score</b> — эмо-трекинг<br>
+          • <b>AI Портрет</b> — психопрофиль<br>
+          • <b>Голосовые сообщения</b><br>
+          • <b>Goal Sharing</b> — делись целями<br>
+          • <b>Summaries</b> — саммари <br>
+          • <b>Leaderboard</b> — соревнуйся<br>
+          • <b>Подцели</b> — декомпозиция<br>
           • Продвинутая аналитика
         </div>
+        <div class="tariff-badge" id="tariff-pro-badge" style="display: none;">
+          PRO активен
+        </div>
+        <button class="btn-subscribe btn-subscribe-pro" id="btn-subscribe-pro" onclick="subscribePro()">
+          Оформить PRO
+        </button>
       </div>
 
       <div class="tariffs-promo-link" onclick="goToProfileAndOpenPromo()">
