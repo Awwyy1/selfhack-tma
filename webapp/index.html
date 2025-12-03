@@ -4280,31 +4280,33 @@ const Analytics = {
     }
 
     function updateTariffCards() {
-      const isFree = userStats.plan === 'FREE';
-      const isPremium = userStats.plan === 'PREMIUM';
-      
-      const freeCard = document.getElementById('tariff-free');
-      const freeBadge = document.getElementById('tariff-free-badge');
-      const premiumBadge = document.getElementById('tariff-premium-badge');
-      const subscribeBtn = document.getElementById('btn-subscribe-premium');
-      
-      if (isFree) {
-        freeCard.classList.add('active');
-        freeBadge.style.display = 'block';
-        premiumBadge.style.display = 'none';
-        subscribeBtn.style.display = 'block';
-      } else {
-        freeCard.classList.remove('active');
-        freeBadge.style.display = 'none';
-        premiumBadge.style.display = 'block';
-        subscribeBtn.style.display = 'none';
-      }
-    }
+   const isFree = userStats.plan === 'FREE';
+   const isPremium = userStats.plan === 'PREMIUM';
+   const isPro = userStats.plan === 'PRO';  // ✅ Добавить
+  
+   const freeCard = document.getElementById('tariff-free');
+   const freeBadge = document.getElementById('tariff-free-badge');
+   const premiumBadge = document.getElementById('tariff-premium-badge');
+   const subscribeBtn = document.getElementById('btn-subscribe-premium');
+  
+   if (isFree) {
+     freeCard.classList.add('active');
+     freeBadge.style.display = 'block';
+     premiumBadge.style.display = 'none';
+     subscribeBtn.style.display = 'block';
+   } else if (isPremium || isPro) {  // ✅ Добавить isPro
+     freeCard.classList.remove('active');
+     freeBadge.style.display = 'none';
+     premiumBadge.style.display = 'block';
+     premiumBadge.textContent = isPro ? 'PRO активен' : 'Активен';  // ✅ Разный текст
+     subscribeBtn.style.display = 'none';
+   }
+ }
 
-    function subscribePremium() {
-  Analytics.upgradeClicked(user?.id);
-  document.getElementById('payment-coming-popup').classList.add('active');
-}
+     function subscribePremium() {
+   Analytics.upgradeClicked(user?.id);
+   document.getElementById('payment-coming-popup').classList.add('active');
+ }
 
     // ========== DASHBOARD ==========
     function showDashboardPopup() {
