@@ -76,7 +76,7 @@ export default async function handler(req, res) {
     const checkinDates = allCheckins ? allCheckins.map(c => c.checkin_date) : [];
 
     // Set limit based on plan
-    const messagesLimit = 2000;
+    const messagesLimit = plan === 'FREE' ? 50 : plan === 'PRO' ? 1000 : 500;
 
     return res.status(200).json({
       success: true,
