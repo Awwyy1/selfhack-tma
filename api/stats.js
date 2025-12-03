@@ -15,7 +15,7 @@ export default async function handler(req, res) {
       .eq('telegram_user_id', user_id)
       .eq('status', 'active')
       .maybeSingle();
-
+      
     const isPremium = subscription && new Date(subscription.expires_at) > new Date();
     const plan = isPremium ? (subscription.plan === 'PRO' ? 'PRO' : 'PREMIUM') : 'FREE';
 
