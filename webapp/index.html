@@ -1969,6 +1969,269 @@
   border-top: 1px solid var(--border-color);
 }
 
+  /* ========== AI PORTRAIT PAGE ========== */
+#portrait-page {
+  padding: 16px;
+  padding-bottom: 120px;
+  overflow-y: auto;
+}
+
+.portrait-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.portrait-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.portrait-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.portrait-date {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 8px;
+}
+
+.portrait-section {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.portrait-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.portrait-section-content {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.portrait-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.portrait-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.portrait-list li:last-child {
+  border-bottom: none;
+}
+
+.portrait-stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.portrait-stat-row:last-child {
+  border-bottom: none;
+}
+
+.portrait-stat-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.portrait-stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.portrait-empty {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.portrait-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.portrait-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.portrait-empty-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.portrait-history-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.portrait-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  padding-bottom: calc(16px + var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 12px;
+}
+
+.btn-download-portrait {
+  flex: 1;
+  padding: 14px;
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-back-portrait {
+  flex: 1;
+  padding: 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-create-portrait {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-create-portrait:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Portrait card in profile */
+.portrait-card {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  transition: border-color 0.2s;
+}
+
+.portrait-card:hover {
+  border-color: #FF6B35;
+}
+
+.portrait-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.portrait-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FF6B35;
+}
+
+.portrait-card-subtitle {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.badge-pro-feature {
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+}
+
+/* Loading animation */
+.portrait-loading {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.portrait-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--border-color);
+  border-top-color: #FF6B35;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 24px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.portrait-loading-text {
+  font-size: 16px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.portrait-loading-step {
+  font-size: 14px;
+  color: var(--text-secondary);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+ 
 .btn-back {
   width: 100%;
   padding: 16px;
@@ -2146,6 +2409,31 @@
         <button class="btn-back" onclick="goBackToProfile()">Окей, я понял</button>
       </div>
     </div> 
+
+
+     <!-- AI PORTRAIT PAGE -->
+    <div id="portrait-page" class="page">
+      <div class="portrait-header">
+        <div class="portrait-title">AI-Портрет</div>
+        <div class="portrait-subtitle">Код твоей личности</div>
+        <div class="portrait-date" id="portrait-date"></div>
+      </div>
+
+      <!-- История портретов -->
+      <select class="portrait-history-select" id="portrait-history-select" onchange="loadPortraitByIndex(this.value)" style="display: none;">
+      </select>
+
+      <!-- Контент портрета -->
+      <div id="portrait-content">
+        <!-- Заполняется динамически -->
+      </div>
+
+      <!-- Кнопки внизу -->
+      <div class="portrait-bottom" id="portrait-bottom">
+        <button class="btn-download-portrait" id="btn-download-portrait" onclick="downloadPortrait()">Скачать PDF</button>
+        <button class="btn-back-portrait" onclick="goBackFromPortrait()">Вернуться</button>
+      </div>
+    </div>    
     
     <!-- ПРОФИЛЬ -->
     <div id="profile-page" class="page">
@@ -2224,6 +2512,17 @@
         </div>
       </div>
 
+     <!-- AI Portrait Card -->
+      <div class="portrait-card" onclick="openPortraitPage()">
+        <div class="portrait-card-header">
+          <div>
+            <div class="portrait-card-title">AI-Портрет</div>
+            <div class="portrait-card-subtitle">Код твоей личности</div>
+          </div>
+          <div class="badge-pro-feature">PRO</div>
+        </div>
+      </div>
+      
       <!-- Dashboard Card -->
       <div class="dashboard-card" onclick="showDashboardPopup()">
         <div class="dashboard-header">
@@ -2314,6 +2613,22 @@
       <button class="popup-close" onclick="closePopup()">Понятно</button>
     </div>
   </div>
+
+ <!-- ПОПАП PRO ДЛЯ ПОРТРЕТА -->
+  <div class="popup" id="portrait-pro-popup">
+    <div class="popup-content">
+      <div class="popup-title">AI-Портрет</div>
+      <div class="popup-text" style="line-height: 1.6;">
+        AI-Портрет анализирует твои диалоги и создаёт психологический профиль: темы, паттерны мышления, сильные стороны и зоны роста.<br><br>
+        Эта функция доступна в тарифе PRO.<br><br>
+        PRO $19.99/мес — 1000 сообщений, AI-Портрет, Mood Score и продвинутая аналитика.
+      </div>
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Понятно</button>
+        <button class="popup-btn primary" style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);" onclick="closePopup(); openTariffsPage();">Тарифы</button>
+      </div>
+    </div>
+  </div>  
 
   <!-- ПОПАП ДОБАВЛЕНИЯ ЦЕЛИ -->
   <div class="popup" id="add-goal-popup">
