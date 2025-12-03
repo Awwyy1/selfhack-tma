@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       .maybeSingle();
 
     const isPremium = subscription && new Date(subscription.expires_at) > new Date();
-    const plan = isPremium ? (subscription.plan === 'pro' ? 'PRO' : 'PREMIUM') : 'FREE';
+    const plan = isPremium ? (subscription.plan === 'PRO' ? 'PRO' : 'PREMIUM') : 'FREE';
 
     const { count: userMessages } = await supabase
       .from('telegram_chats')
