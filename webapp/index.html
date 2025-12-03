@@ -4943,6 +4943,322 @@ const Analytics = {
   Analytics.upgradeClicked(user?.id);
   document.getElementById('payment-coming-popup').classList.add('active');
 }
+
+    // ========== AI PORTRAIT ==========
+    let userPortraits = [];
+    let currentPortraitIndex = 0;
+
+    async function openPortraitPage() {
+      // Проверить PRO
+      if (userStats.plan !== 'PRO') {
+        document.getElementById('portrait-pro-popup').classList.add('active');
+        return;
+      }
+
+      // Показать страницу с loading
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('portrait-page').classList.add('active');
+      document.querySelector('.navigation').style.display = 'none';
+
+      // Показать loading
+      document.getElementById('portrait-content').innerHTML = `
+        <div class="portrait-loading">
+          <div class="portrait-loading-spinner"></div>
+          <div class="portrait-loading-text">Загрузка...</div>
+        </div>
+      `;
+      document.getElementById('portrait-bottom').style.display = 'none';
+      document.getElementById('portrait-history-select').style.display = 'none';
+      document.getElementById('portrait-date').textContent = '';
+
+      try {
+        const response = await fetch(`/api/portrait?user_id=${user?.id || 0}`, {
+          headers: { 'X-Telegram-Init-Data': tg.initData }
+        });
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message || 'Ошибка загрузки');
+        }
+
+        userPortraits = data.portraits || [];
+
+        if (userPortraits.length === 0) {
+          // Нет портретов — показать empty state
+          renderEmptyPortrait(data.canCreate, data.messagesNeeded, data.daysUntilNext);
+        } else {
+          // Есть портреты — показать последний
+          currentPortraitIndex = 0;
+          renderPortrait(userPortraits[0]);
+          
+          // Показать селект истории если больше 1
+          if (userPortraits.length > 1) {
+            renderPortraitHistory();
+          }
+        }
+
+      } catch (error) {
+        console.error('Load portrait error:', error);
+        document.getElementById('portrait-content').innerHTML = `
+          <div class="portrait-empty">
+            <div class="portrait-empty-title">Ошибка загрузки</div>
+            <div class="portrait-empty-text">${error.message || 'Попробуй позже'}</div>
+          </div>
+        `;
+        document.getElementById('portrait-bottom').innerHTML = `
+          <button class="btn-back-portrait" style="width: 100%;" onclick="goBackFromPortrait()">Вернуться</button>
+        `;
+        document.getElementById('portrait-bottom').style.display = 'flex';
+      }
+    }
+
+    function renderEmptyPortrait(canCreate, messagesNeeded, daysUntilNext) {
+      let content = '<div class="portrait-empty">';
+      content += '<div class="portrait-empty-title">Портрет ещё не создан</div>';
+
+      if (!canCreate && messagesNeeded > 0) {
+        content += `<div class="portrait-empty-text">Для создания первого портрета нужно ещё ${messagesNeeded} сообщений. Продолжай общаться с коучем!</div>`;
+        content += `<button class="btn-create-portrait" disabled>Нужно ещё ${messagesNeeded} сообщений</button>`;
+      } else if (!canCreate && daysUntilNext > 0) {
+        content += `<div class="portrait-empty-text">Следующий портрет будет доступен через ${daysUntilNext} дней.</div>`;
+        content += `<button class="btn-create-portrait" disabled>Доступен через ${daysUntilNext} дн.</button>`;
+      } else {
+        content += '<div class="portrait-empty-text">AI проанализирует твои диалоги и создаст психологический профиль: темы, паттерны, сильные стороны и зоны роста.</div>';
+        content += '<button class="btn-create-portrait" onclick="createPortrait()">Создать первый портрет</button>';
+      }
+
+      content += '</div>';
+      document.getElementById('portrait-content').innerHTML = content;
+      
+      document.getElementById('portrait-bottom').innerHTML = `
+        <button class="btn-back-portrait" style="width: 100%;" onclick="goBackFromPortrait()">Вернуться</button>
+      `;
+      document.getElementById('portrait-bottom').style.display = 'flex';
+    }
+
+    function renderPortrait(portrait) {
+      const content = portrait.content;
+      const createdAt = new Date(portrait.created_at);
+      const dateStr = createdAt.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      document.getElementById('portrait-date').textContent = `Создан: ${dateStr}`;
+
+      let html = '';
+
+      // Статистика
+      if (content.statistics) {
+        html += `
+          <div class="portrait-section">
+            <div class="portrait-section-title">Статистика</div>
+            <div class="portrait-stat-row">
+              <span class="portrait-stat-label">Проанализировано сообщений</span>
+              <span class="portrait-stat-value">${content.statistics.messages_analyzed || portrait.messages_analyzed}</span>
+            </div>
+            <div class="portrait-stat-row">
+              <span class="portrait-stat-label">Целей достигнуто</span>
+              <span class="portrait-stat-value">${content.statistics.goals_achieved} / ${content.statistics.goals_total}</span>
+            </div>
+            <div class="portrait-stat-row">
+              <span class="portrait-stat-label">Чекинов</span>
+              <span class="portrait-stat-value">${content.statistics.checkins}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // Темы
+      if (content.themes && content.themes.length > 0) {
+        html += `
+          <div class="portrait-section">
+            <div class="portrait-section-title">Доминирующие темы</div>
+            <ul class="portrait-list">
+              ${content.themes.map(t => `<li>${t}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      // Паттерны
+      if (content.patterns && content.patterns.length > 0) {
+        html += `
+          <div class="portrait-section">
+            <div class="portrait-section-title">Паттерны мышления</div>
+            <ul class="portrait-list">
+              ${content.patterns.map(p => `<li>${p}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      // Сильные стороны
+      if (content.strengths && content.strengths.length > 0) {
+        html += `
+          <div class="portrait-section">
+            <div class="portrait-section-title">Сильные стороны</div>
+            <ul class="portrait-list">
+              ${content.strengths.map(s => `<li>${s}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      // Зоны роста
+      if (content.growth_zones && content.growth_zones.length > 0) {
+        html += `
+          <div class="portrait-section">
+            <div class="portrait-section-title">Зоны роста</div>
+            <ul class="portrait-list">
+              ${content.growth_zones.map(g => `<li>${g}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      // Эмоциональный фон
+      if (content.emotional_background) {
+        html += `
+          <div class="portrait-section">
+            <div class="portrait-section-title">Эмоциональный фон</div>
+            <div class="portrait-section-content">
+              ${content.emotional_background.summary || 'Нет данных'}
+              ${content.emotional_background.average_mood ? `<br><br>Средний mood score: ${content.emotional_background.average_mood}/5` : ''}
+              ${content.emotional_background.trend ? `<br>Тренд: ${content.emotional_background.trend}` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // Рекомендации
+      if (content.recommendations && content.recommendations.length > 0) {
+        html += `
+          <div class="portrait-section">
+            <div class="portrait-section-title">Рекомендации</div>
+            <ul class="portrait-list">
+              ${content.recommendations.map((r, i) => `<li><strong>${i + 1}.</strong> ${r}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      document.getElementById('portrait-content').innerHTML = html;
+      
+      document.getElementById('portrait-bottom').innerHTML = `
+        <button class="btn-download-portrait" onclick="downloadPortrait()">Скачать PDF</button>
+        <button class="btn-back-portrait" onclick="goBackFromPortrait()">Вернуться</button>
+      `;
+      document.getElementById('portrait-bottom').style.display = 'flex';
+    }
+
+    function renderPortraitHistory() {
+      const select = document.getElementById('portrait-history-select');
+      select.innerHTML = userPortraits.map((p, i) => {
+        const date = new Date(p.created_at).toLocaleDateString('ru-RU', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+        return `<option value="${i}">${date}</option>`;
+      }).join('');
+      select.style.display = 'block';
+    }
+
+    function loadPortraitByIndex(index) {
+      currentPortraitIndex = parseInt(index);
+      renderPortrait(userPortraits[currentPortraitIndex]);
+    }
+
+    async function createPortrait() {
+      // Показать loading с анимацией
+      const steps = [
+        'Загружаю диалоги...',
+        'Анализирую темы...',
+        'Ищу паттерны...',
+        'Определяю сильные стороны...',
+        'Формирую рекомендации...',
+        'Создаю портрет...'
+      ];
+      let stepIndex = 0;
+
+      document.getElementById('portrait-content').innerHTML = `
+        <div class="portrait-loading">
+          <div class="portrait-loading-spinner"></div>
+          <div class="portrait-loading-text">Создаём AI-Портрет</div>
+          <div class="portrait-loading-step" id="loading-step">${steps[0]}</div>
+        </div>
+      `;
+      document.getElementById('portrait-bottom').style.display = 'none';
+
+      // Анимация шагов
+      const stepInterval = setInterval(() => {
+        stepIndex = (stepIndex + 1) % steps.length;
+        const stepEl = document.getElementById('loading-step');
+        if (stepEl) stepEl.textContent = steps[stepIndex];
+      }, 3000);
+
+      try {
+        const response = await fetch('/api/portrait', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            user_id: user?.id || 0
+          })
+        });
+
+        clearInterval(stepInterval);
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message || 'Ошибка создания');
+        }
+
+        // Добавить новый портрет в начало
+        userPortraits.unshift(data.portrait);
+        currentPortraitIndex = 0;
+        renderPortrait(data.portrait);
+
+        if (userPortraits.length > 1) {
+          renderPortraitHistory();
+        }
+
+        tg.showAlert('AI-Портрет успешно создан!');
+
+      } catch (error) {
+        clearInterval(stepInterval);
+        console.error('Create portrait error:', error);
+        document.getElementById('portrait-content').innerHTML = `
+          <div class="portrait-empty">
+            <div class="portrait-empty-title">Ошибка создания</div>
+            <div class="portrait-empty-text">${error.message || 'Попробуй позже'}</div>
+            <button class="btn-create-portrait" onclick="createPortrait()">Попробовать снова</button>
+          </div>
+        `;
+        document.getElementById('portrait-bottom').innerHTML = `
+          <button class="btn-back-portrait" style="width: 100%;" onclick="goBackFromPortrait()">Вернуться</button>
+        `;
+        document.getElementById('portrait-bottom').style.display = 'flex';
+      }
+    }
+
+    function downloadPortrait() {
+      // TODO: Реализовать генерацию PDF
+      tg.showAlert('Генерация PDF будет доступна в ближайшем обновлении');
+    }
+
+    function goBackFromPortrait() {
+      document.getElementById('portrait-page').classList.remove('active');
+      document.getElementById('profile-page').classList.add('active');
+      document.querySelector('[data-page="profile"]').classList.add('active');
+      document.querySelector('.navigation').style.display = 'flex';
+    }    
     
     // ========== DASHBOARD ==========
     function showDashboardPopup() {
