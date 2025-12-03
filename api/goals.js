@@ -71,31 +71,52 @@ export default async function handler(req, res) {
     }
   }
 
-  // PUT - Update goal status
+ // PUT - Update goal (status, text, date)
   if (method === 'PUT') {
-    const { user_id, goal_id, status, new_date } = req.body;
-
-    if (!user_id || !goal_id || !status) {
+    const { user_id, goal_id, status, new_date, text } = req.body;
+    
+    if (!user_id || !goal_id) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Validate status
-    const validStatuses = ['active', 'achieved', 'extended', 'failed'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
-    }
-
     try {
-      const updateData = {
-        status: status,
-        completed_at: ['achieved', 'failed'].includes(status) ? new Date().toISOString() : null
-      };
+      const updateData = {};
 
-      // If extending, update target_date
-      if (status === 'extended' && new_date) {
+      // Обновление текста
+      if (text !== undefined && text.trim() !== '') {
+        updateData.text = text.trim();
+      }
+
+      // Обновление даты (без смены статуса)
+      if (new_date !== undefined && !status) {
         updateData.target_date = new_date;
-        updateData.status = 'active'; // Keep as active with new date
-        updateData.was_extended = true;
+      }
+
+      // Обновление статуса
+      if (status) {
+        const validStatuses = ['active', 'achieved', 'extended', 'failed'];
+        if (!validStatuses.includes(status)) {
+          return res.status(400).json({ error: 'Invalid status' });
+        }
+
+        if (status === 'achieved') {
+          updateData.status = 'achieved';
+          updateData.completed_at = new Date().toISOString();
+        } else if (status === 'failed') {
+          updateData.status = 'failed';
+          updateData.completed_at = new Date().toISOString();
+        } else if (status === 'extended' && new_date) {
+          updateData.target_date = new_date;
+          updateData.status = 'active';
+          updateData.was_extended = true;
+        } else {
+          updateData.status = status;
+        }
+      }
+
+      // Проверка что есть что обновлять
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ error: 'Nothing to update' });
       }
 
       const { data: goal, error } = await supabase
@@ -108,13 +129,12 @@ export default async function handler(req, res) {
 
       if (error) throw error;
 
-      console.log(`Goal ${goal_id} updated to status: ${status} for user ${user_id}`);
-
+      console.log(`Goal ${goal_id} updated for user ${user_id}:`, updateData);
+      
       return res.status(200).json({
         success: true,
         goal: goal
       });
-
     } catch (error) {
       console.error('Update goal error:', error);
       return res.status(500).json({
