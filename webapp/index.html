@@ -6530,13 +6530,17 @@ const Analytics = {
     
     // Инициализация
     renderCalendar(); // Initial render
-    renderGoals(); // Initial empty state
     loadHistory();
+    
+    // Сначала загружаем stats (чтобы знать тариф), потом goals
     loadStats().then(() => {
       // Track app open after stats loaded (to know user's plan)
       Analytics.appOpen(user?.id, userStats.plan);
+      
+      // Теперь загружаем цели (после того как знаем тариф)
+      loadGoals();
     });
-    loadGoals();
+    
     showStories(); // Show daily motivational stories
   </script>
 </body>
