@@ -2231,6 +2231,258 @@
   50% { opacity: 1; }
 }
 
+/* ========== CREDITS PAGE ========== */
+#credits-page {
+  padding: 16px;
+  padding-bottom: 120px;
+  overflow-y: auto;
+}
+
+.credits-header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding: 24px 16px;
+  background: linear-gradient(135deg, rgba(123,104,238,0.1) 0%, rgba(157,142,255,0.1) 100%);
+  border-radius: 16px;
+  border: 1px solid var(--accent-light);
+}
+
+.credits-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  margin-bottom: 8px;
+}
+
+.credits-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.credits-section {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.credits-section-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.credits-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.credits-text {
+  font-size: 15px;
+  color: var(--text-primary);
+  line-height: 1.7;
+  text-align: center;
+}
+
+.credits-highlight {
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+/* Hall of Fame */
+.hall-of-fame {
+  background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,165,0,0.1) 100%);
+  border: 2px solid rgba(255,215,0,0.3);
+}
+
+.hall-of-fame .credits-section-title {
+  color: #D4A000;
+}
+
+.fame-member {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255,215,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fame-member:last-child {
+  margin-bottom: 0;
+}
+
+.fame-member:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255,215,0,0.2);
+}
+
+.fame-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+  font-weight: 700;
+  margin-right: 14px;
+  flex-shrink: 0;
+}
+
+.fame-info {
+  flex: 1;
+}
+
+.fame-username {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.fame-contribution {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.fame-badge {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* CTA Section */
+.credits-cta {
+  background: linear-gradient(135deg, rgba(123,104,238,0.05) 0%, rgba(157,142,255,0.1) 100%);
+  border: 1px dashed var(--accent-primary);
+}
+
+.credits-cta-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.btn-credits-survey {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: transform 0.2s;
+}
+
+.btn-credits-survey:active {
+  transform: scale(0.98);
+}
+
+.btn-credits-bug {
+  width: 100%;
+  padding: 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.btn-credits-bug:active {
+  transform: scale(0.98);
+}
+
+.credits-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  padding-bottom: calc(16px + var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-back-credits {
+  width: 100%;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Credits card in profile */
+.credits-card {
+  background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,165,0,0.1) 100%);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  border: 1px solid rgba(255,215,0,0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.credits-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255,215,0,0.15);
+}
+
+.credits-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.credits-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #D4A000;
+}
+
+.credits-card-subtitle {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.badge-fame {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+}
+
  
 .btn-back {
   width: 100%;
@@ -2512,6 +2764,17 @@
         </div>
       </div>
 
+     <!-- Credits Card -->
+      <div class="credits-card" onclick="openCreditsPage()">
+        <div class="credits-card-header">
+          <div>
+            <div class="credits-card-title">Credits</div>
+            <div class="credits-card-subtitle">Зал славы</div>
+          </div>
+          <div class="badge-fame">FAME</div>
+        </div>
+      </div>
+      
      <!-- AI Portrait Card -->
       <div class="portrait-card" onclick="openPortraitPage()">
         <div class="portrait-card-header">
