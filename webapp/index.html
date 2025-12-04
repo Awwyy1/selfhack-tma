@@ -2686,7 +2686,61 @@
         <button class="btn-back-portrait" onclick="goBackFromPortrait()">Вернуться</button>
       </div>
     </div>    
-    
+
+    <!-- CREDITS PAGE -->
+    <div id="credits-page" class="page">
+      <div class="credits-header">
+        <div class="credits-title">Credits</div>
+        <div class="credits-subtitle">Зал славы SelfHack</div>
+      </div>
+
+      <!-- Благодарность -->
+      <div class="credits-section">
+        <div class="credits-section-title">Благодарность</div>
+        <div class="credits-text">
+          SelfHack существует благодаря людям, которые <span class="credits-highlight">верили в идею с самого начала</span>. 
+          Они тестировали, находили баги, предлагали улучшения и помогали делать продукт лучше каждый день.
+          <br><br>
+          <strong>Это их заслуга.</strong>
+        </div>
+      </div>
+
+      <!-- Hall of Fame -->
+      <div class="credits-section hall-of-fame">
+        <div class="credits-section-title">Hall of Fame</div>
+        
+        <div class="fame-member">
+          <div class="fame-avatar">J</div>
+          <div class="fame-info">
+            <div class="fame-username">@jxh_uk</div>
+            <div class="fame-contribution">Самая объёмная и детальная обратная связь. Помог найти критические баги и улучшить UX.</div>
+          </div>
+          <div class="fame-badge">Pioneer</div>
+        </div>
+
+        <!-- Здесь будут добавляться новые члены -->
+
+      </div>
+
+      <!-- CTA -->
+      <div class="credits-section credits-cta">
+        <div class="credits-section-title">Стань частью истории</div>
+        <div class="credits-cta-text">
+          Хочешь попасть в Credits? Помоги сделать SelfHack лучше — пройди опрос, сообщи о баге или предложи идею.
+        </div>
+        <button class="btn-credits-survey" onclick="openSurvey()">
+          Пройти опрос
+        </button>
+        <button class="btn-credits-bug" onclick="openBugReport()">
+          Сообщить о баге или предложить идею
+        </button>
+      </div>
+
+      <div class="credits-bottom">
+        <button class="btn-back-credits" onclick="goBackFromCredits()">Вернуться</button>
+      </div>
+    </div>
+
     <!-- ПРОФИЛЬ -->
     <div id="profile-page" class="page">
       <!-- Account Card -->
@@ -5211,6 +5265,32 @@ const Analytics = {
     let userPortraits = [];
     let currentPortraitIndex = 0;
 
+    // ========== CREDITS PAGE ==========
+    function openCreditsPage() {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('credits-page').classList.add('active');
+      document.querySelector('.navigation').style.display = 'none';
+    }
+
+    function goBackFromCredits() {
+      document.getElementById('credits-page').classList.remove('active');
+      document.getElementById('profile-page').classList.add('active');
+      document.querySelector('[data-page="profile"]').classList.add('active');
+      document.querySelector('.navigation').style.display = 'flex';
+    }
+
+    function openSurvey() {
+      window.open('https://z75ydawx339.typeform.com/to/cuo0CMq9', '_blank');
+    }
+
+    function openBugReport() {
+      goBackFromCredits();
+      setTimeout(() => {
+        showSupportPopup();
+      }, 300);
+    }
+    
     async function openPortraitPage() {
       // Проверить PRO
       if (userStats.plan !== 'PRO') {
