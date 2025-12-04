@@ -4185,6 +4185,16 @@ const Analytics = {
           if (expandedGoals.has(goal.id)) div.classList.add('expanded');
 
           let statusText = goal.status === 'achieved' ? 'Достигнута' : 'Не достигнута';
+          
+          // Дата завершения или дедлайна
+          let dateText = '';
+          const completedDate = goal.completed_at || goal.target_date;
+          if (completedDate) {
+            const date = new Date(completedDate);
+            const day = date.getUTCDate();
+            const month = monthNames[date.getUTCMonth()].toLowerCase();
+            dateText = `${day} ${month}`;
+          }
 
           div.innerHTML = `
             <div class="goal-header" onclick="toggleGoal(${goal.id})">
@@ -4192,6 +4202,7 @@ const Analytics = {
                 <div class="goal-text">${goal.text}</div>
                 <div class="goal-meta">
                   <span class="goal-status ${goal.status}">${statusText}</span>
+                  ${dateText ? `<span class="goal-meta-separator">·</span><span>${dateText}</span>` : ''}
                 </div>
               </div>
               <div class="goal-expand-icon">›</div>
