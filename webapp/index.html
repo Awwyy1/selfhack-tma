@@ -4167,7 +4167,18 @@ const Analytics = {
         completedSection.style.marginTop = '24px';
         completedSection.innerHTML = '<div style="font-size: 12px; color: var(--text-tertiary); font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Завершённые</div>';
 
-        completedGoals.forEach(goal => {
+        // Сортировка: сначала achieved, потом failed, внутри по дате (новые сверху)
+        const sortedCompletedGoals = [...completedGoals].sort((a, b) => {
+          // Сначала по статусу: achieved перед failed
+          if (a.status === 'achieved' && b.status !== 'achieved') return -1;
+          if (a.status !== 'achieved' && b.status === 'achieved') return 1;
+          // Затем по дате (новые сверху)
+          const dateA = a.completed_at || a.target_date || '1970-01-01';
+          const dateB = b.completed_at || b.target_date || '1970-01-01';
+          return new Date(dateB) - new Date(dateA);
+        });
+
+        sortedCompletedGoals.forEach(goal => {
           const div = document.createElement('div');
           div.className = `goal-item ${goal.status}`;
           div.id = `goal-${goal.id}`;
