@@ -1018,53 +1018,354 @@
       padding: 16px;
     }
 
+    .goal-tip {
+      background: var(--accent-lighter);
+      border-left: 3px solid var(--accent-primary);
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      border-radius: 0 8px 8px 0;
+    }
+
     .goal-item {
       background: var(--bg-secondary);
       border-radius: 12px;
-      padding: 16px;
-      padding-right: 36px;
       margin-bottom: 12px;
       border-left: 4px solid var(--accent-primary);
       box-shadow: 0 2px 8px var(--shadow-color);
-      position: relative;
-      transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .goal-text {
-      font-size: 14px;
-      color: var(--text-primary);
-      line-height: 1.4;
-      transition: color 0.3s ease;
-    }
-
-    .goal-date {
-      font-size: 11px;
-      color: var(--text-tertiary);
-      margin-top: 6px;
-      transition: color 0.3s ease;
-    }
-
-    .goal-delete {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 20px;
-      height: 20px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
+      overflow: hidden;
       transition: all 0.3s ease;
     }
 
-    .goal-delete:hover {
+    .goal-header {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .goal-header:active {
+      background: var(--bg-tertiary);
+    }
+
+    .goal-header-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .goal-text {
+      font-size: 15px;
+      color: var(--text-primary);
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+
+    .goal-meta {
+      font-size: 12px;
       color: var(--text-tertiary);
-      background: var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .goal-meta-separator {
+      color: var(--text-muted);
+    }
+
+    .goal-expand-icon {
+      font-size: 18px;
+      color: var(--text-muted);
+      margin-left: 12px;
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .goal-item.expanded .goal-expand-icon {
+      transform: rotate(90deg);
+    }
+
+    .goal-body {
+      display: none;
+      border-top: 1px solid var(--border-light);
+      padding: 16px;
+    }
+
+    .goal-item.expanded .goal-body {
+      display: block;
+    }
+
+    /* Подцели */
+    .subgoals-section {
+      margin-bottom: 20px;
+    }
+
+    .subgoals-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .subgoal-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--bg-primary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .subgoal-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .subgoal-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .subgoal-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 50%;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .subgoal-item.completed .subgoal-checkbox {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .subgoal-checkbox-icon {
+      color: white;
+      font-size: 12px;
+      opacity: 0;
+    }
+
+    .subgoal-item.completed .subgoal-checkbox-icon {
+      opacity: 1;
+    }
+
+    .subgoal-text {
+      flex: 1;
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .subgoal-item.completed .subgoal-text {
+      text-decoration: line-through;
+      color: var(--text-tertiary);
+    }
+
+    /* Редактирование подцели */
+    .subgoal-edit {
+      display: none;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .subgoal-edit.active {
+      display: block;
+    }
+
+    .subgoal-edit-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+
+    .subgoal-edit-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+    }
+
+    .subgoal-edit-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .subgoal-edit-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+    }
+
+    .subgoal-edit-btn:active {
+      opacity: 0.8;
+    }
+
+    .subgoal-edit-btn.save {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .subgoal-edit-btn.delete {
+      background: var(--error-light);
+      color: var(--error);
+    }
+
+    .subgoal-edit-btn.cancel {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Кнопки добавления подцелей */
+    .subgoal-add-buttons {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-add-subgoal {
+      padding: 10px 14px;
+      background: var(--bg-primary);
+      border: 1px dashed var(--border-color);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .btn-add-subgoal:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .btn-ai-subgoals {
+      padding: 10px 14px;
+      background: linear-gradient(135deg, rgba(255,107,53,0.1) 0%, rgba(255,140,66,0.1) 100%);
+      border: 1px solid rgba(255,107,53,0.3);
+      border-radius: 8px;
+      color: #FF6B35;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-ai-subgoals:hover {
+      background: linear-gradient(135deg, rgba(255,107,53,0.2) 0%, rgba(255,140,66,0.2) 100%);
+    }
+
+    .btn-ai-subgoals .badge-pro-small {
+      background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      color: white;
+    }
+
+    .subgoal-upsell {
+      padding: 10px 14px;
+      background: linear-gradient(135deg, rgba(255,107,53,0.05) 0%, rgba(255,140,66,0.05) 100%);
+      border: 1px dashed rgba(255,107,53,0.3);
+      border-radius: 8px;
+      color: var(--text-tertiary);
+      font-size: 12px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .subgoal-upsell:hover {
+      background: linear-gradient(135deg, rgba(255,107,53,0.1) 0%, rgba(255,140,66,0.1) 100%);
+    }
+
+    .subgoal-limit-warning {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      text-align: center;
+      padding: 8px;
+    }
+
+    /* Действия с целью */
+    .goal-actions {
+      border-top: 1px solid var(--border-light);
+      padding-top: 16px;
+      margin-top: 4px;
+    }
+
+    .goal-actions-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .goal-action-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .goal-action-btn:last-child {
+      margin-bottom: 0;
+    }
+
+    .goal-action-btn:active {
+      transform: scale(0.98);
+    }
+
+    .goal-action-btn.achieved {
+      background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+      color: white;
+    }
+
+    .goal-action-btn.edit {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .goal-action-btn.delete {
+      background: var(--bg-primary);
+      color: var(--error);
+      border: 1px solid var(--border-color);
+    }
+
+    .goal-action-btn.collapse {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
     }
 
     .add-goal {
@@ -1077,7 +1378,11 @@
       color: var(--accent-primary);
       font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+      transition: background-color 0.3s ease;
+    }
+
+    .add-goal:hover {
+      background: var(--accent-lighter);
     }
 
     .goals-empty {
@@ -1085,7 +1390,6 @@
       padding: 32px 16px;
       color: var(--text-tertiary);
       font-size: 14px;
-      transition: color 0.3s ease;
     }
     
     /* ========== ПРОФИЛЬ ========== */
@@ -2951,6 +3255,9 @@
   <div class="popup" id="add-goal-popup">
     <div class="popup-content large" style="text-align: left;">
       <div class="popup-title" style="text-align: center;">Новая цель</div>
+      <div class="goal-tip">
+        Совет: конкретная цель с цифрами и сроком достигается в 3 раза чаще
+      </div>
       <label class="popup-label">Описание цели</label>
       <textarea id="goal-text-input" class="popup-input" style="resize: none;" placeholder="Чего ты хочешь достичь?"></textarea>
       <label class="popup-label">Дата достижения</label>
@@ -3790,18 +4097,19 @@ const Analytics = {
       const container = document.getElementById('goals-container');
       container.innerHTML = '';
 
-      // Filter out completed goals for main display (only show active)
       const activeGoals = userGoals.filter(g => !g.status || g.status === 'active');
       const completedGoals = userGoals.filter(g => g.status && g.status !== 'active');
 
       if (activeGoals.length === 0 && completedGoals.length === 0) {
-        container.innerHTML = '<div class="goals-empty">Пока нет целей. Добавьте свою первую цель!</div>';
+        container.innerHTML = '<div class="goals-empty">Пока нет целей. Добавь свою первую цель!</div>';
+        document.getElementById('profile-goals-count').textContent = '0';
         return;
       }
 
       const today = formatDateGMT(getGMTDate());
+      const isPro = userStats.plan === 'PRO';
 
-      // Sort by target_date ascending (nearest first)
+      // Сортировка по дате
       const sortedGoals = [...activeGoals].sort((a, b) => {
         if (!a.target_date && !b.target_date) return 0;
         if (!a.target_date) return 1;
@@ -3811,134 +4119,192 @@ const Analytics = {
 
       sortedGoals.forEach(goal => {
         const div = document.createElement('div');
-        div.className = 'goal-item clickable';
-        div.onclick = (e) => {
-          // Не открывать если клик на кнопке удаления или валидации
-          if (e.target.closest('.goal-delete') || e.target.closest('.goal-validation-btn')) {
-            return;
-          }
-          openEditGoalPopup(goal.id, e);
-        };
+        div.className = 'goal-item';
+        div.id = `goal-${goal.id}`;
 
-        // Check if goal is overdue (past date but still active)
         const isOverdue = goal.target_date && goal.target_date < today;
-        const isToday = goal.target_date && goal.target_date === today;
+        if (isOverdue) div.classList.add('overdue');
+        if (expandedGoals.has(goal.id)) div.classList.add('expanded');
 
-        if (isOverdue) {
-          div.classList.add('overdue');
-        } else if (isToday) {
-          div.classList.add('needs-validation');
-        }
+        // Подцели
+        const subgoals = goal.subgoals || [];
+        const completedSubgoals = subgoals.filter(s => s.is_completed).length;
+        const hasSubgoals = subgoals.length > 0;
 
-        // Check if goal was extended
-        if (goal.was_extended) {
-          div.classList.add('extended');
-        }
-
-        let dateText = '';
-        let validationButtons = '';
-        let statusText = '';
-
+        // Мета информация
+        let metaText = '';
         if (goal.target_date) {
           const date = new Date(goal.target_date);
           const day = date.getUTCDate();
-          const month = monthNames[date.getUTCMonth()];
-          const year = date.getUTCFullYear();
-
-          const isTodayDate = goal.target_date === today;
-          const isPast = goal.target_date < today;
-
-          let dateLabel = `До ${day} ${month.toLowerCase()} ${year}`;
-          if (isTodayDate) {
-            dateLabel += ' - СЕГОДНЯ';
-          } else if (isPast) {
-            dateLabel += ' - ПРОСРОЧЕНО';
-            statusText = '<div class="goal-status overdue">Просрочена</div>';
-          }
-
-          dateText = `<div class="goal-date">${dateLabel}</div>`;
-
-          // Show validation buttons only for today's goals, not overdue ones
-          if (isToday) {
-            validationButtons = `
-              <div class="goal-validation-buttons">
-                <button class="goal-validation-btn achieved" onclick="validateGoalFromCard(${goal.id}, 'achieved')">Достигнута</button>
-                <button class="goal-validation-btn extend" onclick="validateGoalFromCard(${goal.id}, 'extend')">Продлить</button>
-                <button class="goal-validation-btn failed" onclick="validateGoalFromCard(${goal.id}, 'failed')">Нет</button>
-              </div>
-            `;
-          }
+          const month = monthNames[date.getUTCMonth()].toLowerCase();
+          metaText = `До ${day} ${month}`;
+        }
+        if (hasSubgoals) {
+          if (metaText) metaText += ' <span class="goal-meta-separator">·</span> ';
+          metaText += `${completedSubgoals}/${subgoals.length} подцелей`;
         }
 
         div.innerHTML = `
-          <div class="goal-text">${goal.text}</div>
-          ${dateText}
-          ${statusText}
-          ${validationButtons}
-          <button class="goal-delete" onclick="showDeleteConfirmation(${goal.id})">x</button>
+          <div class="goal-header" onclick="toggleGoal(${goal.id})">
+            <div class="goal-header-content">
+              <div class="goal-text">${goal.text}</div>
+              ${metaText ? `<div class="goal-meta">${metaText}</div>` : ''}
+            </div>
+            <div class="goal-expand-icon">›</div>
+          </div>
+          <div class="goal-body">
+            ${renderSubgoalsSection(goal, subgoals, isPro)}
+            ${renderGoalActions(goal)}
+          </div>
         `;
+
         container.appendChild(div);
       });
 
-      // Show completed goals section if any
+      // Завершённые цели
       if (completedGoals.length > 0) {
         const completedSection = document.createElement('div');
         completedSection.style.marginTop = '24px';
-        completedSection.innerHTML = '<h4 style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 12px;">ЗАВЕРШЕННЫЕ ЦЕЛИ</h4>';
+        completedSection.innerHTML = '<div style="font-size: 12px; color: var(--text-tertiary); font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Завершённые</div>';
 
-        // Sort completed goals: achieved first, then failed, all by date descending
-        const sortedCompletedGoals = [...completedGoals].sort((a, b) => {
-          // First sort by status: achieved comes before failed
-          if (a.status === 'achieved' && b.status !== 'achieved') return -1;
-          if (a.status !== 'achieved' && b.status === 'achieved') return 1;
-
-          // Then sort by date descending (newest first)
-          if (!a.target_date && !b.target_date) return 0;
-          if (!a.target_date) return 1;
-          if (!b.target_date) return -1;
-          return new Date(b.target_date) - new Date(a.target_date);
-        });
-
-        sortedCompletedGoals.forEach(goal => {
+        completedGoals.forEach(goal => {
           const div = document.createElement('div');
           div.className = `goal-item ${goal.status}`;
+          div.id = `goal-${goal.id}`;
+          if (expandedGoals.has(goal.id)) div.classList.add('expanded');
 
-          let dateText = '';
-          let statusText = '';
-
-          if (goal.target_date) {
-            const date = new Date(goal.target_date);
-            const day = date.getUTCDate();
-            const month = monthNames[date.getUTCMonth()];
-            dateText = `<div class="goal-date">${day} ${month.toLowerCase()}</div>`;
-          }
-
-          if (goal.status === 'achieved') {
-            statusText = '<div class="goal-status achieved">Достигнута</div>';
-          } else if (goal.status === 'failed') {
-            statusText = '<div class="goal-status failed">Не достигнута</div>';
-          }
+          let statusText = goal.status === 'achieved' ? 'Достигнута' : 'Не достигнута';
 
           div.innerHTML = `
-            <div class="goal-text">${goal.text}</div>
-            ${dateText}
-            ${statusText}
-            <button class="goal-delete" onclick="showDeleteConfirmation(${goal.id})">x</button>
+            <div class="goal-header" onclick="toggleGoal(${goal.id})">
+              <div class="goal-header-content">
+                <div class="goal-text">${goal.text}</div>
+                <div class="goal-meta">
+                  <span class="goal-status ${goal.status}">${statusText}</span>
+                </div>
+              </div>
+              <div class="goal-expand-icon">›</div>
+            </div>
+            <div class="goal-body">
+              <div class="goal-actions">
+                <button class="goal-action-btn delete" onclick="showDeleteConfirmation(${goal.id})">Удалить</button>
+                <button class="goal-action-btn collapse" onclick="toggleGoal(${goal.id})">Свернуть</button>
+              </div>
+            </div>
           `;
+
           completedSection.appendChild(div);
         });
 
         container.appendChild(completedSection);
       }
 
-      // Update profile goals count (only active)
-      const goalsCountEl = document.getElementById('profile-goals-count');
-      if (goalsCountEl) {
-        goalsCountEl.textContent = activeGoals.length;
+      document.getElementById('profile-goals-count').textContent = activeGoals.length;
+      renderCalendar();
+    }
+
+    function renderSubgoalsSection(goal, subgoals, isPro) {
+      let html = '<div class="subgoals-section">';
+      html += '<div class="subgoals-title">Подцели</div>';
+
+      // Список подцелей
+      if (subgoals.length > 0) {
+        subgoals.forEach(sub => {
+          html += `
+            <div class="subgoal-item ${sub.is_completed ? 'completed' : ''}" onclick="openSubgoalEdit(${goal.id}, '${sub.id}', event)">
+              <div class="subgoal-checkbox">
+                <span class="subgoal-checkbox-icon">✓</span>
+              </div>
+              <div class="subgoal-text">${sub.text}</div>
+            </div>
+            <div class="subgoal-edit" id="subgoal-edit-${sub.id}">
+              <input type="text" class="subgoal-edit-input" id="subgoal-input-${sub.id}" value="${sub.text}">
+              <div class="subgoal-edit-buttons">
+                <button class="subgoal-edit-btn save" onclick="saveSubgoal('${sub.id}', ${goal.id})">Сохранить</button>
+                <button class="subgoal-edit-btn delete" onclick="deleteSubgoal('${sub.id}', ${goal.id})">Удалить</button>
+                <button class="subgoal-edit-btn cancel" onclick="closeSubgoalEdit()">Отмена</button>
+              </div>
+              <div style="margin-top: 10px;">
+                <button class="subgoal-edit-btn ${sub.is_completed ? 'cancel' : 'save'}" style="width: 100%;" onclick="toggleSubgoalComplete('${sub.id}', ${goal.id}, ${!sub.is_completed})">
+                  ${sub.is_completed ? 'Отметить невыполненной' : 'Отметить выполненной'}
+                </button>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        html += '<div style="font-size: 13px; color: var(--text-tertiary); padding: 8px 0;">Подцелей пока нет</div>';
       }
 
-      // Re-render calendar to update goal highlights
-      renderCalendar();
+      // Кнопки добавления
+      html += '<div class="subgoal-add-buttons">';
+
+      if (subgoals.length < 10) {
+        html += `<button class="btn-add-subgoal" onclick="showAddSubgoalInput(${goal.id})">+ Добавить подцель</button>`;
+
+        if (isPro) {
+          html += `
+            <button class="btn-ai-subgoals" onclick="generateSubgoalsAI(${goal.id})">
+              AI: Разбить на подцели
+              <span class="badge-pro-small">PRO</span>
+            </button>
+          `;
+        } else {
+          html += `
+            <div class="subgoal-upsell" onclick="openTariffsPage()">
+              AI-генерация подцелей доступна в PRO
+            </div>
+          `;
+        }
+      } else {
+        html += '<div class="subgoal-limit-warning">Максимум 10 подцелей на одну цель</div>';
+      }
+
+      html += '</div>';
+
+      // Поле добавления подцели
+      html += `
+        <div class="subgoal-edit" id="add-subgoal-${goal.id}" style="margin-top: 12px;">
+          <input type="text" class="subgoal-edit-input" id="new-subgoal-input-${goal.id}" placeholder="Текст подцели...">
+          <div class="subgoal-edit-buttons">
+            <button class="subgoal-edit-btn save" onclick="addSubgoal(${goal.id})">Добавить</button>
+            <button class="subgoal-edit-btn cancel" onclick="hideAddSubgoalInput(${goal.id})">Отмена</button>
+          </div>
+        </div>
+      `;
+
+      html += '</div>';
+      return html;
+    }
+
+    function renderGoalActions(goal) {
+      return `
+        <div class="goal-actions">
+          <div class="goal-actions-title">Действия</div>
+          <button class="goal-action-btn achieved" onclick="markGoalAchievedFromCard(${goal.id})">Отметить достигнутой</button>
+          <button class="goal-action-btn edit" onclick="openEditGoalPopup(${goal.id})">Редактировать</button>
+          <button class="goal-action-btn delete" onclick="showDeleteConfirmation(${goal.id})">Удалить</button>
+          <button class="goal-action-btn collapse" onclick="toggleGoal(${goal.id})">Свернуть</button>
+        </div>
+      `;
+    }
+
+    function toggleGoal(goalId) {
+      if (expandedGoals.has(goalId)) {
+        expandedGoals.delete(goalId);
+      } else {
+        expandedGoals.add(goalId);
+      }
+      const el = document.getElementById(`goal-${goalId}`);
+      if (el) {
+        el.classList.toggle('expanded');
+      }
+    }
+
+    async function markGoalAchievedFromCard(goalId) {
+      goalToEdit = userGoals.find(g => g.id === goalId);
+      if (!goalToEdit) return;
+      await markGoalAchievedEarly();
     }
 
     // Show goal on date popup
@@ -3996,8 +4362,10 @@ const Analytics = {
     }
 
     // Delete confirmation
-    let goalToDelete = null;
+   let goalToDelete = null;
     let goalToEdit = null;
+    let expandedGoals = new Set(); // Какие цели развёрнуты
+    let editingSubgoalId = null; // Какую подцель редактируем
 
     function showDeleteConfirmation(goalId) {
       goalToDelete = goalId;
