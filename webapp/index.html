@@ -4555,8 +4555,17 @@ const Analytics = {
         return;
       }
 
-      // Показать loading
-      tg.showAlert('Генерирую подцели...');
+      // Показать loading на кнопке
+      const btn = document.querySelector(`#goal-${goalId} .btn-ai-subgoals`);
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Генерирую...';
+      }
+
+      // Haptic feedback
+      if (tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('medium');
+      }
 
       try {
         const response = await fetch('/api/goals', {
@@ -4580,16 +4589,35 @@ const Analytics = {
           // Добавить локально
           if (!goal.subgoals) goal.subgoals = [];
           goal.subgoals.push(...data.subgoals);
+          
+          // Haptic success
+          if (tg.HapticFeedback) {
+            tg.HapticFeedback.notificationOccurred('success');
+          }
+          
+          // Перерендерить цели (кнопка обновится автоматически)
           renderGoals();
-          tg.showAlert(`Добавлено ${data.subgoals.length} подцелей`);
+          
+          // Показать результат
+          tg.showAlert(`✅ Добавлено ${data.subgoals.length} подцелей`);
         } else {
+          // Восстановить кнопку при ошибке
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'AI: Разбить на подцели <span class="badge-pro-small">PRO</span>';
+          }
           tg.showAlert(data.message || 'Ошибка генерации');
         }
       } catch (error) {
         console.error('Generate subgoals error:', error);
+        // Восстановить кнопку при ошибке
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = 'AI: Разбить на подцели <span class="badge-pro-small">PRO</span>';
+        }
         tg.showAlert('Ошибка генерации подцелей');
       }
-    }    
+    }
 
     // Show goal on date popup
     function showGoalOnDate(dateStr, goals) {
