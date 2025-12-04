@@ -4307,6 +4307,268 @@ const Analytics = {
       await markGoalAchievedEarly();
     }
 
+    // ========== SUBGOALS ==========
+    function openSubgoalEdit(goalId, subgoalId, event) {
+      event.stopPropagation();
+
+      // Закрыть предыдущее редактирование
+      closeSubgoalEdit();
+
+      editingSubgoalId = subgoalId;
+      const editEl = document.getElementById(`subgoal-edit-${subgoalId}`);
+      if (editEl) {
+        editEl.classList.add('active');
+        const input = document.getElementById(`subgoal-input-${subgoalId}`);
+        if (input) input.focus();
+      }
+    }
+
+    function closeSubgoalEdit() {
+      if (editingSubgoalId) {
+        const editEl = document.getElementById(`subgoal-edit-${editingSubgoalId}`);
+        if (editEl) editEl.classList.remove('active');
+      }
+      editingSubgoalId = null;
+
+      // Также скрыть все поля добавления
+      document.querySelectorAll('[id^="add-subgoal-"]').forEach(el => {
+        el.classList.remove('active');
+      });
+    }
+
+    function showAddSubgoalInput(goalId) {
+      closeSubgoalEdit();
+      const el = document.getElementById(`add-subgoal-${goalId}`);
+      if (el) {
+        el.classList.add('active');
+        const input = document.getElementById(`new-subgoal-input-${goalId}`);
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+      }
+    }
+
+    function hideAddSubgoalInput(goalId) {
+      const el = document.getElementById(`add-subgoal-${goalId}`);
+      if (el) el.classList.remove('active');
+    }
+
+    async function addSubgoal(goalId) {
+      const input = document.getElementById(`new-subgoal-input-${goalId}`);
+      const text = input?.value.trim();
+
+      if (!text) {
+        tg.showAlert('Введи текст подцели');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            action: 'add-subgoal',
+            user_id: user?.id || 0,
+            goal_id: goalId,
+            text: text
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Добавить подцель локально
+          const goal = userGoals.find(g => g.id === goalId);
+          if (goal) {
+            if (!goal.subgoals) goal.subgoals = [];
+            goal.subgoals.push(data.subgoal);
+          }
+          hideAddSubgoalInput(goalId);
+          renderGoals();
+        } else {
+          tg.showAlert(data.message || 'Ошибка добавления');
+        }
+      } catch (error) {
+        console.error('Add subgoal error:', error);
+        tg.showAlert('Ошибка добавления подцели');
+      }
+    }
+
+    async function saveSubgoal(subgoalId, goalId) {
+      const input = document.getElementById(`subgoal-input-${subgoalId}`);
+      const text = input?.value.trim();
+
+      if (!text) {
+        tg.showAlert('Введи текст подцели');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            action: 'update-subgoal',
+            user_id: user?.id || 0,
+            subgoal_id: subgoalId,
+            text: text
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Обновить локально
+          const goal = userGoals.find(g => g.id === goalId);
+          if (goal && goal.subgoals) {
+            const sub = goal.subgoals.find(s => s.id === subgoalId);
+            if (sub) sub.text = text;
+          }
+          closeSubgoalEdit();
+          renderGoals();
+        } else {
+          tg.showAlert(data.message || 'Ошибка сохранения');
+        }
+      } catch (error) {
+        console.error('Save subgoal error:', error);
+        tg.showAlert('Ошибка сохранения');
+      }
+    }
+
+    async function deleteSubgoal(subgoalId, goalId) {
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            action: 'delete-subgoal',
+            user_id: user?.id || 0,
+            subgoal_id: subgoalId
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Удалить локально
+          const goal = userGoals.find(g => g.id === goalId);
+          if (goal && goal.subgoals) {
+            goal.subgoals = goal.subgoals.filter(s => s.id !== subgoalId);
+          }
+          closeSubgoalEdit();
+          renderGoals();
+        } else {
+          tg.showAlert(data.message || 'Ошибка удаления');
+        }
+      } catch (error) {
+        console.error('Delete subgoal error:', error);
+        tg.showAlert('Ошибка удаления');
+      }
+    }
+
+    async function toggleSubgoalComplete(subgoalId, goalId, isCompleted) {
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            action: 'update-subgoal',
+            user_id: user?.id || 0,
+            subgoal_id: subgoalId,
+            is_completed: isCompleted
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Обновить локально
+          const goal = userGoals.find(g => g.id === goalId);
+          if (goal && goal.subgoals) {
+            const sub = goal.subgoals.find(s => s.id === subgoalId);
+            if (sub) sub.is_completed = isCompleted;
+          }
+          closeSubgoalEdit();
+          renderGoals();
+
+          if (isCompleted && tg.HapticFeedback) {
+            tg.HapticFeedback.notificationOccurred('success');
+          }
+        } else {
+          tg.showAlert(data.message || 'Ошибка');
+        }
+      } catch (error) {
+        console.error('Toggle subgoal error:', error);
+        tg.showAlert('Ошибка');
+      }
+    }
+
+    async function generateSubgoalsAI(goalId) {
+      const goal = userGoals.find(g => g.id === goalId);
+      if (!goal) return;
+
+      if (userStats.plan !== 'PRO') {
+        tg.showAlert('AI-генерация подцелей доступна только в PRO');
+        openTariffsPage();
+        return;
+      }
+
+      // Проверить лимит
+      const currentSubgoals = goal.subgoals?.length || 0;
+      if (currentSubgoals >= 10) {
+        tg.showAlert('Достигнут лимит в 10 подцелей');
+        return;
+      }
+
+      // Показать loading
+      tg.showAlert('Генерирую подцели...');
+
+      try {
+        const response = await fetch('/api/goals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: JSON.stringify({
+            action: 'generate-subgoals',
+            user_id: user?.id || 0,
+            goal_id: goalId,
+            goal_text: goal.text,
+            existing_count: currentSubgoals
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.subgoals) {
+          // Добавить локально
+          if (!goal.subgoals) goal.subgoals = [];
+          goal.subgoals.push(...data.subgoals);
+          renderGoals();
+          tg.showAlert(`Добавлено ${data.subgoals.length} подцелей`);
+        } else {
+          tg.showAlert(data.message || 'Ошибка генерации');
+        }
+      } catch (error) {
+        console.error('Generate subgoals error:', error);
+        tg.showAlert('Ошибка генерации подцелей');
+      }
+    }    
+
     // Show goal on date popup
     function showGoalOnDate(dateStr, goals) {
       const container = document.getElementById('view-goal-text');
