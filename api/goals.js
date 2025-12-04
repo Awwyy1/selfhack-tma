@@ -64,7 +64,7 @@ export default async function handler(req, res) {
 
   // POST - Add goal or subgoal
   if (method === 'POST') {
-    const { user_id, text, target_date, action, goal_id } = req.body;
+    const { user_id, text, target_date, action, goal_id, goal_text, existing_count } = req.body;
 
     if (!user_id) {
       return res.status(400).json({ error: 'Missing user_id' });
