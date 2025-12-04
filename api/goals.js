@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js';
+import { anthropic } from '../lib/claude.js';
 
 export default async function handler(req, res) {
   const { method } = req;
@@ -120,12 +121,95 @@ export default async function handler(req, res) {
       }
     }
 
-    // Generate subgoals with AI - временно отключено
+    // Generate subgoals with AI
     if (action === 'generate-subgoals') {
-      return res.status(200).json({
-        success: false,
-        message: 'AI-генерация временно недоступна'
-      });
+      if (!goal_id || !goal_text) {
+        return res.status(400).json({ error: 'Missing goal_id or goal_text' });
+      }
+
+      try {
+        // Check how many subgoals can be added (max 10)
+        const { count: currentCount } = await supabase
+          .from('subgoals')
+          .select('*', { count: 'exact', head: true })
+          .eq('goal_id', goal_id);
+
+        const maxToGenerate = 10 - (currentCount || 0);
+        if (maxToGenerate <= 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'Достигнут лимит подцелей'
+          });
+        }
+
+        const numToGenerate = Math.min(maxToGenerate, 5);
+
+        // Generate with Claude
+        const aiResponse = await anthropic.messages.create({
+          model: 'claude-sonnet-4-5-20250929',
+          max_tokens: 500,
+          temperature: 0.7,
+          system: `Ты помощник по декомпозиции целей. Разбей цель пользователя на ${numToGenerate} конкретных, измеримых подцелей (шагов). 
+
+Правила:
+- Каждая подцель должна быть конкретным действием
+- Подцели должны быть последовательными шагами к главной цели
+- Формулируй кратко, 5-10 слов максимум
+- Отвечай ТОЛЬКО JSON массивом строк, без пояснений и markdown
+
+Пример ответа:
+["Подцель 1", "Подцель 2", "Подцель 3"]`,
+          messages: [
+            { role: 'user', content: `Цель: "${goal_text}"` }
+          ]
+        });
+
+        let subgoalTexts = [];
+        try {
+          const content = aiResponse.content[0].text.trim();
+          // Убрать возможные markdown обёртки
+          const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          subgoalTexts = JSON.parse(cleanContent);
+          if (!Array.isArray(subgoalTexts)) {
+            throw new Error('Not an array');
+          }
+        } catch (parseError) {
+          console.error('Parse AI response error:', parseError, aiResponse.content[0].text);
+          return res.status(500).json({
+            success: false,
+            message: 'Ошибка генерации подцелей'
+          });
+        }
+
+        // Insert subgoals
+        const subgoalsToInsert = subgoalTexts.slice(0, numToGenerate).map((text, i) => ({
+          goal_id: goal_id,
+          telegram_user_id: user_id,
+          text: String(text).trim(),
+          sort_order: (currentCount || 0) + i
+        }));
+
+        const { data: insertedSubgoals, error: insertError } = await supabase
+          .from('subgoals')
+          .insert(subgoalsToInsert)
+          .select();
+
+        if (insertError) throw insertError;
+
+        console.log(`Generated ${insertedSubgoals.length} subgoals for goal ${goal_id}`);
+
+        return res.status(200).json({
+          success: true,
+          subgoals: insertedSubgoals
+        });
+
+      } catch (error) {
+        console.error('Generate subgoals error:', error);
+        return res.status(500).json({
+          error: 'Internal error',
+          message: 'Error generating subgoals'
+        });
+      }
     }
 
     // Add regular goal (default action)
