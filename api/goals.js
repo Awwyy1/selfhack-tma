@@ -1,9 +1,4 @@
 import { supabase } from '../lib/supabase.js';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
 
 export default async function handler(req, res) {
   const { method } = req;
@@ -37,8 +32,13 @@ export default async function handler(req, res) {
           .in('goal_id', goalIds)
           .order('sort_order', { ascending: true });
 
-        if (subgoalsError) throw subgoalsError;
-        subgoals = subgoalsData || [];
+        if (subgoalsError) {
+          console.error('Subgoals load error:', subgoalsError);
+          // Продолжаем без подцелей если таблица не существует
+          subgoals = [];
+        } else {
+          subgoals = subgoalsData || [];
+        }
       }
 
       // Attach subgoals to their goals
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
 
   // POST - Add goal or subgoal
   if (method === 'POST') {
-    const { user_id, text, target_date, action, goal_id, goal_text, existing_count } = req.body;
+    const { user_id, text, target_date, action, goal_id } = req.body;
 
     if (!user_id) {
       return res.status(400).json({ error: 'Missing user_id' });
@@ -120,100 +120,12 @@ export default async function handler(req, res) {
       }
     }
 
-    // Generate subgoals with AI
+    // Generate subgoals with AI - временно отключено
     if (action === 'generate-subgoals') {
-      if (!goal_id || !goal_text) {
-        return res.status(400).json({ error: 'Missing goal_id or goal_text' });
-      }
-
-      try {
-        // Check how many subgoals can be added (max 10)
-        const maxToGenerate = 10 - (existing_count || 0);
-        if (maxToGenerate <= 0) {
-          return res.status(400).json({
-            success: false,
-            message: 'Достигнут лимит подцелей'
-          });
-        }
-
-        const numToGenerate = Math.min(maxToGenerate, 5);
-
-        // Generate with AI
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `Ты помощник по декомпозиции целей. Разбей цель пользователя на ${numToGenerate} конкретных, измеримых подцелей (шагов). 
-              
-Правила:
-- Каждая подцель должна быть конкретным действием
-- Подцели должны быть последовательными шагами к главной цели
-- Формулируй кратко, 5-10 слов максимум
-- Отвечай ТОЛЬКО JSON массивом строк, без пояснений
-
-Пример ответа:
-["Подцель 1", "Подцель 2", "Подцель 3"]`
-            },
-            {
-              role: 'user',
-              content: `Цель: "${goal_text}"`
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 500
-        });
-
-        let subgoalTexts = [];
-        try {
-          const content = completion.choices[0].message.content.trim();
-          subgoalTexts = JSON.parse(content);
-          if (!Array.isArray(subgoalTexts)) {
-            throw new Error('Not an array');
-          }
-        } catch (parseError) {
-          console.error('Parse AI response error:', parseError);
-          return res.status(500).json({
-            success: false,
-            message: 'Ошибка генерации подцелей'
-          });
-        }
-
-        // Get current count for sort_order
-        const { count: currentCount } = await supabase
-          .from('subgoals')
-          .select('*', { count: 'exact', head: true })
-          .eq('goal_id', goal_id);
-
-        // Insert subgoals
-        const subgoalsToInsert = subgoalTexts.slice(0, numToGenerate).map((text, i) => ({
-          goal_id: goal_id,
-          telegram_user_id: user_id,
-          text: text.trim(),
-          sort_order: (currentCount || 0) + i
-        }));
-
-        const { data: insertedSubgoals, error: insertError } = await supabase
-          .from('subgoals')
-          .insert(subgoalsToInsert)
-          .select();
-
-        if (insertError) throw insertError;
-
-        console.log(`Generated ${insertedSubgoals.length} subgoals for goal ${goal_id}`);
-
-        return res.status(200).json({
-          success: true,
-          subgoals: insertedSubgoals
-        });
-
-      } catch (error) {
-        console.error('Generate subgoals error:', error);
-        return res.status(500).json({
-          error: 'Internal error',
-          message: 'Error generating subgoals'
-        });
-      }
+      return res.status(200).json({
+        success: false,
+        message: 'AI-генерация временно недоступна'
+      });
     }
 
     // Add regular goal (default action)
