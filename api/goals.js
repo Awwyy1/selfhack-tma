@@ -1,9 +1,14 @@
 import { supabase } from '../lib/supabase.js';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 export default async function handler(req, res) {
   const { method } = req;
 
-  // GET - Load goals
+  // GET - Load goals with subgoals
   if (method === 'GET') {
     const { user_id } = req.query;
 
@@ -12,17 +17,39 @@ export default async function handler(req, res) {
     }
 
     try {
-      const { data: goals, error } = await supabase
+      // Load goals
+      const { data: goals, error: goalsError } = await supabase
         .from('goals')
         .select('*')
         .eq('telegram_user_id', user_id)
         .order('target_date', { ascending: true, nullsFirst: false });
 
-      if (error) throw error;
+      if (goalsError) throw goalsError;
+
+      // Load subgoals for all goals
+      const goalIds = goals?.map(g => g.id) || [];
+      
+      let subgoals = [];
+      if (goalIds.length > 0) {
+        const { data: subgoalsData, error: subgoalsError } = await supabase
+          .from('subgoals')
+          .select('*')
+          .in('goal_id', goalIds)
+          .order('sort_order', { ascending: true });
+
+        if (subgoalsError) throw subgoalsError;
+        subgoals = subgoalsData || [];
+      }
+
+      // Attach subgoals to their goals
+      const goalsWithSubgoals = goals?.map(goal => ({
+        ...goal,
+        subgoals: subgoals.filter(s => s.goal_id === goal.id)
+      })) || [];
 
       return res.status(200).json({
         success: true,
-        goals: goals || []
+        goals: goalsWithSubgoals
       });
 
     } catch (error) {
@@ -34,12 +61,164 @@ export default async function handler(req, res) {
     }
   }
 
-  // POST - Add goal
+  // POST - Add goal or subgoal
   if (method === 'POST') {
-    const { user_id, text, target_date } = req.body;
+    const { user_id, text, target_date, action, goal_id, goal_text, existing_count } = req.body;
 
-    if (!user_id || !text) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!user_id) {
+      return res.status(400).json({ error: 'Missing user_id' });
+    }
+
+    // Add subgoal
+    if (action === 'add-subgoal') {
+      if (!goal_id || !text) {
+        return res.status(400).json({ error: 'Missing goal_id or text' });
+      }
+
+      try {
+        // Check subgoal limit (10 max)
+        const { count, error: countError } = await supabase
+          .from('subgoals')
+          .select('*', { count: 'exact', head: true })
+          .eq('goal_id', goal_id);
+
+        if (countError) throw countError;
+
+        if (count >= 10) {
+          return res.status(400).json({
+            success: false,
+            message: 'Максимум 10 подцелей на одну цель'
+          });
+        }
+
+        const { data: subgoal, error } = await supabase
+          .from('subgoals')
+          .insert({
+            goal_id: goal_id,
+            telegram_user_id: user_id,
+            text: text.trim(),
+            sort_order: count || 0
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        console.log(`Subgoal added for goal ${goal_id}: ${text}`);
+
+        return res.status(200).json({
+          success: true,
+          subgoal: subgoal
+        });
+
+      } catch (error) {
+        console.error('Add subgoal error:', error);
+        return res.status(500).json({
+          error: 'Internal error',
+          message: 'Error adding subgoal'
+        });
+      }
+    }
+
+    // Generate subgoals with AI
+    if (action === 'generate-subgoals') {
+      if (!goal_id || !goal_text) {
+        return res.status(400).json({ error: 'Missing goal_id or goal_text' });
+      }
+
+      try {
+        // Check how many subgoals can be added (max 10)
+        const maxToGenerate = 10 - (existing_count || 0);
+        if (maxToGenerate <= 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'Достигнут лимит подцелей'
+          });
+        }
+
+        const numToGenerate = Math.min(maxToGenerate, 5);
+
+        // Generate with AI
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `Ты помощник по декомпозиции целей. Разбей цель пользователя на ${numToGenerate} конкретных, измеримых подцелей (шагов). 
+              
+Правила:
+- Каждая подцель должна быть конкретным действием
+- Подцели должны быть последовательными шагами к главной цели
+- Формулируй кратко, 5-10 слов максимум
+- Отвечай ТОЛЬКО JSON массивом строк, без пояснений
+
+Пример ответа:
+["Подцель 1", "Подцель 2", "Подцель 3"]`
+            },
+            {
+              role: 'user',
+              content: `Цель: "${goal_text}"`
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        });
+
+        let subgoalTexts = [];
+        try {
+          const content = completion.choices[0].message.content.trim();
+          subgoalTexts = JSON.parse(content);
+          if (!Array.isArray(subgoalTexts)) {
+            throw new Error('Not an array');
+          }
+        } catch (parseError) {
+          console.error('Parse AI response error:', parseError);
+          return res.status(500).json({
+            success: false,
+            message: 'Ошибка генерации подцелей'
+          });
+        }
+
+        // Get current count for sort_order
+        const { count: currentCount } = await supabase
+          .from('subgoals')
+          .select('*', { count: 'exact', head: true })
+          .eq('goal_id', goal_id);
+
+        // Insert subgoals
+        const subgoalsToInsert = subgoalTexts.slice(0, numToGenerate).map((text, i) => ({
+          goal_id: goal_id,
+          telegram_user_id: user_id,
+          text: text.trim(),
+          sort_order: (currentCount || 0) + i
+        }));
+
+        const { data: insertedSubgoals, error: insertError } = await supabase
+          .from('subgoals')
+          .insert(subgoalsToInsert)
+          .select();
+
+        if (insertError) throw insertError;
+
+        console.log(`Generated ${insertedSubgoals.length} subgoals for goal ${goal_id}`);
+
+        return res.status(200).json({
+          success: true,
+          subgoals: insertedSubgoals
+        });
+
+      } catch (error) {
+        console.error('Generate subgoals error:', error);
+        return res.status(500).json({
+          error: 'Internal error',
+          message: 'Error generating subgoals'
+        });
+      }
+    }
+
+    // Add regular goal (default action)
+    if (!text) {
+      return res.status(400).json({ error: 'Missing text' });
     }
 
     try {
@@ -54,6 +233,9 @@ export default async function handler(req, res) {
         .single();
 
       if (error) throw error;
+
+      // Return goal with empty subgoals array
+      goal.subgoals = [];
 
       console.log(`Goal added for user ${user_id}: ${text}`);
 
@@ -71,12 +253,64 @@ export default async function handler(req, res) {
     }
   }
 
- // PUT - Update goal (status, text, date)
+  // PUT - Update goal or subgoal
   if (method === 'PUT') {
-    const { user_id, goal_id, status, new_date, text } = req.body;
+    const { user_id, goal_id, subgoal_id, action, status, new_date, text, is_completed } = req.body;
     
-    if (!user_id || !goal_id) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!user_id) {
+      return res.status(400).json({ error: 'Missing user_id' });
+    }
+
+    // Update subgoal
+    if (action === 'update-subgoal' || subgoal_id) {
+      if (!subgoal_id) {
+        return res.status(400).json({ error: 'Missing subgoal_id' });
+      }
+
+      try {
+        const updateData = {};
+
+        if (text !== undefined && text.trim() !== '') {
+          updateData.text = text.trim();
+        }
+
+        if (is_completed !== undefined) {
+          updateData.is_completed = is_completed;
+        }
+
+        if (Object.keys(updateData).length === 0) {
+          return res.status(400).json({ error: 'Nothing to update' });
+        }
+
+        const { data: subgoal, error } = await supabase
+          .from('subgoals')
+          .update(updateData)
+          .eq('id', subgoal_id)
+          .eq('telegram_user_id', user_id)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        console.log(`Subgoal ${subgoal_id} updated:`, updateData);
+
+        return res.status(200).json({
+          success: true,
+          subgoal: subgoal
+        });
+
+      } catch (error) {
+        console.error('Update subgoal error:', error);
+        return res.status(500).json({
+          error: 'Internal error',
+          message: 'Error updating subgoal'
+        });
+      }
+    }
+
+    // Update goal
+    if (!goal_id) {
+      return res.status(400).json({ error: 'Missing goal_id' });
     }
 
     try {
@@ -129,6 +363,15 @@ export default async function handler(req, res) {
 
       if (error) throw error;
 
+      // Load subgoals for this goal
+      const { data: subgoals } = await supabase
+        .from('subgoals')
+        .select('*')
+        .eq('goal_id', goal_id)
+        .order('sort_order', { ascending: true });
+
+      goal.subgoals = subgoals || [];
+
       console.log(`Goal ${goal_id} updated for user ${user_id}:`, updateData);
       
       return res.status(200).json({
@@ -144,12 +387,47 @@ export default async function handler(req, res) {
     }
   }
 
-  // DELETE - Delete goal
+  // DELETE - Delete goal or subgoal
   if (method === 'DELETE') {
-    const { user_id, goal_id } = req.body;
+    const { user_id, goal_id, subgoal_id, action } = req.body;
 
-    if (!user_id || !goal_id) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!user_id) {
+      return res.status(400).json({ error: 'Missing user_id' });
+    }
+
+    // Delete subgoal
+    if (action === 'delete-subgoal' || subgoal_id) {
+      if (!subgoal_id) {
+        return res.status(400).json({ error: 'Missing subgoal_id' });
+      }
+
+      try {
+        const { error } = await supabase
+          .from('subgoals')
+          .delete()
+          .eq('id', subgoal_id)
+          .eq('telegram_user_id', user_id);
+
+        if (error) throw error;
+
+        console.log(`Subgoal ${subgoal_id} deleted for user ${user_id}`);
+
+        return res.status(200).json({
+          success: true
+        });
+
+      } catch (error) {
+        console.error('Delete subgoal error:', error);
+        return res.status(500).json({
+          error: 'Internal error',
+          message: 'Error deleting subgoal'
+        });
+      }
+    }
+
+    // Delete goal (subgoals will be deleted by CASCADE)
+    if (!goal_id) {
+      return res.status(400).json({ error: 'Missing goal_id' });
     }
 
     try {
