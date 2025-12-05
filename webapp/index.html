@@ -4386,8 +4386,10 @@ const Analytics = {
             </div>
             <div class="goal-body">
               <div class="goal-actions">
-                <button class="goal-action-btn delete" onclick="showDeleteConfirmation(${goal.id})">Удалить</button>
-                <button class="goal-action-btn collapse" onclick="toggleGoal(${goal.id})">Свернуть</button>
+                <div class="goal-actions-row">
+                  <button class="goal-action-btn delete" onclick="showDeleteConfirmation(${goal.id})">Удалить</button>
+                  <button class="goal-action-btn collapse" onclick="toggleGoal(${goal.id})">Свернуть</button>
+                </div>
               </div>
             </div>
           `;
