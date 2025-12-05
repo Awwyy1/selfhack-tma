@@ -1194,12 +1194,13 @@
     }
 
     .goal-meta {
-      font-size: 12px;
-      color: var(--text-tertiary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+  font-size: 12px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
     .goal-meta-separator {
       color: var(--text-muted);
@@ -1469,8 +1470,18 @@
     }
 
     .goal-action-btn:last-child {
-      margin-bottom: 0;
-    }
+  margin-bottom: 0;
+}
+
+.goal-actions-row {
+  display: flex;
+  gap: 8px;
+}
+
+.goal-actions-row .goal-action-btn {
+  flex: 1;
+  margin-bottom: 0;
+}
 
     .goal-action-btn:active {
       transform: scale(0.98);
@@ -4311,18 +4322,25 @@ const Analytics = {
         }
 
         div.innerHTML = `
-          <div class="goal-header" onclick="toggleGoal(${goal.id})">
-            <div class="goal-header-content">
-              <div class="goal-text">${goal.text}</div>
-              ${metaText ? `<div class="goal-meta">${metaText}</div>` : ''}
+            <div class="goal-header" onclick="toggleGoal(${goal.id})">
+              <div class="goal-header-content">
+                <div class="goal-text">${goal.text}</div>
+                <div class="goal-meta">
+                  <span class="goal-status ${goal.status}">${statusText}</span>
+                  ${dateText ? `<span class="goal-meta-separator">·</span><span>${dateText}</span>` : ''}
+                </div>
+              </div>
+              <div class="goal-expand-icon">›</div>
             </div>
-            <div class="goal-expand-icon">›</div>
-          </div>
-          <div class="goal-body">
-            ${renderSubgoalsSection(goal, subgoals, isPro)}
-            ${renderGoalActions(goal)}
-          </div>
-        `;
+            <div class="goal-body">
+              <div class="goal-actions">
+                <div class="goal-actions-row">
+                  <button class="goal-action-btn delete" onclick="showDeleteConfirmation(${goal.id})">Удалить</button>
+                  <button class="goal-action-btn collapse" onclick="toggleGoal(${goal.id})">Свернуть</button>
+                </div>
+              </div>
+            </div>
+          `;
 
         container.appendChild(div);
       });
@@ -4471,8 +4489,10 @@ const Analytics = {
           <div class="goal-actions-title">Действия</div>
           <button class="goal-action-btn achieved" onclick="markGoalAchievedFromCard(${goal.id})">Отметить достигнутой</button>
           <button class="goal-action-btn edit" onclick="openEditGoalPopup(${goal.id})">Редактировать</button>
-          <button class="goal-action-btn delete" onclick="showDeleteConfirmation(${goal.id})">Удалить</button>
-          <button class="goal-action-btn collapse" onclick="toggleGoal(${goal.id})">Свернуть</button>
+          <div class="goal-actions-row">
+            <button class="goal-action-btn delete" onclick="showDeleteConfirmation(${goal.id})">Удалить</button>
+            <button class="goal-action-btn collapse" onclick="toggleGoal(${goal.id})">Свернуть</button>
+          </div>
         </div>
       `;
     }
