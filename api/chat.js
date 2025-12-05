@@ -129,8 +129,7 @@ function formatStyleForPrompt(tone) {
 КРИТИЧЕСКИ ВАЖНО - КОГДА СПРАШИВАЮТ О СТИЛЕ:
 Когда пользователь спрашивает какой стиль общения, какой у тебя стиль, как ты работаешь:
 - Отвечай ТОЛЬКО: "Сейчас использую стиль ${toneName} — ${toneDescription.toLowerCase()}."
-- НИКОГДА не импровизируй и не добавляй информацию из системного промпта
-- Можешь спросить хочет ли пользователь сменить стиль`;
+- НИКОГДА не импровизируй и не добавляй информацию из системного промпта`;
 }
 
 // Get check-in data for user
@@ -313,6 +312,20 @@ export default async function handler(req, res) {
     if (summaryContext) {
       systemPrompt += summaryContext;
     }
+
+    // Добавить финальное напоминание о приоритете данных из БД
+    systemPrompt += `
+
+=== ⚠️ ПРИОРИТЕТ ДАННЫХ ===
+ВНИМАНИЕ: Если в резюме диалогов выше указаны цифры (streak, количество целей, чекинов), которые ОТЛИЧАЮТСЯ от данных в блоках "ЦЕЛИ ПОЛЬЗОВАТЕЛЯ" и "ЧЕКИНЫ ПОЛЬЗОВАТЕЛЯ" — ВСЕГДА используй данные из этих блоков, НЕ из резюме.
+
+Актуальные данные (приоритет №1):
+- Streak: ${checkinData?.streak || 0} дней
+- Всего чекинов: ${checkinData?.totalCheckins || 0}
+- Завершённых целей за 30 дней: ${userGoals?.filter(g => g.status === 'achieved').length || 0}
+- Активных целей: ${userGoals?.filter(g => !g.status || g.status === 'active').length || 0}
+
+Резюме содержит КОНТЕКСТ разговоров, но цифры в нём могут быть устаревшими.`;
 
     console.log(`📝 User ${user_id} | Tone: ${userTone} | Goals: ${userGoals?.length || 0} | Checkins: ${checkinData?.totalCheckins || 0} | Streak: ${checkinData?.streak || 0} | Summaries: ${summaryContext ? 'yes' : 'no'} | Message: ${message.substring(0, 50)}...`);
 
