@@ -349,6 +349,46 @@
       transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
 
+    #voice-btn {
+      width: 48px;
+      height: 48px;
+      border: none;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    #voice-btn:hover {
+      background: var(--accent-light);
+      color: var(--accent-primary);
+    }
+
+    #voice-btn:active {
+      transform: scale(0.95);
+    }
+
+    #voice-btn.recording {
+      background: var(--error);
+      color: white;
+      animation: voicePulse 1s ease-in-out infinite;
+    }
+
+    @keyframes voicePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    #voice-btn.processing {
+      background: var(--accent-primary);
+      color: white;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
     #send-btn {
       width: 48px;
       height: 48px;
@@ -359,10 +399,100 @@
       font-size: 20px;
       cursor: pointer;
       transition: background 0.3s;
+      flex-shrink: 0;
     }
 
     #send-btn:active {
       background: var(--accent-dark);
+    }
+
+    /* Voice recording overlay */
+    .voice-recording-overlay {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      padding: 20px;
+      padding-bottom: calc(20px + var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      box-shadow: 0 -4px 20px var(--shadow-medium);
+    }
+
+    .voice-recording-overlay.active {
+      display: flex;
+    }
+
+    .voice-timer {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--error);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .voice-hint {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .voice-buttons {
+      display: flex;
+      gap: 16px;
+    }
+
+    .voice-cancel-btn {
+      padding: 12px 24px;
+      background: var(--bg-tertiary);
+      border: none;
+      border-radius: 24px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .voice-stop-btn {
+      padding: 12px 24px;
+      background: var(--error);
+      border: none;
+      border-radius: 24px;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .voice-wave {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 24px;
+    }
+
+    .voice-wave-bar {
+      width: 4px;
+      background: var(--error);
+      border-radius: 2px;
+      animation: waveAnimation 0.5s ease-in-out infinite;
+    }
+
+    .voice-wave-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+    .voice-wave-bar:nth-child(2) { height: 16px; animation-delay: 0.1s; }
+    .voice-wave-bar:nth-child(3) { height: 24px; animation-delay: 0.2s; }
+    .voice-wave-bar:nth-child(4) { height: 16px; animation-delay: 0.3s; }
+    .voice-wave-bar:nth-child(5) { height: 8px; animation-delay: 0.4s; }
+
+    @keyframes waveAnimation {
+      0%, 100% { transform: scaleY(0.5); }
+      50% { transform: scaleY(1); }
     }
     
     /* ========== ЧЕКИН ========== */
@@ -2864,13 +2994,11 @@
     </div>
     
     <!-- ЧАТ -->
-    <div id="chat-page" class="page active">
-      <div id="chat-container"></div>
-      <div class="input-area">
+    <div class="input-area">
         <textarea id="message-input" placeholder="Напиши что-то..." rows="1"></textarea>
+        <button id="voice-btn" onclick="toggleVoiceRecording()">🎤</button>
         <button id="send-btn">→</button>
       </div>
-    </div>
     
     <!-- ЦЕЛИ -->
     <div id="goals-page" class="page">
@@ -3512,6 +3640,41 @@
     <button class="nav-btn active" data-page="chat">Чат</button>
     <button class="nav-btn" data-page="goals">Цели</button>
     <button class="nav-btn" data-page="profile">Профиль</button>
+  </div>
+
+  <!-- VOICE RECORDING OVERLAY -->
+  <div class="voice-recording-overlay" id="voice-overlay">
+    <div class="voice-wave">
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+      <div class="voice-wave-bar"></div>
+    </div>
+    <div class="voice-timer" id="voice-timer">0:00</div>
+    <div class="voice-hint">Говори чётко, до 60 секунд</div>
+    <div class="voice-buttons">
+      <button class="voice-cancel-btn" onclick="cancelVoiceRecording()">Отмена</button>
+      <button class="voice-stop-btn" onclick="stopVoiceRecording()">
+        <span>⬜</span> Готово
+      </button>
+    </div>
+  </div>
+
+  <!-- VOICE PRO UPSELL POPUP -->
+  <div class="popup" id="voice-upsell-popup">
+    <div class="popup-content">
+      <div class="popup-icon">🎤</div>
+      <div class="popup-title">Голосовые сообщения</div>
+      <div class="popup-text" style="line-height: 1.6;">
+        Говори вместо печатания — AI расшифрует и ответит.<br><br>
+        Эта функция доступна в тарифе PRO.
+      </div>
+      <div class="popup-buttons">
+        <button class="popup-btn secondary" onclick="closePopup()">Понятно</button>
+        <button class="popup-btn primary" style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%);" onclick="closePopup(); openTariffsPage();">Тарифы</button>
+      </div>
+    </div>
   </div>
 
   <!-- ONBOARDING STORIES -->
@@ -4678,6 +4841,177 @@ const Analytics = {
     let goalToEdit = null;
     let expandedGoals = new Set(); // Какие цели развёрнуты
     let editingSubgoalId = null; // Какую подцель редактируем
+
+    // ========== VOICE RECORDING ==========
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let voiceRecordingTimer = null;
+    let voiceRecordingSeconds = 0;
+    const MAX_VOICE_DURATION = 60; // seconds
+
+    function toggleVoiceRecording() {
+      // Проверка тарифа
+      if (userStats.plan !== 'PRO') {
+        document.getElementById('voice-upsell-popup').classList.add('active');
+        return;
+      }
+
+      // Если уже записываем — остановить
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        stopVoiceRecording();
+        return;
+      }
+
+      // Начать запись
+      startVoiceRecording();
+    }
+
+    async function startVoiceRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+        });
+        
+        audioChunks = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onstop = async () => {
+          // Остановить таймер
+          clearInterval(voiceRecordingTimer);
+          voiceRecordingTimer = null;
+          
+          // Скрыть overlay
+          document.getElementById('voice-overlay').classList.remove('active');
+          document.getElementById('voice-btn').classList.remove('recording');
+          
+          // Остановить все треки
+          stream.getTracks().forEach(track => track.stop());
+          
+          // Если есть аудио — отправить на транскрипцию
+          if (audioChunks.length > 0) {
+            await transcribeAudio();
+          }
+        };
+        
+        // Начать запись
+        mediaRecorder.start(1000); // Chunk every second
+        
+        // UI
+        document.getElementById('voice-btn').classList.add('recording');
+        document.getElementById('voice-overlay').classList.add('active');
+        
+        // Таймер
+        voiceRecordingSeconds = 0;
+        updateVoiceTimer();
+        voiceRecordingTimer = setInterval(() => {
+          voiceRecordingSeconds++;
+          updateVoiceTimer();
+          
+          // Автостоп на 60 секундах
+          if (voiceRecordingSeconds >= MAX_VOICE_DURATION) {
+            stopVoiceRecording();
+          }
+        }, 1000);
+        
+        // Haptic
+        if (tg.HapticFeedback) {
+          tg.HapticFeedback.impactOccurred('medium');
+        }
+        
+      } catch (error) {
+        console.error('Microphone access error:', error);
+        tg.showAlert('Не удалось получить доступ к микрофону. Проверь разрешения.');
+      }
+    }
+
+    function stopVoiceRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+    }
+
+    function cancelVoiceRecording() {
+      // Очистить chunks чтобы не отправлять
+      audioChunks = [];
+      
+      // Остановить запись
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+      
+      // UI
+      clearInterval(voiceRecordingTimer);
+      voiceRecordingTimer = null;
+      document.getElementById('voice-overlay').classList.remove('active');
+      document.getElementById('voice-btn').classList.remove('recording');
+    }
+
+    function updateVoiceTimer() {
+      const minutes = Math.floor(voiceRecordingSeconds / 60);
+      const seconds = voiceRecordingSeconds % 60;
+      document.getElementById('voice-timer').textContent = 
+        `${minutes}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    async function transcribeAudio() {
+      // Показать processing state
+      const voiceBtn = document.getElementById('voice-btn');
+      voiceBtn.classList.add('processing');
+      voiceBtn.textContent = '⏳';
+      
+      try {
+        // Создать blob из chunks
+        const audioBlob = new Blob(audioChunks, { 
+          type: mediaRecorder.mimeType || 'audio/webm' 
+        });
+        
+        // Создать FormData
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'voice.webm');
+        formData.append('user_id', user?.id || 0);
+        
+        // Отправить на сервер
+        const response = await fetch('/api/transcribe', {
+          method: 'POST',
+          headers: {
+            'X-Telegram-Init-Data': tg.initData
+          },
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.text) {
+          // Вставить текст в поле ввода
+          messageInput.value = data.text;
+          messageInput.focus();
+          autoResizeTextarea();
+          
+          // Haptic success
+          if (tg.HapticFeedback) {
+            tg.HapticFeedback.notificationOccurred('success');
+          }
+        } else {
+          tg.showAlert(data.message || 'Не удалось распознать речь');
+        }
+        
+      } catch (error) {
+        console.error('Transcribe error:', error);
+        tg.showAlert('Ошибка распознавания речи');
+      } finally {
+        // Восстановить кнопку
+        voiceBtn.classList.remove('processing');
+        voiceBtn.textContent = '🎤';
+        audioChunks = [];
+      }
+    }    
 
     function showDeleteConfirmation(goalId) {
       goalToDelete = goalId;
