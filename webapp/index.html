@@ -4321,26 +4321,19 @@ const Analytics = {
           metaText += `${completedSubgoals}/${subgoals.length} подцелей`;
         }
 
-        div.innerHTML = `
-            <div class="goal-header" onclick="toggleGoal(${goal.id})">
-              <div class="goal-header-content">
-                <div class="goal-text">${goal.text}</div>
-                <div class="goal-meta">
-                  <span class="goal-status ${goal.status}">${statusText}</span>
-                  ${dateText ? `<span class="goal-meta-separator">·</span><span>${dateText}</span>` : ''}
-                </div>
-              </div>
-              <div class="goal-expand-icon">›</div>
+       div.innerHTML = `
+          <div class="goal-header" onclick="toggleGoal(${goal.id})">
+            <div class="goal-header-content">
+              <div class="goal-text">${goal.text}</div>
+              ${metaText ? `<div class="goal-meta">${metaText}</div>` : ''}
             </div>
-            <div class="goal-body">
-              <div class="goal-actions">
-                <div class="goal-actions-row">
-                  <button class="goal-action-btn delete" onclick="showDeleteConfirmation(${goal.id})">Удалить</button>
-                  <button class="goal-action-btn collapse" onclick="toggleGoal(${goal.id})">Свернуть</button>
-                </div>
-              </div>
-            </div>
-          `;
+            <div class="goal-expand-icon">›</div>
+          </div>
+          <div class="goal-body">
+            ${renderSubgoalsSection(goal, subgoals, isPro)}
+            ${renderGoalActions(goal)}
+          </div>
+        `;
 
         container.appendChild(div);
       });
