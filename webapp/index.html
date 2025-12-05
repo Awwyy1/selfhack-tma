@@ -3041,9 +3041,9 @@
           <div class="tariff-price">$0</div>
         </div>
         <div class="tariff-features">
-          • 50 сообщений в месяц<br>
+          • 50 сообщений lifetime<br>
           • 1 стиль коуча Baddy<br>
-          • История 7 дней<br>
+          • История 14 дней<br>
           • Чекины и цели
         </div>
         <div class="tariff-badge" id="tariff-free-badge" style="display: none;">
@@ -5945,7 +5945,7 @@ const Analytics = {
 
         if (data.limit_reached) {
           addMessage(data.message || 'Лимит FREE достигнут', 'assistant');
-          tg.showAlert('Лимит FREE (50 сообщений) достигнут. Купи Premium для продолжения.');
+          tg.showAlert('Лимит FREE (50 сообщений) достигнут. Купи Premium или PRO для продолжения.');
         } else {
           addMessage(data.reply || 'Ошибка ответа', 'assistant');
 
